@@ -1,0 +1,39 @@
+# Table of contents
+# Docs: https://jupyterbook.org/customize/toc.html
+format: jb-book
+root: intro
+parts:
+  - caption: Getting Started
+    chapters:
+      - file: how-to-use
+  - caption: Lessons
+    chapters:
+      - file: lessons/lesson01_dynamic_systems_everywhere
+      - file: lessons/lesson_orders_of_systems
+      - file: lessons/lesson02_modeling_with_newton
+      - file: lessons/lesson03_differential_equations
+      - file: lessons/lesson04_laplace_transforms
+      - file: lessons/lesson05_transfer_functions
+      - file: lessons/lesson06_second_order_systems
+      - file: lessons/lesson07_state_space
+      - file: lessons/lesson08_mechanical_electrical_hydraulic
+  - caption: Projects
+    chapters:
+      - file: projects/project1_car_suspension
+      - file: projects/project2_hydraulic_cylinder
+  - caption: Fluid Power Projects
+    chapters:
+      - file: projects/project3_hyd_single_cylinder
+      - file: projects/project4_hyd_series
+      - file: projects/project5_hyd_parallel
+      - file: projects/project6_hyd_onoff
+      - file: projects/project7_hyd_proportional
+  - caption: Derivations & Solutions
+    chapters:
+      - file: derivations/derivations_solutions
+      - file: derivations/derivations_html
+  - caption: Reference
+    chapters:
+      - file: glossary
+      - file: references
+      - file: instructor-notes

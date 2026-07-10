@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hydraulic Circuits · 2 · Cylinders in Series</title>
+<style>
+  :root{
+    --paper:#EEF2F5; --card:#FFFFFF; --ink:#17252E; --muted:#5E7686; --line:#D3DDE4; --line2:#E3EAEF;
+    --panel:#0E1B24; --grid2:#16262F; --axis:#3A5464;
+    --in:#E8A33D; --out:#22C3AE; --accent:#22C3AE; --accent-ink:#0A5B52; --blue:#9BD0FF; --red:#FF8FA3;
+    --mono: ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    --sans: system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box} html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.6;font-size:17px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:940px;margin:0 auto;padding:0 20px 120px}
+  header.hero{padding:64px 0 34px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono);font-size:.78rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+  h1{font-size:clamp(2rem,5vw,3.1rem);line-height:1.06;margin:0 0 18px;letter-spacing:-.02em;font-weight:750}
+  .lede{font-size:1.12rem;color:#33454f;max-width:62ch;margin:0}
+  h2{font-size:1.02rem;font-family:var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:52px 0 14px;font-weight:600}
+  h3{font-size:1.5rem;letter-spacing:-.01em;margin:6px 0 10px;font-weight:700}
+  p{margin:0 0 16px} em{font-style:normal;color:var(--accent-ink);font-weight:600}
+  .goal{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:0 14px 14px 0;padding:18px 22px;margin:20px 0}
+  .goal .lab{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-ink);display:block;margin-bottom:6px}
+  .eq{font-family:var(--mono);background:var(--panel);color:#DCE7EC;border-radius:12px;padding:18px 20px;margin:16px 0;overflow-x:auto;font-size:.98rem;line-height:2}
+  .eq .cmt{color:#6E8794} .eq .hl-in{color:var(--in)} .eq .hl-out{color:var(--out)} .eq .hl-k{color:#9BD0FF}
+  .plain-eq{font-family:var(--mono);font-size:1rem;color:var(--ink);background:#F6F9FB;border:1px solid var(--line2);border-radius:9px;padding:10px 14px;display:inline-block;margin:4px 0}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px}
+  .chip{font-family:var(--mono);font-size:.82rem;padding:6px 11px;border-radius:999px;background:#F0F5F8;border:1px solid var(--line);color:#3a4d57}
+  .demo{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:22px 0}
+  .demo>canvas{background:var(--panel);border-radius:10px;width:100%;height:auto;display:block}
+  .controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px 20px;margin:16px 4px 4px}
+  @media (max-width:640px){.controls{grid-template-columns:1fr}}
+  .ctrl{display:flex;flex-direction:column;gap:5px}
+  .ctrl .row{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:.86rem}
+  .ctrl .name{color:var(--ink)} .ctrl .val{color:var(--accent-ink);font-weight:600}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:5px;background:var(--line);border-radius:5px;outline:none;margin:6px 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.25);cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--accent);border:2px solid #fff;cursor:pointer}
+  .btnrow{display:flex;flex-wrap:wrap;gap:8px;margin:14px 4px 2px;align-items:center}
+  .btn{font-family:var(--mono);font-size:.78rem;color:var(--accent-ink);background:none;border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}
+  .btn:hover{background:#F0F5F8} .btn.on{background:var(--accent);color:#04302b;border-color:var(--accent)}
+  .readouts{display:flex;flex-wrap:wrap;gap:8px 10px;margin:14px 4px 2px;font-family:var(--mono);font-size:.82rem}
+  .ro{background:#F0F5F8;border:1px solid var(--line);border-radius:8px;padding:6px 10px;color:#3a4d57} .ro b{color:var(--accent-ink)}
+  .ro.good{background:#eafaf6;border-color:var(--accent)} .ro.good b{color:var(--accent-ink)}
+  .ro.warn{background:#fff2e0;border-color:var(--in)} .ro.warn b{color:#8a5a12}
+  .takeaways{background:var(--panel);color:#DCE7EC;border-radius:16px;padding:26px 28px;margin:40px 0}
+  .takeaways h3{color:#fff} .takeaways li{margin:9px 0} .takeaways b{color:var(--out)}
+  details{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:2px 16px;margin:10px 0}
+  details[open]{padding-bottom:12px}
+  summary{cursor:pointer;font-weight:600;padding:12px 0;list-style:none}
+  summary::-webkit-details-marker{display:none} summary::before{content:"▸ ";color:var(--accent-ink)} details[open] summary::before{content:"▾ "}
+  .qa{font-size:.97rem} .qa p{margin:8px 0}
+  ol.ex{padding-left:1.3em} ol.ex li{margin:8px 0}
+  footer{margin-top:60px;padding-top:20px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.8rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+  <p class="eyebrow">Foundations of Dynamic Systems · Hydraulic Circuits · 2</p>
+  <h1>Cylinders in Series</h1>
+  <p class="lede">Connect the outlet of one cylinder into the inlet of the next and you build a <em>series</em>
+  circuit — the same oil passes through both. That single fact has two big consequences: the cylinders' speeds
+  are locked together by their areas, and the pump has to supply the <em>sum</em> of both loads. It's the classic
+  way to (almost) synchronize two actuators from one pump.</p>
+</header>
+
+<div class="goal"><span class="lab">The mission</span>
+  Feed the discharge of cylinder 1 into cylinder 2 (same-size cylinders) and discover the two rules of a series
+  circuit: <em>flow is shared</em> (so speeds are coupled through the area ratio) and <em>pressures add</em> down
+  the chain. Then see why "same size" cylinders don't perfectly synchronize — and what would fix it.
+</div>
+
+<h2>Step 1 · One stream, two cylinders</h2>
+<h3>Shared flow couples the speeds</h3>
+<p>The pump pushes oil into the cap of cylinder 1. As its piston advances, it expels oil from its rod side — and
+<em>that</em> discharge is piped into the cap of cylinder 2, driving it forward. The two cylinders sit on one
+stream of oil, so their motions are locked together. Because the discharge comes off the smaller rod-side area
+A<sub>a</sub> but fills cylinder 2 on the full cap area A<sub>c</sub>, the second cylinder runs slower:</p>
+<div class="eq">
+  v<sub>1</sub> = <span class="hl-in">Q</span> / A<sub>c</sub>
+  &nbsp;&nbsp;&nbsp; discharge from 1 = A<sub>a</sub>·v<sub>1</sub>
+  &nbsp;&nbsp;&nbsp; ⟹ &nbsp; <span class="hl-out">v<sub>2</sub> = v<sub>1</sub> · (A<sub>a</sub> / A<sub>c</sub>)</span>
+  &nbsp;&nbsp;<span class="cmt">// same-size cylinders ⇒ v₂ &lt; v₁</span>
+</div>
+
+<h2>Step 2 · Run the chain</h2>
+<h3>Watch the flow pass through, and the pressures stack</h3>
+<p>Both loads and the pump flow are yours to set. Watch cylinder 2 trail cylinder 1 (they don't perfectly sync),
+and watch the pump-pressure gauge: it has to overcome load 2 <em>through</em> cylinder 1, so it reads higher than
+either load alone. Series connection makes the pump carry the sum.</p>
+
+<div class="demo" data-demo="series">
+  <canvas class="pic"></canvas>
+  <div class="btnrow">
+    <button class="btn on" data-sync="same">same-size cylinders</button>
+    <button class="btn" data-sync="matched">area-matched (sync)</button>
+    <button class="btn" data-reset>reset</button>
+  </div>
+  <div class="controls"></div>
+  <div class="readouts"></div>
+</div>
+
+<p>The force balance tells the pressure story. Cylinder 2's load sets an intermediate line pressure
+P<sub>m</sub> = F<sub>2</sub>/A<sub>c</sub>; the pump then has to beat cylinder 1's load <em>plus</em> that
+back-pressure acting on the rod side:</p>
+<div class="eq">
+  P<sub>m</sub> = F<sub>2</sub> / A<sub>c</sub>
+  &nbsp;&nbsp;&nbsp; <span class="hl-out">P<sub>pump</sub> = F<sub>1</sub>/A<sub>c</sub> + F<sub>2</sub>·A<sub>a</sub>/A<sub>c</sub>²</span>
+  &nbsp;&nbsp;<span class="cmt">// pressures add down the chain — the pump feels both loads</span>
+</div>
+
+<h2>Step 3 · Why "same size" won't synchronize</h2>
+<h3>Perfect sync needs matched areas</h3>
+<p>Toggle "area-matched" above and the two pistons lock step-for-step. The trick: make cylinder 2's cap area equal
+cylinder 1's rod-side area, A<sub>c2</sub> = A<sub>a1</sub>. Then the discharge volume from 1 exactly fills 2 over
+the same travel, so v<sub>2</sub> = v<sub>1</sub>. With two <em>identical</em> cylinders that condition can't be met
+(the rod-side area is always smaller than the cap), so the second always lags by the ratio A<sub>a</sub>/A<sub>c</sub>.
+Real synchronizing circuits size the cylinders deliberately down the chain.</p>
+
+<div class="chips">
+  <span class="chip">series = one shared stream</span>
+  <span class="chip">v₂ = v₁·(A<sub>a</sub>/A<sub>c</sub>)</span>
+  <span class="chip">pressures add: P<sub>pump</sub> feels both loads</span>
+  <span class="chip">sync needs A<sub>c2</sub> = A<sub>a1</sub></span>
+  <span class="chip">contrast: parallel splits flow (next)</span>
+</div>
+
+<div class="takeaways">
+  <h3>Key takeaways</h3>
+  <ul>
+    <li><b>A series circuit shares one flow stream,</b> so the cylinders' speeds are coupled — you can't move one
+      without the other.</li>
+    <li><b>Same-size cylinders don't perfectly synchronize:</b> the second runs slower by the area ratio
+      A<sub>a</sub>/A<sub>c</sub>, because it's filled by the smaller rod-side discharge.</li>
+    <li><b>Pressures add down the chain.</b> The pump must supply cylinder 1's load plus the back-pressure from
+      cylinder 2 — more than either load by itself.</li>
+    <li><b>True synchronization needs matched areas:</b> size cylinder 2's cap to equal cylinder 1's rod side.</li>
+    <li>This is the opposite of a parallel circuit, where pressure is shared and flow divides.</li>
+  </ul>
+</div>
+
+<h2>Investigate further</h2>
+<ol class="ex">
+  <li><b>Speed lag.</b> Two identical 50 mm-bore, 28 mm-rod cylinders are in series. By what factor is cylinder 2 slower
+    than cylinder 1?</li>
+  <li><b>Pressure add-up.</b> Each cylinder carries a 10 kN load. Find the intermediate pressure and the pump pressure,
+    and confirm the pump feels more than either load alone.</li>
+  <li><b>Synchronize.</b> What cap area would cylinder 2 need to move in perfect lock-step with cylinder 1?</li>
+  <li><b>Design.</b> Give one advantage and one drawback of synchronizing two actuators with a series circuit versus
+    using two separate pumps or a flow divider.</li>
+</ol>
+<details><summary>Show discussion &amp; answers</summary>
+  <div class="qa">
+    <p><b>1.</b> A<sub>c</sub> = 19.63 cm², A<sub>a</sub> = 13.48 cm², so v₂/v₁ = A<sub>a</sub>/A<sub>c</sub> ≈ <b>0.69×</b>
+    — cylinder 2 runs about 31% slower.</p>
+    <p><b>2.</b> P<sub>m</sub> = F₂/A<sub>c</sub> = 10 000/19.63×10⁻⁴ ≈ <b>51 bar</b>. P<sub>pump</sub> = F₁/A<sub>c</sub> +
+    F₂·A<sub>a</sub>/A<sub>c</sub>² ≈ 51 + 35 = <b>86 bar</b> — higher than the ~51 bar either load needs on its own,
+    because the pump carries both.</p>
+    <p><b>3.</b> Perfect sync needs A<sub>c2</sub> = A<sub>a1</sub> = <b>13.48 cm²</b> (a smaller bore than cylinder 1),
+    so the discharge from 1 exactly fills 2 over equal travel.</p>
+    <p><b>4.</b> Advantage: one pump and simple plumbing give approximate synchronization with no electronics.
+    Drawback: pressures add so the pump must be sized for the sum of loads (and any leak or trapped air throws the
+    sync off, and cylinders must be specially sized). Two pumps or a flow divider synchronize more robustly and don't
+    stack the pressures, at the cost of more hardware.</p>
+  </div>
+</details>
+
+<footer>Hydraulic Circuits 2 · self-contained, no external libraries or network · speeds and pressures computed live.
+Next: cylinders in parallel.</footer>
+</div>
+
+<script>
+"use strict";
+(function(){
+  const REDUCED=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const COL={in:'#E8A33D',out:'#22C3AE',grid2:'#16262F',axis:'#3A5464',text:'#7FA0AE',blue:'#9BD0FF',red:'#FF8FA3',steel:'#6E8794',ret:'#6E8794'};
+  const BORE=0.050, ROD=0.028, STROKE=0.26, Ac=Math.PI/4*BORE*BORE, Aa=Ac-Math.PI/4*ROD*ROD;
+  function el(t,c){const e=document.createElement(t);if(c)e.className=c;return e;}
+  function fit(cv,a){const dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1));const w=cv.clientWidth||cv.parentElement.clientWidth||300;const h=Math.round(w*a);cv.style.height=h+'px';cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);return{ctx:x,W:w,H:h};}
+  function sliders(cont,defs,p,cb){defs.forEach(d=>{p[d.key]=d.value;const c=el('div','ctrl'),r=el('div','row');const n=el('span','name');n.innerHTML=d.label;const v=el('span','val');const f=d.fmt||(x=>x.toFixed(2));v.textContent=f(d.value);r.appendChild(n);r.appendChild(v);const i=document.createElement('input');i.type='range';i.min=d.min;i.max=d.max;i.step=d.step;i.value=d.value;i.setAttribute('aria-label',d.label.replace(/<[^>]+>/g,''));i.addEventListener('input',()=>{p[d.key]=parseFloat(i.value);v.textContent=f(p[d.key]);cb&&cb();});c.appendChild(r);c.appendChild(i);cont.appendChild(c);});}
+  function reads(cont,items){cont.innerHTML='';items.forEach(r=>{const s=el('span','ro'+(r.cls?' '+r.cls:''));s.innerHTML=r.label+' <b>'+r.value+'</b>';cont.appendChild(s);});}
+  // draw a cylinder with SIDE ports at the EXTREME ends; the piston travels strictly
+  // BETWEEN the two ports and never covers them. Rod + load translate as oil enters.
+  // Returns port tips, current piston x, and the full-stroke piston x (fullX).
+  function drawCyl(ctx,x,y,w,h,frac,capSide,rodSide,label,moving){
+    const capPX=x+w*0.08, rodPX=x+w*0.92;        // ports right at the ends
+    const pistW=8, clr=7;
+    const leftStop=capPX+clr+pistW/2, rightStop=rodPX-clr-pistW/2;
+    const pistonX=leftStop+(rightStop-leftStop)*Math.max(0,Math.min(1,frac));
+    const rodH=h*0.30, rodY=y+h/2, travel=pistonX-leftStop, rodTip=x+w+14+travel;
+    // rod-side oil (piston -> rod-end wall)
+    ctx.fillStyle='rgba(155,208,255,0.16)';ctx.fillRect(pistonX+pistW/2,y+1,(x+w-1)-(pistonX+pistW/2),h-2);
+    // cap-side oil (cap wall -> piston)
+    ctx.fillStyle='rgba(232,163,61,0.30)';ctx.fillRect(x+1,y+1,(pistonX-pistW/2)-(x+1),h-2);
+    // barrel
+    ctx.strokeStyle=moving?COL.out:COL.steel;ctx.lineWidth=moving?2.9:2.6;ctx.strokeRect(x,y,w,h);
+    // piston
+    ctx.fillStyle='#8296a0';ctx.fillRect(pistonX-pistW/2,y+2,pistW,h-4);
+    // rod out through rod-end wall to load
+    ctx.fillRect(pistonX,rodY-rodH/2,rodTip-pistonX,rodH);
+    // load (translates with rod)
+    const lw=w*0.26,lh=h*1.55;
+    ctx.fillStyle='#0E1B24';ctx.strokeStyle=moving?COL.out:COL.steel;ctx.lineWidth=2.4;
+    ctx.fillRect(rodTip,rodY-lh/2,lw,lh);ctx.strokeRect(rodTip,rodY-lh/2,lw,lh);
+    ctx.fillStyle=COL.text;ctx.font='10px ui-monospace,monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('load',rodTip+lw/2,rodY);ctx.textBaseline='alphabetic';
+    // side ports at the extreme ends (piston never reaches them)
+    const stub=h*0.55;
+    function port(px,side,col,name){const ey=side==='top'?y:y+h,ty=side==='top'?y-stub:y+h+stub;
+      ctx.strokeStyle=COL.steel;ctx.lineWidth=3.2;ctx.beginPath();ctx.moveTo(px,ey);ctx.lineTo(px,ty);ctx.stroke();
+      ctx.fillStyle=col;ctx.beginPath();ctx.arc(px,ty,3,0,7);ctx.fill();
+      ctx.font='8px ui-monospace,monospace';ctx.textAlign='center';ctx.fillText(name,px,side==='top'?ty-5:ty+11);return {x:px,y:ty};}
+    const cap=port(capPX,capSide,'#E8A33D','cap'), rod=port(rodPX,rodSide,'#9BD0FF','rod');
+    ctx.fillStyle=COL.text;ctx.font='10px ui-monospace,monospace';ctx.textAlign='left';ctx.fillText(label,x,y+h+stub+22);
+    return {cap,rod,pistonX,leftStop,rightStop,rodTip,y,h};
+  }
+  function pipe(ctx,pts,active,phase,color){
+    ctx.strokeStyle=active?(color||COL.in):'#2b3d47';ctx.lineWidth=active?3:2.4;
+    ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.stroke();
+    if(active){ctx.fillStyle=color||COL.in;let segs=[],tot=0;
+      for(let i=0;i<pts.length-1;i++){const a=pts[i],b=pts[i+1];const L=Math.hypot(b[0]-a[0],b[1]-a[1]);segs.push({a,b,L});tot+=L;}
+      const n=Math.max(2,Math.floor(tot/26));
+      for(let k=0;k<n;k++){let d=(phase*46+k*tot/n)%tot;for(const s of segs){if(d<=s.L){const t=d/s.L,mx=s.a[0]+(s.b[0]-s.a[0])*t,my=s.a[1]+(s.b[1]-s.a[1])*t,ux=(s.b[0]-s.a[0])/s.L,uy=(s.b[1]-s.a[1])/s.L;ctx.beginPath();ctx.moveTo(mx+ux*4,my+uy*4);ctx.lineTo(mx-ux*3+uy*3,my-uy*3-ux*3);ctx.lineTo(mx-ux*3-uy*3,my-uy*3+ux*3);ctx.closePath();ctx.fill();break;}d-=s.L;}}}
+  }
+  function pump(ctx,x,y,r){ctx.strokeStyle=COL.steel;ctx.lineWidth=2.4;ctx.fillStyle='#0E1B24';ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();ctx.stroke();ctx.fillStyle=COL.out;ctx.beginPath();ctx.moveTo(x-r*0.4,y-r*0.5);ctx.lineTo(x+r*0.6,y);ctx.lineTo(x-r*0.4,y+r*0.5);ctx.closePath();ctx.fill();ctx.fillStyle=COL.text;ctx.font='9px ui-monospace,monospace';ctx.textAlign='center';ctx.fillText('pump',x,y+r+11);}
+  function tank(ctx,x,y){ctx.strokeStyle=COL.steel;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x-12,y-8);ctx.lineTo(x-12,y+8);ctx.lineTo(x+12,y+8);ctx.lineTo(x+12,y-8);ctx.stroke();ctx.fillStyle=COL.text;ctx.font='9px ui-monospace,monospace';ctx.textAlign='center';ctx.fillText('tank',x,y+20);}
+
+  const root=document.querySelector('[data-demo=series]'); if(!root) return;
+  const pic=root.querySelector('.pic'), controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+  const p={}; let mode='same', x1=0.02, x2=0.02, raf=null, last=null, phase=0;
+  sliders(controls,[
+    {key:'Q',label:'pump flow (L/min)',min:4,max:36,step:1,value:20,fmt:v=>v.toFixed(0)},
+    {key:'F1',label:'load 1 (kN)',min:0,max:25,step:1,value:10,fmt:v=>v.toFixed(0)},
+    {key:'F2',label:'load 2 (kN)',min:0,max:25,step:1,value:10,fmt:v=>v.toFixed(0)}
+  ],p,null);
+  root.querySelectorAll('[data-sync]').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.sync;x1=0.02;x2=0.02;root.querySelectorAll('[data-sync]').forEach(o=>o.classList.toggle('on',o===b));}));
+  root.querySelector('[data-reset]').addEventListener('click',()=>{x1=0.02;x2=0.02;});
+  function draw(now){
+    const {ctx,W,H}=fit(pic,0.86); let dt=last?Math.min(0.05,(now-last)/1000):0.016; last=now; phase+=dt;
+    const Q=p.Q/60000, ratio=mode==='matched'?1:(Aa/Ac);
+    // cyl2 is fed only by cyl1's rod-end discharge: it moves only while cyl1 moves,
+    // and reaches at most ratio*STROKE (oil-limited) in same-size mode.
+    const v1=(x1<STROKE-1e-4)?Q/Ac:0, v2=(x1<STROKE-1e-4)?v1*ratio:0;
+    x1=Math.max(0,Math.min(STROKE,x1+v1*dt)); x2=Math.max(0,Math.min(STROKE,x2+v2*dt));
+    const Pm=(p.F2*1000)/Ac, Ppump=(p.F1*1000)/Ac+(p.F2*1000)*Aa/(Ac*Ac);
+    ctx.clearRect(0,0,W,H);
+    const bw=W*0.30, bh=H*0.13, c1x=W*0.20, c1y=H*0.15, c2x=W*0.20, c2y=H*0.56;
+    const g1=drawCyl(ctx,c1x,c1y,bw,bh,x1/STROKE,'top','bottom','cylinder 1  (v\u2081)',v1>0);
+    const g2=drawCyl(ctx,c2x,c2y,bw,bh,x2/STROKE,'top','bottom','cylinder 2  (v\u2082)',v2>0);
+    // cyl2 oil-limited full-stroke marker (same-size mode)
+    if(mode==='same'){ctx.strokeStyle=COL.red;ctx.setLineDash([4,3]);ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.moveTo(g2.rightStop,g2.y-4);ctx.lineTo(g2.rightStop,g2.y+g2.h+4);ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle=COL.red;ctx.font='8px ui-monospace,monospace';ctx.textAlign='center';ctx.fillText('full stroke — cyl 2 can\u2019t reach it',g2.rightStop,g2.y-8);}
+    // pump -> cyl1 cap
+    const pumpX=W*0.07, pumpY=g1.cap.y; pump(ctx,pumpX,pumpY,H*0.05);
+    const active=v1>0;
+    pipe(ctx,[[pumpX+H*0.05,pumpY],[g1.cap.x,g1.cap.y]],active,phase,COL.in);
+    // cyl1 rod (bottom) -> cyl2 cap (top) through the gap
+    const ymid=(c1y+bh+c2y)/2;
+    pipe(ctx,[[g1.rod.x,g1.rod.y],[g1.rod.x,ymid],[g2.cap.x,ymid],[g2.cap.x,g2.cap.y]],active,phase,COL.blue);
+    ctx.fillStyle=COL.blue;ctx.font='9px ui-monospace,monospace';ctx.textAlign='left';ctx.fillText('rod-end oil of cyl 1 \u2192 cap of cyl 2',g2.cap.x+8,ymid-4);
+    // cyl2 rod (bottom) -> tank
+    const tankX=W*0.86, tankY=H*0.93;
+    pipe(ctx,[[g2.rod.x,g2.rod.y],[g2.rod.x,tankY],[tankX-14,tankY]],active,phase,COL.ret);
+    tank(ctx,tankX,tankY);
+    ctx.fillStyle=mode==='matched'?COL.out:COL.in;ctx.textAlign='right';ctx.font='10px ui-monospace,monospace';
+    ctx.fillText(mode==='matched'?'area-matched \u2192 synchronized':'same-size \u2192 cyl 2 lags & stops short',W-8,14);
+    reads(ro,[
+      {label:'v\u2081',value:(v1*1000).toFixed(0)+' mm/s'},
+      {label:'v\u2082',value:(v2*1000).toFixed(0)+' mm/s',cls:mode==='matched'?'good':'warn'},
+      {label:'cyl 2 max reach',value:mode==='matched'?'100%':(Aa/Ac*100).toFixed(0)+'% (oil-limited)',cls:mode==='matched'?'good':'warn'},
+      {label:'pump pressure',value:(Ppump/1e5).toFixed(0)+' bar (both loads)'},
+      {label:'intermediate P_m',value:(Pm/1e5).toFixed(0)+' bar'}
+    ]);
+    raf=requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',()=>{if(REDUCED)fit(pic,0.86);});
+  if(REDUCED){last=performance.now();draw(performance.now());cancelAnimationFrame(raf);} else raf=requestAnimationFrame(draw);
+})();
+
+</script>
+</body>
+</html>

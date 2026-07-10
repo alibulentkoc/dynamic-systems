@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project 2 · Hydraulic Cylinder &amp; Bulk Modulus</title>
+<style>
+  :root{
+    --paper:#EEF2F5; --card:#FFFFFF; --ink:#17252E; --muted:#5E7686;
+    --line:#D3DDE4; --line2:#E3EAEF;
+    --panel:#0E1B24; --grid2:#16262F; --axis:#3A5464;
+    --in:#E8A33D; --out:#22C3AE; --accent:#22C3AE; --accent-ink:#0A5B52; --blue:#9BD0FF; --red:#FF8FA3;
+    --mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); line-height:1.6; font-size:17px; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:940px; margin:0 auto; padding:0 20px 120px}
+  header.hero{padding:64px 0 34px; border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono); font-size:.78rem; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); margin:0 0 14px}
+  h1{font-size:clamp(2rem,5vw,3.1rem); line-height:1.06; margin:0 0 18px; letter-spacing:-.02em; font-weight:750}
+  .lede{font-size:1.12rem; color:#33454f; max-width:62ch; margin:0}
+  h2{font-size:1.02rem; font-family:var(--mono); letter-spacing:.04em; text-transform:uppercase; color:var(--muted); margin:52px 0 14px; font-weight:600}
+  h3{font-size:1.5rem; letter-spacing:-.01em; margin:6px 0 10px; font-weight:700}
+  p{margin:0 0 16px}
+  em{font-style:normal; color:var(--accent-ink); font-weight:600}
+  .goal{background:var(--card); border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:0 14px 14px 0; padding:18px 22px; margin:20px 0}
+  .goal .lab{font-family:var(--mono); font-size:.72rem; letter-spacing:.16em; text-transform:uppercase; color:var(--accent-ink); display:block; margin-bottom:6px}
+  .eq{font-family:var(--mono); background:var(--panel); color:#DCE7EC; border-radius:12px; padding:18px 20px; margin:16px 0; overflow-x:auto; font-size:.98rem; line-height:2}
+  .eq .cmt{color:#6E8794} .eq .hl-in{color:var(--in)} .eq .hl-out{color:var(--out)} .eq .hl-k{color:#9BD0FF}
+  .plain-eq{font-family:var(--mono); font-size:1rem; color:var(--ink); background:#F6F9FB; border:1px solid var(--line2); border-radius:9px; padding:10px 14px; display:inline-block; margin:4px 0}
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 4px}
+  .chip{font-family:var(--mono); font-size:.82rem; padding:6px 11px; border-radius:999px; background:#F0F5F8; border:1px solid var(--line); color:#3a4d57}
+
+  .demo{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; margin:22px 0}
+  .demo > canvas{background:var(--panel); border-radius:10px; width:100%; height:auto; display:block}
+  .stage{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  @media (max-width:640px){ .stage{grid-template-columns:1fr} }
+  .stage canvas{background:var(--panel); border-radius:10px; width:100%; height:auto; display:block}
+  .controls{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px 20px; margin:16px 4px 4px}
+  @media (max-width:640px){ .controls{grid-template-columns:1fr} }
+  .ctrl{display:flex; flex-direction:column; gap:5px}
+  .ctrl .row{display:flex; justify-content:space-between; align-items:baseline; font-family:var(--mono); font-size:.86rem}
+  .ctrl .name{color:var(--ink)} .ctrl .val{color:var(--accent-ink); font-weight:600}
+  input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:5px; background:var(--line); border-radius:5px; outline:none; margin:6px 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none; width:18px; height:18px; border-radius:50%; background:var(--accent); border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,.25); cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--accent); border:2px solid #fff; cursor:pointer}
+  input[type=range]:focus-visible{box-shadow:0 0 0 3px rgba(34,195,174,.35)}
+  .btnrow{display:flex; flex-wrap:wrap; gap:8px; margin:14px 4px 2px; align-items:center}
+  .btn{font-family:var(--mono); font-size:.78rem; color:var(--accent-ink); background:none; border:1px solid var(--line); border-radius:8px; padding:6px 12px; cursor:pointer}
+  .btn:hover{background:#F0F5F8}
+  .readouts{display:flex; flex-wrap:wrap; gap:8px 10px; margin:14px 4px 2px; font-family:var(--mono); font-size:.82rem}
+  .ro{background:#F0F5F8; border:1px solid var(--line); border-radius:8px; padding:6px 10px; color:#3a4d57}
+  .ro b{color:var(--accent-ink)}
+  .ro.good{background:#eafaf6; border-color:var(--accent)} .ro.good b{color:var(--accent-ink)}
+  .ro.warn{background:#3a1c22; border-color:var(--red)} .ro.warn b{color:var(--red)}
+
+  .takeaways{background:var(--panel); color:#DCE7EC; border-radius:16px; padding:26px 28px; margin:40px 0}
+  .takeaways h3{color:#fff} .takeaways li{margin:9px 0} .takeaways b{color:var(--out)}
+  details{background:var(--card); border:1px solid var(--line); border-radius:11px; padding:2px 16px; margin:10px 0}
+  details[open]{padding-bottom:12px}
+  summary{cursor:pointer; font-weight:600; padding:12px 0; list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"▸ "; color:var(--accent-ink)} details[open] summary::before{content:"▾ "}
+  .qa{font-size:.97rem} .qa p{margin:8px 0}
+  ol.ex{padding-left:1.3em} ol.ex li{margin:8px 0}
+  footer{margin-top:60px; padding-top:20px; border-top:1px solid var(--line); font-family:var(--mono); font-size:.8rem; color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <p class="eyebrow">Foundations of Dynamic Systems · Project 2</p>
+  <h1>Hydraulic Cylinder &amp; Bulk Modulus</h1>
+  <p class="lede">Fluid power is how the strongest machines move — excavators, presses, walking robots, and the
+  physical-AI actuators this course was built toward. In this final project you'll discover why a "rigid" hydraulic
+  cylinder secretly behaves like a spring, how the oil's bulk modulus sets its natural frequency, and why a few
+  bubbles of air can turn a crisp, powerful actuator into a useless, oscillating mess.</p>
+</header>
+
+<div class="goal"><span class="lab">The mission</span>
+  Characterize a hydraulic cylinder as a spring–mass system, investigate how bulk modulus β sets its natural
+  frequency, then close a position-control loop around it and discover the hard limit: <em>the hydraulic resonance
+  caps how hard you can control it</em> — and air entrainment moves that limit against you.
+</div>
+
+<h2>Step 1 · The cylinder is a spring</h2>
+<h3>Compressible oil makes a stiff spring</h3>
+<p>Oil looks incompressible, but it isn't quite. Its <em>bulk modulus</em> β (how much pressure it takes to shrink
+its volume by a fraction) is huge but finite — around 1.4 GPa for clean hydraulic oil. Trap a column of it behind a
+piston of area A in a volume V, and it pushes back like a spring of stiffness:</p>
+<div class="eq">
+  <span class="hl-k">k</span><sub>h</sub> = β A² / V
+  &nbsp;&nbsp; → &nbsp; ω<sub>n</sub> = √(k<sub>h</sub> / m)
+  &nbsp;&nbsp;<span class="cmt">// stiffer oil (β), bigger piston (A), less trapped oil (V) → higher ωₙ</span>
+</div>
+<p>Two consequences fall out immediately, and you can feel both below. First, as the piston <em>extends</em> and traps
+more oil, V grows, the spring softens, and ωₙ <em>drops</em> — the actuator's resonance changes as it moves. Second,
+and far more dangerous: entrained <em>air</em> collapses the effective β (air is thousands of times more
+compressible than oil), so a little air softens the spring dramatically.</p>
+
+<div class="demo" data-demo="natfreq">
+  <div class="stage">
+    <canvas class="pic"></canvas>
+    <canvas class="plot"></canvas>
+  </div>
+  <div class="controls"></div>
+  <div class="readouts"></div>
+</div>
+
+<h2>Step 2 · Close the loop</h2>
+<h3>The resonance limits how hard you can control it</h3>
+<p>Now make it a <em>servo</em>: add a valve that pushes oil in proportion to a command, and a controller that
+commands the valve to drive the piston to a target position — u = K<sub>p</sub>·(target − position). This is exactly
+how a robot joint is position-controlled. The three-state model couples piston motion to the pressure in the
+compressible oil:</p>
+<div class="eq">
+  ẋ = v
+  &nbsp;&nbsp;<span class="cmt">// piston moves</span>
+  <br>
+  m v̇ = A·P − c·v
+  &nbsp;&nbsp;<span class="cmt">// pressure pushes the load</span>
+  <br>
+  (V/β)·Ṗ = <span class="hl-in">Q</span> − A·v
+  &nbsp;&nbsp;<span class="cmt">// flow compresses oil + moves piston;  Q = K<sub>q</sub>·K<sub>p</sub>·(x*−x)</span>
+</div>
+<p>Here's the punchline of the whole course, in one machine. There's a <em>maximum</em> control gain you can use
+before the loop goes unstable and the actuator oscillates — and that maximum <em>scales with β</em>. Clean, stiff oil
+lets you crank the gain up for a fast, crisp response. Let air in, β collapses, the stability limit drops below your
+gain, and the same controller that worked yesterday shakes the machine apart today.</p>
+
+<div class="demo" data-demo="servo">
+  <div class="stage">
+    <canvas class="pic"></canvas>
+    <canvas class="plot"></canvas>
+  </div>
+  <div class="controls"></div>
+  <div class="readouts"></div>
+</div>
+
+<p>Try it: with clean oil, raise the gain until the response gets snappy but still settles — then drag the bulk
+modulus down toward "air entrained" and watch the <em>same gain</em> tip into runaway oscillation. That single
+demonstration is why fluid-power engineers treat air in the oil as an enemy, keep trapped volumes small, and never
+tune a servo tighter than the hydraulic resonance allows.</p>
+
+<h2>What you built</h2>
+<div class="chips">
+  <span class="chip">A hydraulic spring, k = βA²/V</span>
+  <span class="chip">ωₙ that changes over the stroke</span>
+  <span class="chip">A 3-state valve–cylinder–load servo</span>
+  <span class="chip">A β-dependent stability limit</span>
+  <span class="chip">The air-entrainment failure mode</span>
+</div>
+<p>This is the bridge from foundations to fluid-powered physical AI: a hydraulic actuator is a second-order spring–mass
+system (Lessons 2, 6, 8) whose poles move into the right half-plane (Lessons 4, 5) when control gain outruns the
+bulk-modulus-set resonance. Everything you learned — natural frequency, damping, poles, stability, state-space — lands
+on this one component you'll actually design.</p>
+
+<div class="takeaways">
+  <h3>Key takeaways</h3>
+  <ul>
+    <li><b>A hydraulic cylinder is a spring</b> of stiffness k<sub>h</sub> = βA²/V; with the load it forms a
+      second-order system, ωₙ = √(k<sub>h</sub>/m).</li>
+    <li><b>ωₙ changes over the stroke</b> — extending traps more oil (larger V), softening the spring and lowering ωₙ.
+      Design for the worst case.</li>
+    <li><b>Bulk modulus β sets everything.</b> Air entrainment can cut effective β several-fold, slashing ωₙ.</li>
+    <li><b>The hydraulic resonance caps control bandwidth.</b> The maximum stable position-loop gain scales with β.</li>
+    <li><b>Air entrainment destabilizes servos:</b> a controller tuned for clean oil can go unstable once air lowers β.</li>
+    <li>Every controls idea in this course converges on this real actuator — the foundation for designing fluid-powered
+      machines.</li>
+  </ul>
+</div>
+
+<h2>Investigate further</h2>
+<ol class="ex">
+  <li><b>Extend and soften.</b> In Step 1, move the piston from retracted to fully extended. By roughly what fraction
+    does ωₙ change, and why? Which stroke position is the "worst case" for control?</li>
+  <li><b>Quantify the air penalty.</b> Set β to clean oil, note ωₙ. Halve β (moderate air). Predict ωₙ before you look,
+    using ωₙ ∝ √β, then check.</li>
+  <li><b>Find the stability edge.</b> In Step 2, with clean oil, raise the gain until it just starts to ring
+    continuously. Now drop β by half — is the same gain still stable? What does this say about re-tuning after an oil
+    change?</li>
+  <li><b>Design brief.</b> You're specifying a hydraulic knee joint for a 90 kg humanoid that must position quickly and
+    precisely. Using k<sub>h</sub> = βA²/V and ωₙ = √(k<sub>h</sub>/m), list four concrete design choices that keep ωₙ
+    high (so you can use high control gain), and name the practical cost of each.</li>
+</ol>
+
+<details><summary>Show discussion &amp; answers</summary>
+  <div class="qa">
+    <p><b>1.</b> Extending traps more oil, so V grows and k<sub>h</sub> = βA²/V falls; since ωₙ ∝ 1/√V, the natural
+    frequency drops as it extends (in this single-chamber model, by tens of percent across the stroke). The
+    lowest-ωₙ position is the worst case for control stability, so a robust controller is designed against the softest
+    point in the stroke, not the average.</p>
+    <p><b>2.</b> ωₙ ∝ √β, so halving β multiplies ωₙ by √0.5 ≈ 0.71 — about a 29% drop. (Cutting β to a quarter would
+    halve ωₙ.) Even "a little air" is expensive because the frequency, and with it your usable control bandwidth,
+    follows the square root of bulk modulus.</p>
+    <p><b>3.</b> No — the same gain that was marginally stable with clean oil will typically be unstable after β drops,
+    because the maximum stable gain scales with β. The lesson: never re-fill or service a hydraulic system and assume
+    the old control tuning is safe; trapped air lowers the stability limit, so you must bleed the system (and often
+    reduce gain) before trusting the servo.</p>
+    <p><b>4.</b> To keep ωₙ = √(βA²/(Vm)) high: (i) <b>keep β high</b> — bleed air, control temperature, use stiff hoses
+    or hard lines (cost: ongoing maintenance and less compliant, harsher plumbing); (ii) <b>minimize trapped volume V</b>
+    — mount the valve directly on the cylinder, short lines (cost: packaging constraints, less cushioning); (iii)
+    <b>increase piston area A</b> — ωₙ ∝ A is a strong lever (cost: larger, heavier joint, more flow and pump demand);
+    (iv) <b>minimize moving load mass m</b> — lighter limb segments (cost: lower structural stiffness or reduced payload).
+    In practice you combine a compact, stiff cylinder with clean oil, design the controller against the worst-case
+    (extended, warmest, softest) operating point, and add damping to tame the resonance that remains — the same
+    "raise ωₙ, add damping, respect the resonance" playbook from Lesson 6, now delivering a physical-AI actuator.</p>
+  </div>
+</details>
+
+<footer>
+  Project 2 · self-contained, no external libraries or network · the natural frequency, stroke dependence, and closed-loop
+  servo response are all computed live. This completes Foundations of Dynamic Systems.
+</footer>
+
+</div><!-- /wrap -->
+
+<script>
+"use strict";
+(function(){
+  const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const COL={in:'#E8A33D',out:'#22C3AE',grid2:'#16262F',axis:'#3A5464',text:'#7FA0AE',blue:'#9BD0FF',red:'#FF8FA3'};
+  const A=8e-4, DEADV=1.2e-4, STROKE=3e-4, Kq=6e-4, Kc=6e-12, Cvisc=800;
+
+  function el(tag,cls){const e=document.createElement(tag); if(cls)e.className=cls; return e;}
+  function fitCanvas(cv,aspect){
+    const dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1));
+    const cssW=cv.clientWidth || cv.parentElement.clientWidth || 300;
+    const cssH=Math.round(cssW*aspect);
+    cv.style.height=cssH+'px'; cv.width=Math.round(cssW*dpr); cv.height=Math.round(cssH*dpr);
+    const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); return {ctx,W:cssW,H:cssH};
+  }
+  function addSliders(container,defs,params,onChange,handles){
+    defs.forEach(p=>{ params[p.key]=p.value;
+      const c=el('div','ctrl'), row=el('div','row');
+      const name=el('span','name'); name.innerHTML=p.label;
+      const val=el('span','val'); const fmt=p.fmt||(v=>v.toFixed(2)); val.textContent=fmt(p.value);
+      row.appendChild(name); row.appendChild(val);
+      const inp=document.createElement('input'); inp.type='range';
+      inp.min=p.min; inp.max=p.max; inp.step=p.step; inp.value=p.value;
+      inp.setAttribute('aria-label',(p.aria||p.label).replace(/<[^>]+>/g,''));
+      inp.addEventListener('input',()=>{ params[p.key]=parseFloat(inp.value); val.textContent=fmt(params[p.key]); onChange&&onChange(); });
+      c.appendChild(row); c.appendChild(inp); container.appendChild(c);
+      if(handles) handles[p.key]={inp,val,fmt};
+    });
+  }
+  function setReadouts(container,items){ container.innerHTML='';
+    items.forEach(r=>{ const s=el('span','ro'+(r.cls?' '+r.cls:'')); s.innerHTML=r.label+' <b>'+r.value+'</b>'; container.appendChild(s); }); }
+  function drawCylinder(ctx,W,H,frac,beta,rodExtra){
+    // returns geometry; frac = piston position 0..1 within body
+    const midY=H*0.46, cylL=W*0.10, cylR=W*0.60, cylTop=midY-H*0.17, cylBot=midY+H*0.17;
+    const px=cylL+(cylR-cylL)*(0.12+0.66*frac);
+    ctx.strokeStyle='#5E7686'; ctx.lineWidth=2.5; ctx.strokeRect(cylL,cylTop,cylR-cylL,cylBot-cylTop);
+    const airy=beta<0.6;
+    ctx.fillStyle= airy?'rgba(155,208,255,0.20)':'rgba(34,195,174,0.26)';
+    ctx.fillRect(cylL+1,cylTop+1,px-cylL-1,cylBot-cylTop-2);
+    if(airy){ ctx.fillStyle='rgba(255,255,255,0.55)';
+      for(let i=0;i<9;i++){ const bx=cylL+8+((i*37)%(Math.max(6,px-cylL-14))); const by=cylTop+8+((i*53)%(cylBot-cylTop-14));
+        ctx.beginPath(); ctx.arc(bx,by,2.1,0,7); ctx.fill(); } }
+    ctx.fillStyle='#5E7686'; ctx.fillRect(px-4,cylTop+2,8,cylBot-cylTop-4);
+    ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(px,midY); ctx.lineTo(W*0.82+ (rodExtra||0),midY); ctx.stroke();
+    ctx.fillStyle='#0E1B24'; ctx.strokeStyle=COL.out; ctx.lineWidth=2;
+    const lx=W*0.82+(rodExtra||0);
+    ctx.fillRect(lx,midY-H*0.13,W*0.12,H*0.26); ctx.strokeRect(lx,midY-H*0.13,W*0.12,H*0.26);
+    ctx.fillStyle=COL.text; ctx.font='11px ui-monospace, monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('m',lx+W*0.06,midY); ctx.textBaseline='alphabetic';
+    ctx.textAlign='left'; ctx.fillStyle=COL.out; ctx.font='10px ui-monospace, monospace'; ctx.fillText('trapped oil (βA²/V)',cylL+4,cylTop-6);
+    if(airy){ ctx.fillStyle=COL.red; ctx.textAlign='right'; ctx.fillText('AIR ENTRAINED',W-8,16); }
+    return {midY,cylL,cylR,px};
+  }
+
+  // ---------------- Demo 1: natural frequency ----------------
+  (function buildNat(){
+    const root=document.querySelector('[data-demo=natfreq]'); if(!root) return;
+    const pic=root.querySelector('.pic'), plot=root.querySelector('.plot');
+    const controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+    const params={};
+    addSliders(controls,[
+      {key:'beta',label:'bulk modulus β (GPa)',min:0.15,max:1.6,step:0.05,value:1.4,fmt:v=>v.toFixed(2)},
+      {key:'stroke',label:'piston extension (%)',min:0,max:100,step:1,value:35,fmt:v=>v.toFixed(0)},
+      {key:'m',label:'load mass (kg)',min:20,max:400,step:10,value:150,fmt:v=>v.toFixed(0)}
+    ],params,onChange);
+    const ZETA=0.12;
+    function Vtrap(){ return DEADV + STROKE*(params.stroke/100); }
+    function wn(){ const kh=params.beta*1e9*A*A/Vtrap(); return Math.sqrt(kh/params.m); }
+    let raf=null;
+    function drawPic(t){
+      const {ctx,W,H}=fitCanvas(pic,0.72); ctx.clearRect(0,0,W,H);
+      const w=wn(), ring=Math.exp(-ZETA*w*(t/16))*Math.cos(w*(t/16));
+      drawCylinder(ctx,W,H,params.stroke/100 + 0.02*ring, params.beta, 0);
+      ctx.fillStyle=COL.text; ctx.font='10px ui-monospace, monospace'; ctx.textAlign='left'; ctx.fillText('slow-motion ring at ωₙ',W*0.10,H-8);
+    }
+    function drawCurve(){
+      const {ctx,W,H}=fitCanvas(plot,0.72); const pad={l:38,r:12,t:16,b:28}; ctx.clearRect(0,0,W,H);
+      // wn vs stroke position, at current beta & m
+      const gx=s=>pad.l+(s/100)*(W-pad.l-pad.r);
+      let wmax=0; const pts=[];
+      for(let s=0;s<=100;s+=2){ const V=DEADV+STROKE*(s/100); const wv=Math.sqrt(params.beta*1e9*A*A/V/params.m); pts.push([s,wv]); wmax=Math.max(wmax,wv); }
+      const gy=v=>(H-pad.b)-(v/(wmax*1.1))*(H-pad.t-pad.b);
+      ctx.strokeStyle=COL.grid2; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(pad.l,pad.t); ctx.lineTo(pad.l,H-pad.b); ctx.lineTo(W-pad.r,H-pad.b); ctx.stroke();
+      ctx.strokeStyle=COL.out; ctx.lineWidth=2.4; ctx.beginPath();
+      pts.forEach((p,i)=>{ const X=gx(p[0]),Y=gy(p[1]); i?ctx.lineTo(X,Y):ctx.moveTo(X,Y); }); ctx.stroke();
+      // current point
+      const cw=wn(); ctx.fillStyle=COL.in; ctx.beginPath(); ctx.arc(gx(params.stroke),gy(cw),5,0,7); ctx.fill();
+      ctx.strokeStyle=COL.in; ctx.setLineDash([2,3]); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(gx(params.stroke),gy(cw)); ctx.lineTo(gx(params.stroke),H-pad.b); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle=COL.text; ctx.font='10px ui-monospace, monospace'; ctx.textAlign='right'; ctx.textBaseline='alphabetic'; ctx.fillText('ωₙ vs extension',W-pad.r,pad.t+10);
+      ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillText('retracted → extended',(pad.l+W-pad.r)/2,H-pad.b+8);
+      ctx.save(); ctx.translate(11,(pad.t+H-pad.b)/2); ctx.rotate(-Math.PI/2); ctx.fillText('ωₙ (rad/s)',0,0); ctx.restore();
+    }
+    function onChange(){ drawCurve();
+      const w=wn(), kh=params.beta*1e9*A*A/Vtrap();
+      setReadouts(ro,[
+        {label:'k_h = βA²/V', value:(kh/1e6).toFixed(2)+'e6 N/m'},
+        {label:'trapped V', value:(Vtrap()*1e3).toFixed(2)+' L'},
+        {label:'ωₙ', value:w.toFixed(0)+' rad/s ('+(w/2/Math.PI).toFixed(1)+' Hz)'},
+        {label:'oil', value: params.beta<0.6?'air entrained':'clean', cls:params.beta<0.6?'warn':'good'}
+      ]);
+    }
+    function frame(now){ drawPic(now/1000); drawCurve(); raf=requestAnimationFrame(frame); }
+    window.addEventListener('resize',onChange);
+    onChange();
+    if(REDUCED){ drawPic(0.3); } else raf=requestAnimationFrame(frame);
+  })();
+
+  // ---------------- Demo 2: closed-loop servo ----------------
+  (function buildServo(){
+    const root=document.querySelector('[data-demo=servo]'); if(!root) return;
+    const pic=root.querySelector('.pic'), plot=root.querySelector('.plot');
+    const controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+    const params={}; const m=150, V=2.4e-4, xref=0.012, TSIM=1.2, DT=2e-4;
+    addSliders(controls,[
+      {key:'beta',label:'bulk modulus β (GPa)',min:0.15,max:1.6,step:0.05,value:1.4,fmt:v=>v.toFixed(2)},
+      {key:'Kp',label:'control gain K<sub>p</sub>',min:2,max:40,step:1,value:16,fmt:v=>v.toFixed(0)}
+    ],params,onChange);
+    let data=null, startT=0, raf=null, unstable=false;
+    function KpMax(){ const b=params.beta*1e9/V; const a2=Cvisc/m+b*Kc; const a1=(b/m)*(Cvisc*Kc+A*A);
+      return (a2*a1)/((A*b*Kq)/m); }
+    function simulate(){ const b=params.beta*1e9/V; let s=[0,0,0]; const xs=[]; unstable=false;
+      for(let t=0;t<=TSIM+1e-9;t+=DT){ const [x,v,P]=s; const u=params.Kp*(xref-x); const Q=Kq*u;
+        const dx=v, dv=(A*P-Cvisc*v)/m, dP=b*(Q-A*v-Kc*P);
+        s=[x+dx*DT, v+dv*DT, P+dP*DT];
+        if(Math.abs(s[0])>0.06){ unstable=true; }
+        xs.push(Math.max(-0.03,Math.min(0.05,s[0]))); }
+      data={xs}; startT=performance.now();
+    }
+    function drawPic(tt){
+      const {ctx,W,H}=fitCanvas(pic,0.72); ctx.clearRect(0,0,W,H);
+      const i=Math.min(data.xs.length-1,Math.max(0,Math.round(tt/DT)));
+      const x=data.xs[i]; const frac=0.4 + x/0.02*0.28; // map position to piston frac
+      const g=drawCylinder(ctx,W,H,Math.max(0.05,Math.min(0.95,frac)),params.beta,0);
+      // target marker
+      const tgtFrac=0.4+xref/0.02*0.28, tgtPx=g.cylL+(g.cylR-g.cylL)*(0.12+0.66*tgtFrac);
+      ctx.strokeStyle=COL.blue; ctx.setLineDash([4,3]); ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(tgtPx,H*0.12); ctx.lineTo(tgtPx,H*0.80); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle=COL.blue; ctx.font='9px ui-monospace, monospace'; ctx.textAlign='center'; ctx.fillText('target',tgtPx,H*0.10);
+      if(unstable){ ctx.fillStyle=COL.red; ctx.font='12px ui-monospace, monospace'; ctx.textAlign='center'; ctx.fillText('UNSTABLE — servo runs away',W*0.5,H*0.92); }
+    }
+    function drawPlot(tt){
+      const {ctx,W,H}=fitCanvas(plot,0.72); const pad={l:34,r:12,t:16,b:26}; ctx.clearRect(0,0,W,H);
+      const gx=i=>pad.l+(i/(data.xs.length-1))*(W-pad.l-pad.r);
+      const gy=v=>pad.t+(1-(v+0.02)/0.06)*(H-pad.t-pad.b); // range -0.02..0.04
+      ctx.strokeStyle=COL.axis; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(pad.l,gy(0)); ctx.lineTo(W-pad.r,gy(0)); ctx.stroke();
+      ctx.strokeStyle='rgba(155,208,255,0.5)'; ctx.setLineDash([4,3]); ctx.beginPath(); ctx.moveTo(pad.l,gy(xref)); ctx.lineTo(W-pad.r,gy(xref)); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle=COL.blue; ctx.font='9px ui-monospace, monospace'; ctx.textAlign='left'; ctx.fillText('target 12 mm',pad.l+3,gy(xref)-3);
+      const cut=Math.min(data.xs.length-1,Math.max(0,Math.round(tt/DT)));
+      ctx.strokeStyle=unstable?COL.red:COL.out; ctx.lineWidth=2.4; ctx.beginPath();
+      for(let i=0;i<=cut;i++){ const X=gx(i),Y=gy(data.xs[i]); i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);} ctx.stroke();
+      ctx.fillStyle=COL.in; ctx.beginPath(); ctx.arc(gx(cut),gy(data.xs[cut]),3.5,0,7); ctx.fill();
+      ctx.fillStyle=COL.text; ctx.textAlign='right'; ctx.textBaseline='alphabetic'; ctx.fillText('piston position x(t)',W-pad.r,pad.t+8);
+      ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillText('time →',(pad.l+W-pad.r)/2,H-pad.b+6);
+    }
+    function drawAll(tt){ drawPic(tt); drawPlot(tt); }
+    function frame(now){ let tt=(now-startT)/1000; if(tt>TSIM+0.4){ startT=now; tt=0; } drawAll(Math.min(tt,TSIM)); raf=requestAnimationFrame(frame); }
+    function onChange(){ simulate();
+      const kpm=KpMax(), wh=Math.sqrt(params.beta*1e9*A*A/V/m);
+      setReadouts(ro,[
+        {label:'ωₙ (hydraulic)', value:wh.toFixed(0)+' rad/s'},
+        {label:'max stable gain', value:kpm.toFixed(0)},
+        {label:'your gain', value:params.Kp.toFixed(0)+(params.Kp<kpm?' (ok)':' (too high!)'), cls:params.Kp<kpm?'good':'warn'},
+        {label:'result', value: unstable||params.Kp>=kpm?'UNSTABLE':'stable', cls: (unstable||params.Kp>=kpm)?'warn':'good'}
+      ]);
+      if(REDUCED) drawAll(TSIM);
+    }
+    window.addEventListener('resize',()=>{ if(data) drawAll(Math.min(TSIM,(performance.now()-startT)/1000)); });
+    onChange(); if(!REDUCED) raf=requestAnimationFrame(frame);
+  })();
+})();
+</script>
+</body>
+</html>

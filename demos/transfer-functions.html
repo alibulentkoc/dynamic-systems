@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Transfer Functions</title>
+<style>
+  :root{
+    --paper:#EEF2F5; --card:#FFFFFF; --ink:#17252E; --muted:#5E7686;
+    --line:#D3DDE4; --line2:#E3EAEF;
+    --panel:#0E1B24; --grid2:#16262F; --axis:#3A5464;
+    --in:#E8A33D; --out:#22C3AE; --accent:#22C3AE; --accent-ink:#0A5B52; --blue:#9BD0FF;
+    --mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans);
+    line-height:1.6; font-size:17px; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:940px; margin:0 auto; padding:0 20px 120px}
+  header.hero{padding:64px 0 34px; border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono); font-size:.78rem; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); margin:0 0 14px}
+  h1{font-size:clamp(2.1rem,5.4vw,3.3rem); line-height:1.05; margin:0 0 18px; letter-spacing:-.02em; font-weight:750}
+  .lede{font-size:1.12rem; color:#33454f; max-width:60ch; margin:0}
+  h2{font-size:1.02rem; font-family:var(--mono); letter-spacing:.04em; text-transform:uppercase; color:var(--muted); margin:52px 0 14px; font-weight:600}
+  h3{font-size:1.5rem; letter-spacing:-.01em; margin:6px 0 10px; font-weight:700}
+  p{margin:0 0 16px}
+  em{font-style:normal; color:var(--accent-ink); font-weight:600}
+  .idea{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px 24px; margin:18px 0}
+  .eq{font-family:var(--mono); background:var(--panel); color:#DCE7EC; border-radius:12px; padding:18px 20px; margin:16px 0; overflow-x:auto; font-size:1.02rem; line-height:2}
+  .eq .cmt{color:#6E8794} .eq .hl-in{color:var(--in)} .eq .hl-out{color:var(--out)} .eq .hl-k{color:#9BD0FF}
+  .frac{display:inline-flex; flex-direction:column; text-align:center; vertical-align:middle; margin:0 .28em; line-height:1.05}
+  .frac .num{border-bottom:1.5px solid currentColor; padding:0 .35em}
+  .frac .den{padding:2px .35em 0}
+  .plain-eq{font-family:var(--mono); font-size:1rem; color:var(--ink); background:#F6F9FB; border:1px solid var(--line2); border-radius:9px; padding:10px 14px; display:inline-block; margin:4px 0}
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 4px}
+  .chip{font-family:var(--mono); font-size:.82rem; padding:6px 11px; border-radius:999px; background:#F0F5F8; border:1px solid var(--line); color:#3a4d57}
+
+  .demo{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; margin:22px 0}
+  .demo > canvas{background:var(--panel); border-radius:10px; width:100%; height:auto; display:block}
+  .stage{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  @media (max-width:620px){ .stage{grid-template-columns:1fr} }
+  .stage canvas{background:var(--panel); border-radius:10px; width:100%; height:auto; display:block}
+  .blockdiag{width:100%; height:auto; display:block; background:#F6F9FB; border:1px solid var(--line2); border-radius:10px; margin-bottom:12px}
+  .blockdiag text{font-family:var(--mono); fill:var(--ink)}
+  .blockdiag .dim{opacity:.28}
+  .controls{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px 20px; margin:16px 4px 4px}
+  @media (max-width:620px){ .controls{grid-template-columns:1fr} }
+  .ctrl{display:flex; flex-direction:column; gap:5px}
+  .ctrl .row{display:flex; justify-content:space-between; align-items:baseline; font-family:var(--mono); font-size:.86rem}
+  .ctrl .name{color:var(--ink)} .ctrl .val{color:var(--accent-ink); font-weight:600}
+  input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:5px; background:var(--line); border-radius:5px; outline:none; margin:6px 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none; width:18px; height:18px; border-radius:50%; background:var(--accent); border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,.25); cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--accent); border:2px solid #fff; cursor:pointer}
+  input[type=range]:focus-visible{box-shadow:0 0 0 3px rgba(34,195,174,.35)}
+  input:disabled{opacity:.4}
+  .btnrow{display:flex; flex-wrap:wrap; gap:8px; margin:14px 4px 2px; align-items:center}
+  .btn{font-family:var(--mono); font-size:.78rem; color:var(--accent-ink); background:none; border:1px solid var(--line); border-radius:8px; padding:6px 12px; cursor:pointer}
+  .btn:hover{background:#F0F5F8}
+  .btn.on{background:var(--accent); color:#04312c; border-color:var(--accent); font-weight:600}
+  .readouts{display:flex; flex-wrap:wrap; gap:8px 10px; margin:14px 4px 2px; font-family:var(--mono); font-size:.82rem}
+  .ro{background:#F0F5F8; border:1px solid var(--line); border-radius:8px; padding:6px 10px; color:#3a4d57}
+  .ro b{color:var(--accent-ink)}
+
+  .takeaways{background:var(--panel); color:#DCE7EC; border-radius:16px; padding:26px 28px; margin:40px 0}
+  .takeaways h3{color:#fff} .takeaways li{margin:9px 0} .takeaways b{color:var(--out)}
+  details{background:var(--card); border:1px solid var(--line); border-radius:11px; padding:2px 16px; margin:10px 0}
+  details[open]{padding-bottom:12px}
+  summary{cursor:pointer; font-weight:600; padding:12px 0; list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"▸ "; color:var(--accent-ink)} details[open] summary::before{content:"▾ "}
+  .qa{font-size:.97rem} .qa p{margin:8px 0}
+  ol.ex{padding-left:1.3em} ol.ex li{margin:8px 0}
+  footer{margin-top:60px; padding-top:20px; border-top:1px solid var(--line); font-family:var(--mono); font-size:.8rem; color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <p class="eyebrow">Foundations of Dynamic Systems · Lesson 5</p>
+  <h1>Transfer Functions</h1>
+  <p class="lede">One ratio holds everything a linear system does: G(s) = output ÷ input. It's the
+  system's fingerprint. Once you have it, you can predict any response, snap systems together like
+  Lego, and read a machine's behavior off the map of its <em>poles and zeros</em>.</p>
+</header>
+
+<h2>The one idea to hold onto</h2>
+<h3>A transfer function is a system's fingerprint</h3>
+<p>In Lesson 4 the mass–spring–damper collapsed into X(s) = F(s)/(ms²+cs+k). Divide output by input
+and the input disappears, leaving a pure property of the system itself:</p>
+<div class="eq">
+  <span class="hl-k">G(s)</span> = <span class="frac"><span class="num"><span class="hl-out">Y(s)</span> &nbsp;output</span><span class="den"><span class="hl-in">U(s)</span> &nbsp;input</span></span>
+  &nbsp;&nbsp;<span class="cmt">// e.g. mass–spring–damper:</span>
+  &nbsp; G(s) = <span class="frac"><span class="num">1</span><span class="den">ms² + cs + k</span></span>
+</div>
+<p>Read the name literally: it <em>transfers</em> input into output. In the s-world you don't solve
+a differential equation — you just multiply: <em>Y(s) = G(s)·U(s)</em>. Feed it any input and G(s)
+tells you the output. Everything the system can do is baked into this one object.</p>
+
+<h3>Poles and zeros: the two lists that say it all</h3>
+<p>Every transfer function is a ratio of two polynomials, G(s) = N(s)/D(s). The roots of each get names:</p>
+<div class="idea">
+  <p style="margin:0 0 8px"><b style="color:var(--accent-ink)">Poles</b> — roots of the denominator D(s),
+  where G blows up. These are the system's natural modes, set by its energy storage (Lessons 2–4). They
+  decide stability and the <em>shape</em> of the transient: how fast it decays, whether it rings.</p>
+  <p style="margin:0"><b style="color:var(--accent-ink)">Zeros</b> — roots of the numerator N(s), where G
+  goes to zero. They shape <em>how the input couples in</em> — they can speed a response up and add
+  overshoot, or, when they sit in the right half-plane, make the output lurch the <em>wrong way</em> first.</p>
+</div>
+<p>One number you can read instantly: the <em>DC gain</em> G(0), found by setting s = 0. It's the
+steady-state output for a unit step — where the response finally settles.</p>
+
+<h2>Interactive · the pole–zero playground</h2>
+<h3>Move the roots, watch the response</h3>
+<p>Here is a second-order system whose poles you set with ωₙ and ζ (they ride the circle from Lesson 4).
+Switch on a <em>zero</em> and slide it along the real axis. Slide it left (negative) and watch overshoot
+grow as the zero speeds the response. Slide it into the <em>right</em> half-plane (positive) and watch
+the step response first dip the wrong way — a non-minimum-phase system, exactly like countersteering a
+bicycle or a boiler drum's level dropping right after you add water.</p>
+
+<div class="demo" data-demo="pz">
+  <div class="stage">
+    <canvas class="pic"></canvas>
+    <canvas class="plot"></canvas>
+  </div>
+  <div class="btnrow">
+    <button class="btn" data-act="zero">add a zero</button>
+    <span style="font-family:var(--mono); font-size:.76rem; color:var(--muted)">× = poles &nbsp; ○ = zero</span>
+  </div>
+  <div class="controls"></div>
+  <div class="readouts"></div>
+</div>
+
+<h2>Snapping systems together</h2>
+<h3>Block diagrams: series means multiply</h3>
+<p>The real power of transfer functions is that they <em>compose</em>. Draw each subsystem as a block
+and connect them, and the algebra is trivial: blocks in <em>series</em> multiply, blocks in <em>parallel</em>
+add, and a feedback loop becomes G/(1 + G·H). No differential equations to re-derive — just multiply the
+fingerprints.</p>
+<div class="eq">
+  series: &nbsp; <span class="hl-k">G(s)</span> = G<sub>1</sub>(s) · G<sub>2</sub>(s)
+  &nbsp;&nbsp;&nbsp; parallel: &nbsp; G<sub>1</sub> + G<sub>2</sub>
+  &nbsp;&nbsp;&nbsp; feedback: &nbsp; <span class="frac"><span class="num">G</span><span class="den">1 + G·H</span></span>
+</div>
+
+<h2>Interactive · a cascade of blocks</h2>
+<h3>Actuator × plant = a third-order system</h3>
+<p>Put a first-order <em>actuator</em> (an amplifier or valve that can't respond instantly) in series with
+our second-order <em>plant</em>. The combined transfer function is just the product — and because you
+multiply the denominators, the poles combine: two plus one makes a <em>third-order</em> system, with the
+slow S-shaped toe you met in the Orders lesson. Bypass the actuator to see the plant alone (dashed), then
+switch it back to watch its lag pile on.</p>
+
+<div class="demo" data-demo="cascade">
+  <svg class="blockdiag" viewBox="0 0 640 130" role="img" aria-label="Block diagram: input into actuator block into plant block into output">
+    <defs>
+      <marker id="bd-ar" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#5E7686"/></marker>
+    </defs>
+    <text x="20" y="60" font-size="13" fill="#5E7686">U(s)</text>
+    <line x1="46" y1="66" x2="96" y2="66" stroke="#5E7686" stroke-width="1.6" marker-end="url(#bd-ar)"/>
+    <g id="actGroup">
+      <rect x="100" y="36" width="170" height="60" rx="8" fill="#fff" stroke="#22C3AE" stroke-width="2"/>
+      <text x="185" y="58" text-anchor="middle" font-size="12" fill="#0A5B52">Actuator  G₁</text>
+      <text x="185" y="80" text-anchor="middle" font-size="13">1 / (τₐ s + 1)</text>
+    </g>
+    <line x1="270" y1="66" x2="330" y2="66" stroke="#5E7686" stroke-width="1.6" marker-end="url(#bd-ar)"/>
+    <g>
+      <rect x="334" y="36" width="220" height="60" rx="8" fill="#fff" stroke="#22C3AE" stroke-width="2"/>
+      <text x="444" y="58" text-anchor="middle" font-size="12" fill="#0A5B52">Plant  G₂</text>
+      <text x="444" y="80" text-anchor="middle" font-size="12">ωₙ² / (s² + 2ζωₙ s + ωₙ²)</text>
+    </g>
+    <line x1="554" y1="66" x2="606" y2="66" stroke="#5E7686" stroke-width="1.6" marker-end="url(#bd-ar)"/>
+    <text x="612" y="60" font-size="13" fill="#5E7686">Y(s)</text>
+    <text x="320" y="20" text-anchor="middle" font-size="12" fill="#5E7686">G(s) = G₁(s) · G₂(s)</text>
+  </svg>
+  <canvas class="plot"></canvas>
+  <div class="btnrow">
+    <button class="btn" data-act="bypass">bypass actuator</button>
+    <span style="font-family:var(--mono); font-size:.76rem; color:var(--muted)">dashed = plant alone (2nd order)</span>
+  </div>
+  <div class="controls"></div>
+  <div class="readouts"></div>
+</div>
+
+<div class="chips">
+  <span class="chip">G(s) = Y/U, the fingerprint</span>
+  <span class="chip">poles = denominator roots</span>
+  <span class="chip">zeros = numerator roots</span>
+  <span class="chip">DC gain = G(0)</span>
+  <span class="chip">series → multiply</span>
+</div>
+
+<div class="takeaways">
+  <h3>Key takeaways</h3>
+  <ul>
+    <li><b>The transfer function G(s) = Y(s)/U(s)</b> is the complete fingerprint of a linear system. In
+      the s-world, output = G(s) × input — multiplication, not calculus.</li>
+    <li><b>Poles are the denominator's roots</b> — the natural modes that set stability and the transient's
+      shape (decay, ringing).</li>
+    <li><b>Zeros are the numerator's roots</b> — they shape how the input couples in: adding overshoot, or,
+      in the right half-plane, causing the output to move the wrong way first (non-minimum phase).</li>
+    <li><b>DC gain = G(0)</b> is where a step response settles.</li>
+    <li><b>Systems compose:</b> series blocks multiply, parallel add, feedback is G/(1+GH). Cascading an
+      actuator and a plant multiplies their denominators, adding poles and order.</li>
+    <li>Engineers <b>design by placing poles and zeros</b> — everything ahead is learning where to put them.</li>
+  </ul>
+</div>
+
+<h2>Quick check</h2>
+<details><summary>What is the DC gain of G(s) = 5/(s² + 2s + 10), and what does it tell you?</summary>
+  <div class="qa"><p>Set s = 0: G(0) = 5/10 = 0.5. A unit step input settles to an output of 0.5 — that's the
+  steady-state value the response climbs (and rings) toward.</p></div>
+</details>
+<details><summary>Two identical first-order blocks 1/(τs+1) are put in series. What's the combined order?</summary>
+  <div class="qa"><p>Multiply them: 1/(τs+1)² — the denominator is now second degree, so it's a <em>second-order</em>
+  system with two (repeated) poles. Series connection multiplies, so orders add: 1 + 1 = 2.</p></div>
+</details>
+<details><summary>A step response dips downward before rising to its final value. What does that imply?</summary>
+  <div class="qa"><p>A zero in the right half-plane — a non-minimum-phase system. The output initially moves
+  opposite to where it ends up. Real examples: a bicycle steering the wrong way to initiate a turn, or a
+  boiler drum's water level dropping just after feedwater is added.</p></div>
+</details>
+
+<h2>Exercises</h2>
+<ol class="ex">
+  <li><b>Calculation.</b> A system has G(s) = 20/(s² + 4s + 20). Find its poles, its DC gain, and say whether
+    it oscillates.</li>
+  <li><b>Calculation.</b> Write the poles and zeros of G(s) = 4(s + 2)/[(s + 1)(s + 10)]. How many of each?</li>
+  <li><b>Calculation.</b> Put G₁ = 2/(s + 2) in series with G₂ = 3/(s + 3). Write the combined transfer
+    function and its DC gain.</li>
+  <li><b>Design.</b> A positioning stage is fast but overshoots too much. You're told you can add a real zero
+    to the controller. Where would you place it (left or right half-plane, near or far from the origin) to
+    trim the response, and what must you watch out for if you push it too far?</li>
+</ol>
+
+<details><summary>Show worked solutions</summary>
+  <div class="qa">
+    <p><b>1.</b> Poles solve s² + 4s + 20 = 0 → s = (−4 ± √(16−80))/2 = −2 ± j4. Complex with negative real
+    part, so it's <b>stable and oscillates</b> (rings at ωd = 4 rad/s, decaying as e<sup>−2t</sup>). DC gain =
+    G(0) = 20/20 = <b>1</b>.</p>
+    <p><b>2.</b> Zeros are numerator roots: s + 2 = 0 → <b>one zero at s = −2</b>. Poles are denominator roots:
+    <b>two poles, at s = −1 and s = −10</b>. So: 1 zero, 2 poles — a proper transfer function.</p>
+    <p><b>3.</b> Series → multiply: G = G₁·G₂ = 6/[(s + 2)(s + 3)] = <b>6/(s² + 5s + 6)</b>. DC gain = G(0) =
+    6/6 = <b>1</b>. (Equivalently, G₁(0)·G₂(0) = 1·1 = 1 — DC gains multiply in series too.)</p>
+    <p><b>4.</b> Add a zero in the <b>left half-plane</b> (negative real axis). A zero speeds the response and can
+    be used to cancel or soften a sluggish pole; placing it moderately close to the dominant pole trims settling
+    without wrecking stability. The caution: push the zero <em>too</em> close to the origin and it injects strong
+    derivative action that <em>increases</em> overshoot and amplifies noise; and never let it drift into the
+    <b>right</b> half-plane, which would make the stage lurch backward before moving forward (non-minimum phase).
+    Practically: place it to partly cancel the slowest pole, then stop.</p>
+  </div>
+</details>
+
+<footer>
+  Lesson 5 · self-contained, no external libraries or network · every pole–zero map and step response is
+  computed live from the transfer functions shown. Next: second-order systems, resonance, and frequency response.
+</footer>
+
+</div><!-- /wrap -->
+
+<script>
+"use strict";
+(function(){
+  const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const COL={in:'#E8A33D',out:'#22C3AE',grid2:'#16262F',axis:'#3A5464',text:'#7FA0AE',
+             lhp:'rgba(34,195,174,0.07)', rhp:'rgba(232,163,61,0.09)', blue:'#9BD0FF'};
+
+  function el(tag,cls){const e=document.createElement(tag); if(cls)e.className=cls; return e;}
+  function fitCanvas(cv,aspect){
+    const dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1));
+    const cssW=cv.clientWidth || cv.parentElement.clientWidth || 300;
+    const cssH=Math.round(cssW*aspect);
+    cv.style.height=cssH+'px'; cv.width=Math.round(cssW*dpr); cv.height=Math.round(cssH*dpr);
+    const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); return {ctx,W:cssW,H:cssH};
+  }
+  function addSliders(container,defs,params,onChange,handles){
+    defs.forEach(p=>{ params[p.key]=p.value;
+      const c=el('div','ctrl'), row=el('div','row');
+      const name=el('span','name'); name.innerHTML=p.label;
+      const val=el('span','val'); const fmt=p.fmt||(v=>v.toFixed(2)); val.textContent=fmt(p.value);
+      row.appendChild(name); row.appendChild(val);
+      const inp=document.createElement('input'); inp.type='range';
+      inp.min=p.min; inp.max=p.max; inp.step=p.step; inp.value=p.value;
+      inp.setAttribute('aria-label',(p.aria||p.label).replace(/<[^>]+>/g,''));
+      inp.addEventListener('input',()=>{ params[p.key]=parseFloat(inp.value); val.textContent=fmt(params[p.key]); onChange(); });
+      c.appendChild(row); c.appendChild(inp); container.appendChild(c);
+      if(handles) handles[p.key]={inp,val,fmt,ctrl:c};
+    });
+  }
+  function setReadouts(container,items){ container.innerHTML='';
+    items.forEach(r=>{ const s=el('span','ro'); s.innerHTML=r.label+' <b>'+r.value+'</b>'; container.appendChild(s); }); }
+  function rk(f,s,dt){const k1=f(s),k2=f(s.map((x,i)=>x+dt/2*k1[i])),k3=f(s.map((x,i)=>x+dt/2*k2[i])),k4=f(s.map((x,i)=>x+dt*k3[i]));
+    return s.map((x,i)=>x+dt/6*(k1[i]+2*k2[i]+2*k3[i]+k4[i]));}
+
+  // ---------------- Demo 1: pole–zero playground ----------------
+  (function buildPZ(){
+    const root=document.querySelector('[data-demo=pz]'); if(!root) return;
+    const pic=root.querySelector('.pic'), plot=root.querySelector('.plot');
+    const controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+    const zbtn=root.querySelector('[data-act=zero]');
+    const params={}, handles={}; let useZero=false;
+    addSliders(controls,[
+      {key:'wn',label:'ωₙ (poles)',min:0.6,max:4,step:0.1,value:2.0,fmt:v=>v.toFixed(1)},
+      {key:'zeta',label:'ζ damping',min:0.05,max:1.4,step:0.02,value:0.4,fmt:v=>v.toFixed(2)},
+      {key:'zpos',label:'zero position (s)',min:-6,max:6,step:0.25,value:-2,fmt:v=>v.toFixed(2)}
+    ],params,onChange,handles);
+    handles.zpos.inp.disabled=true; handles.zpos.ctrl.style.opacity=.4;
+    const SLIM=6.6, WLIM=5;
+    function poles(){ const wn=params.wn,z=params.zeta;
+      if(z<1){ const wd=wn*Math.sqrt(1-z*z); return [{re:-z*wn,im:wd},{re:-z*wn,im:-wd}]; }
+      const d=wn*Math.sqrt(z*z-1); return [{re:-z*wn+d,im:0},{re:-z*wn-d,im:0}]; }
+    function zval(){ let z=params.zpos; if(Math.abs(z)<0.5) z=(z<0?-0.5:0.5); return z; }
+    function stepResp(){
+      const wn=params.wn,z=params.zeta,a1=2*z*wn,a0=wn*wn,b0=wn*wn;
+      const b1=useZero? -wn*wn/zval() : 0;
+      const dt=0.004,T=12,ts=[],ys=[]; let x=[0,0],mn=1e9,mx=-1e9;
+      for(let t=0;t<=T+1e-9;t+=dt){ const y=b0*x[0]+b1*x[1]; ts.push(t); ys.push(y); mn=Math.min(mn,y);mx=Math.max(mx,y);
+        x=rk(s=>[s[1],-a0*s[0]-a1*s[1]+1],x,dt); }
+      return {ts,ys,mn,mx,T};
+    }
+    function drawPZ(){
+      const {ctx,W,H}=fitCanvas(pic,0.98); ctx.clearRect(0,0,W,H);
+      const pad=22, cx=pad+(W-2*pad)*(SLIM/(SLIM+SLIM)), cy=H/2;  // origin centered
+      const sx=(W-2*pad)/(2*SLIM), sy=(cy-pad)/WLIM;
+      const gx=re=>cx+re*sx, gy=im=>cy-im*sy;
+      ctx.fillStyle=COL.lhp; ctx.fillRect(pad,pad,cx-pad,H-2*pad);
+      ctx.fillStyle=COL.rhp; ctx.fillRect(cx,pad,(W-pad)-cx,H-2*pad);
+      ctx.strokeStyle=COL.axis; ctx.lineWidth=1.4; ctx.beginPath(); ctx.moveTo(cx,pad); ctx.lineTo(cx,H-pad); ctx.stroke();
+      ctx.strokeStyle=COL.grid2; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(pad,cy); ctx.lineTo(W-pad,cy); ctx.stroke();
+      ctx.fillStyle=COL.text; ctx.font='10px ui-monospace, monospace';
+      ctx.textAlign='right'; ctx.textBaseline='bottom'; ctx.fillText('σ →', W-pad, cy-4);
+      ctx.textAlign='left'; ctx.textBaseline='top'; ctx.fillText('jω', cx+4, pad+2);
+      ctx.textAlign='center'; ctx.fillStyle='rgba(232,163,61,0.85)'; ctx.fillText('unstable', gx(SLIM/2), pad+4);
+      // poles (×)
+      ctx.strokeStyle=COL.out; ctx.lineWidth=2.4;
+      poles().forEach(p=>{ const X=gx(p.re),Y=gy(p.im);
+        ctx.beginPath(); ctx.moveTo(X-6,Y-6); ctx.lineTo(X+6,Y+6); ctx.moveTo(X+6,Y-6); ctx.lineTo(X-6,Y+6); ctx.stroke(); });
+      // zero (○)
+      if(useZero){ const X=gx(zval()),Y=gy(0); ctx.strokeStyle=COL.in; ctx.lineWidth=2.4;
+        ctx.beginPath(); ctx.arc(X,Y,6,0,7); ctx.stroke(); }
+    }
+    function drawStep(){
+      const {ctx,W,H}=fitCanvas(plot,0.98); const pad={l:30,r:12,t:14,b:24};
+      const d=stepResp(); ctx.clearRect(0,0,W,H);
+      const ymin=Math.min(-0.25,d.mn-0.1), ymax=Math.max(1.35,d.mx+0.1);
+      const gx=t=>pad.l+(t/d.T)*(W-pad.l-pad.r);
+      const gy=v=>(H-pad.b)-((v-ymin)/(ymax-ymin))*(H-pad.t-pad.b);
+      // reference lines y=0, y=1
+      ctx.strokeStyle=COL.grid2; ctx.setLineDash([3,4]); ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(pad.l,gy(1)); ctx.lineTo(W-pad.r,gy(1)); ctx.stroke(); ctx.setLineDash([]);
+      ctx.strokeStyle=COL.axis; ctx.beginPath(); ctx.moveTo(pad.l,gy(0)); ctx.lineTo(W-pad.r,gy(0)); ctx.stroke();
+      ctx.strokeStyle=COL.out; ctx.lineWidth=2.4; ctx.beginPath();
+      for(let i=0;i<d.ys.length;i++){ const X=gx(d.ts[i]),Y=gy(d.ys[i]); i?ctx.lineTo(X,Y):ctx.moveTo(X,Y); } ctx.stroke();
+      ctx.fillStyle=COL.text; ctx.font='10px ui-monospace, monospace'; ctx.textAlign='right'; ctx.textBaseline='alphabetic';
+      ctx.fillText('step response', W-pad.r, pad.t+10);
+      ctx.textAlign='left'; ctx.fillText('y=1', pad.l+2, gy(1)-3);
+      return d;
+    }
+    function onChange(){
+      const d=drawStep(); drawPZ();
+      const over=Math.max(0,(d.mx-1)*100), under=d.mn<-1e-3? d.mn.toFixed(2):'0';
+      setReadouts(ro,[
+        {label:'DC gain G(0)', value:'1.00'},
+        {label:'overshoot', value:over.toFixed(0)+'%'},
+        {label:'min (undershoot)', value:under},
+        {label:'zero', value:useZero? 's = '+zval().toFixed(2)+(zval()>0?' (RHP!)':''):'none'}
+      ]);
+    }
+    zbtn.addEventListener('click',()=>{ useZero=!useZero; zbtn.classList.toggle('on',useZero);
+      zbtn.textContent=useZero?'remove zero':'add a zero';
+      handles.zpos.inp.disabled=!useZero; handles.zpos.ctrl.style.opacity=useZero?1:.4; onChange(); });
+    window.addEventListener('resize',onChange);
+    onChange();
+  })();
+
+  // ---------------- Demo 2: series cascade ----------------
+  (function buildCascade(){
+    const root=document.querySelector('[data-demo=cascade]'); if(!root) return;
+    const plot=root.querySelector('.plot');
+    const controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+    const bbtn=root.querySelector('[data-act=bypass]');
+    const actGroup=root.querySelector('#actGroup');
+    const params={}; let bypass=false;
+    addSliders(controls,[
+      {key:'wn',label:'ωₙ (plant)',min:0.6,max:4,step:0.1,value:2.0,fmt:v=>v.toFixed(1)},
+      {key:'zeta',label:'ζ (plant)',min:0.1,max:1.2,step:0.02,value:0.35,fmt:v=>v.toFixed(2)},
+      {key:'ta',label:'τₐ (actuator)',min:0.05,max:1.5,step:0.05,value:0.6,fmt:v=>v.toFixed(2)+' s'}
+    ],params,onChange);
+    const T=16, DT=0.004;
+    function sim(){
+      const wn=params.wn,z=params.zeta,ta=Math.max(0.02,params.ta);
+      const t=[],yC=[],yP=[]; let s=[0,0,0], p=[0,0];
+      const f=(st)=>[ (1-st[0])/ta, st[2], wn*wn*(st[0]-st[1])-2*z*wn*st[2] ];
+      const fp=(st)=>[ st[1], wn*wn*(1-st[0])-2*z*wn*st[1] ];
+      for(let tt=0;tt<=T+1e-9;tt+=DT){ t.push(tt); yC.push(s[1]); yP.push(p[0]);
+        s=rk(f,s,DT); p=rk(fp,p,DT); }
+      return {t,yC,yP};
+    }
+    function draw(){
+      const {ctx,W,H}=fitCanvas(plot,0.42); const pad={l:30,r:12,t:14,b:24};
+      const d=sim(); ctx.clearRect(0,0,W,H);
+      const ymax=1.5;
+      const gx=t=>pad.l+(t/T)*(W-pad.l-pad.r);
+      const gy=v=>(H-pad.b)-(v/ymax)*(H-pad.t-pad.b);
+      ctx.strokeStyle=COL.grid2; ctx.setLineDash([3,4]); ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(pad.l,gy(1)); ctx.lineTo(W-pad.r,gy(1)); ctx.stroke(); ctx.setLineDash([]);
+      ctx.strokeStyle=COL.axis; ctx.beginPath(); ctx.moveTo(pad.l,gy(0)); ctx.lineTo(W-pad.r,gy(0)); ctx.stroke();
+      // plant alone (dashed)
+      ctx.strokeStyle='rgba(155,208,255,0.7)'; ctx.lineWidth=1.8; ctx.setLineDash([5,4]); ctx.beginPath();
+      for(let i=0;i<d.yP.length;i++){ const X=gx(d.t[i]),Y=gy(d.yP[i]); i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);} ctx.stroke(); ctx.setLineDash([]);
+      // active output
+      const active = bypass? d.yP : d.yC;
+      ctx.strokeStyle=COL.out; ctx.lineWidth=2.5; ctx.beginPath();
+      for(let i=0;i<active.length;i++){ const X=gx(d.t[i]),Y=gy(active[i]); i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);} ctx.stroke();
+      ctx.fillStyle=COL.text; ctx.font='10px ui-monospace, monospace'; ctx.textAlign='right';
+      ctx.fillText(bypass?'output = plant (2nd order)':'output = actuator × plant (3rd order)', W-pad.r, pad.t+10);
+      ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillText('time →',(pad.l+W-pad.r)/2,H-pad.b+6);
+    }
+    function onChange(){
+      draw();
+      setReadouts(ro,[
+        {label:'combined order', value: bypass? '2 (actuator bypassed)':'3'},
+        {label:'τₐ', value: bypass?'—':params.ta.toFixed(2)+' s'},
+        {label:'plant ωₙ, ζ', value:params.wn.toFixed(1)+', '+params.zeta.toFixed(2)},
+        {label:'series rule', value:'G = G₁·G₂'}
+      ]);
+    }
+    bbtn.addEventListener('click',()=>{ bypass=!bypass; bbtn.classList.toggle('on',bypass);
+      bbtn.textContent=bypass?'restore actuator':'bypass actuator';
+      if(actGroup) actGroup.classList.toggle('dim',bypass); onChange(); });
+    window.addEventListener('resize',onChange);
+    onChange();
+  })();
+})();
+</script>
+</body>
+</html>

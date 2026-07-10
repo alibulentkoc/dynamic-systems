@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One Language: Mechanical, Electrical, Hydraulic</title>
+<style>
+  :root{
+    --paper:#EEF2F5; --card:#FFFFFF; --ink:#17252E; --muted:#5E7686;
+    --line:#D3DDE4; --line2:#E3EAEF;
+    --panel:#0E1B24; --grid2:#16262F; --axis:#3A5464;
+    --in:#E8A33D; --out:#22C3AE; --accent:#22C3AE; --accent-ink:#0A5B52; --blue:#9BD0FF;
+    --mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); line-height:1.6; font-size:17px; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:940px; margin:0 auto; padding:0 20px 120px}
+  header.hero{padding:64px 0 34px; border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono); font-size:.78rem; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); margin:0 0 14px}
+  h1{font-size:clamp(2rem,5vw,3.1rem); line-height:1.06; margin:0 0 18px; letter-spacing:-.02em; font-weight:750}
+  .lede{font-size:1.12rem; color:#33454f; max-width:60ch; margin:0}
+  h2{font-size:1.02rem; font-family:var(--mono); letter-spacing:.04em; text-transform:uppercase; color:var(--muted); margin:52px 0 14px; font-weight:600}
+  h3{font-size:1.5rem; letter-spacing:-.01em; margin:6px 0 10px; font-weight:700}
+  p{margin:0 0 16px}
+  em{font-style:normal; color:var(--accent-ink); font-weight:600}
+  .idea{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px 24px; margin:18px 0}
+  .eq{font-family:var(--mono); background:var(--panel); color:#DCE7EC; border-radius:12px; padding:18px 20px; margin:16px 0; overflow-x:auto; font-size:1rem; line-height:2}
+  .eq .cmt{color:#6E8794} .eq .hl-in{color:var(--in)} .eq .hl-out{color:var(--out)} .eq .hl-k{color:#9BD0FF}
+  .eq .mech{color:#22C3AE} .eq .elec{color:#9BD0FF} .eq .hyd{color:#E8A33D}
+  .frac{display:inline-flex; flex-direction:column; text-align:center; vertical-align:middle; margin:0 .28em; line-height:1.05}
+  .frac .num{border-bottom:1.5px solid currentColor; padding:0 .35em}
+  .frac .den{padding:2px .35em 0}
+  .plain-eq{font-family:var(--mono); font-size:1rem; color:var(--ink); background:#F6F9FB; border:1px solid var(--line2); border-radius:9px; padding:10px 14px; display:inline-block; margin:4px 0}
+  table.map{width:100%; border-collapse:collapse; margin:16px 0; font-size:.92rem}
+  table.map th,table.map td{text-align:left; padding:10px 12px; border-bottom:1px solid var(--line)}
+  table.map th{font-family:var(--mono); font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:600}
+  table.map td:first-child{font-weight:600}
+  table.map .cM{color:#0A5B52} table.map .cE{color:#2c6fa8} table.map .cH{color:#a6701f}
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 4px}
+  .chip{font-family:var(--mono); font-size:.82rem; padding:6px 11px; border-radius:999px; background:#F0F5F8; border:1px solid var(--line); color:#3a4d57}
+
+  .demo{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; margin:22px 0}
+  .demo > canvas{background:var(--panel); border-radius:10px; width:100%; height:auto; display:block}
+  .triorow{display:grid; grid-template-columns:repeat(3,1fr); gap:12px}
+  @media (max-width:640px){ .triorow{grid-template-columns:1fr} }
+  .triorow figure{margin:0}
+  .triorow figcaption{font-family:var(--mono); font-size:.74rem; text-align:center; color:var(--muted); margin-top:6px}
+  .triorow canvas{background:var(--panel); border-radius:10px; width:100%; height:auto; display:block}
+  .sharedcurve{margin-top:12px}
+  .stage{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  @media (max-width:640px){ .stage{grid-template-columns:1fr} }
+  .stage canvas{background:var(--panel); border-radius:10px; width:100%; height:auto; display:block}
+  .controls{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px 20px; margin:16px 4px 4px}
+  @media (max-width:640px){ .controls{grid-template-columns:1fr} }
+  .controls.four{grid-template-columns:1fr 1fr}
+  .ctrl{display:flex; flex-direction:column; gap:5px}
+  .ctrl .row{display:flex; justify-content:space-between; align-items:baseline; font-family:var(--mono); font-size:.86rem}
+  .ctrl .name{color:var(--ink)} .ctrl .val{color:var(--accent-ink); font-weight:600}
+  input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:5px; background:var(--line); border-radius:5px; outline:none; margin:6px 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none; width:18px; height:18px; border-radius:50%; background:var(--accent); border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,.25); cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--accent); border:2px solid #fff; cursor:pointer}
+  input[type=range]:focus-visible{box-shadow:0 0 0 3px rgba(34,195,174,.35)}
+  .readouts{display:flex; flex-wrap:wrap; gap:8px 10px; margin:14px 4px 2px; font-family:var(--mono); font-size:.82rem}
+  .ro{background:#F0F5F8; border:1px solid var(--line); border-radius:8px; padding:6px 10px; color:#3a4d57}
+  .ro b{color:var(--accent-ink)}
+  .ro.warn{background:#3a2f17; border-color:#E8A33D} .ro.warn b{color:#E8A33D}
+
+  .takeaways{background:var(--panel); color:#DCE7EC; border-radius:16px; padding:26px 28px; margin:40px 0}
+  .takeaways h3{color:#fff} .takeaways li{margin:9px 0} .takeaways b{color:var(--out)}
+  details{background:var(--card); border:1px solid var(--line); border-radius:11px; padding:2px 16px; margin:10px 0}
+  details[open]{padding-bottom:12px}
+  summary{cursor:pointer; font-weight:600; padding:12px 0; list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"▸ "; color:var(--accent-ink)} details[open] summary::before{content:"▾ "}
+  .qa{font-size:.97rem} .qa p{margin:8px 0}
+  ol.ex{padding-left:1.3em} ol.ex li{margin:8px 0}
+  footer{margin-top:60px; padding-top:20px; border-top:1px solid var(--line); font-family:var(--mono); font-size:.8rem; color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <p class="eyebrow">Foundations of Dynamic Systems · Lesson 8</p>
+  <h1>One Language: Mechanical, Electrical, Hydraulic</h1>
+  <p class="lede">Here is the secret that ties the whole course together — and the reason a single toolkit
+  runs robotics, power electronics, and fluid power alike. A mass on a spring, an RLC circuit, and a
+  hydraulic cylinder are <em>the same system</em>. Same equation, same poles, same behavior, just with the
+  labels swapped. Learn one and you have learned all three.</p>
+</header>
+
+<h2>The one idea to hold onto</h2>
+<h3>Every domain speaks in effort and flow</h3>
+<p>Under the hood, every physical domain has the same two quantities: an <em>effort</em> that pushes, and a
+<em>flow</em> that results. Their product is always power. And every domain has the same three ingredients:
+something that stores energy in motion (<em>inertia</em>), something that stores it in compression
+(<em>compliance</em>), and something that dissipates it (<em>resistance</em>).</p>
+
+<table class="map">
+  <thead><tr><th>Role</th><th class="cM">Mechanical</th><th class="cE">Electrical</th><th class="cH">Hydraulic</th></tr></thead>
+  <tbody>
+    <tr><td>Effort (pushes)</td><td class="cM">Force F</td><td class="cE">Voltage V</td><td class="cH">Pressure P</td></tr>
+    <tr><td>Flow (results)</td><td class="cM">Velocity v</td><td class="cE">Current i</td><td class="cH">Flow rate Q</td></tr>
+    <tr><td>Inertia (mass-like)</td><td class="cM">Mass m</td><td class="cE">Inductance L</td><td class="cH">Fluid inertance I</td></tr>
+    <tr><td>Compliance (spring-like)</td><td class="cM">1 / stiffness k</td><td class="cE">Capacitance C</td><td class="cH">Volume V / bulk modulus β</td></tr>
+    <tr><td>Resistance (loss)</td><td class="cM">Damping c</td><td class="cE">Resistance R</td><td class="cH">Valve / orifice R</td></tr>
+  </tbody>
+</table>
+
+<h3>Same equation, three costumes</h3>
+<p>Write the second-order law in each domain and the shapes are identical — an inertia term, a resistance
+term, a compliance term, equal to the driving effort:</p>
+<div class="eq">
+  <span class="mech">m ẍ + c ẋ + k x = F</span> &nbsp;<span class="cmt">// mechanical</span><br>
+  <span class="elec">L q̈ + R q̇ + (1/C) q = V</span> &nbsp;<span class="cmt">// electrical (RLC), q = charge</span><br>
+  <span class="hyd">I Q̇ + R Q + (1/C<sub>h</sub>) ∫Q = P</span> &nbsp;<span class="cmt">// hydraulic</span>
+</div>
+<p>Line them up and the correspondence is exact: mass ↔ inductance ↔ fluid inertance; damping ↔ resistance ↔
+valve loss; stiffness ↔ 1/capacitance ↔ bulk-modulus stiffness. Solve one, and the poles, the ωₙ, the ζ, the
+resonance — everything transfers, unchanged, to the others.</p>
+
+<h2>Interactive · three domains, one response</h2>
+<h3>Drive the shared parameters, watch them move as one</h3>
+<p>The three sliders set the <em>universal</em> inertia, stiffness, and resistance. Below, a mass bobs, a
+capacitor's charge swings while current sloshes around the loop, and a hydraulic piston strokes — all three
+tracing the <em>identical</em> normalized response shown at the bottom, because they are literally the same
+equation. Change a slider and all three change together.</p>
+
+<div class="demo" data-demo="trio">
+  <div class="triorow">
+    <figure><canvas class="mech"></canvas><figcaption>mechanical · mass–spring–damper</figcaption></figure>
+    <figure><canvas class="elec"></canvas><figcaption>electrical · RLC circuit</figcaption></figure>
+    <figure><canvas class="hyd"></canvas><figcaption>hydraulic · cylinder</figcaption></figure>
+  </div>
+  <canvas class="sharedcurve"></canvas>
+  <div class="controls"></div>
+  <div class="readouts"></div>
+</div>
+
+<h2>The fluid-power payoff</h2>
+<h3>Trapped oil is a spring</h3>
+<p>This is why fluid power belongs to the same story. Oil looks incompressible, but it isn't quite: squeeze a
+trapped volume V and its pressure rises in proportion to its <em>bulk modulus</em> β. In a cylinder of piston
+area A, moving the piston by x compresses the oil and pushes back with a force — a spring force. Work it out and
+the effective stiffness is:</p>
+<div class="eq">
+  k<sub>hyd</sub> = <span class="frac"><span class="num">β A²</span><span class="den">V</span></span>
+  &nbsp;&nbsp;<span class="cmt">// stiffer oil, bigger piston, smaller trapped volume → stiffer "spring"</span>
+</div>
+<p>So a hydraulic actuator driving a load mass m is a mass–spring–damper with ωₙ = √(k<sub>hyd</sub>/m) — and it
+can ring and resonate exactly like the others. The villain of fluid power hides in β: dissolve a little
+<em>air</em> into the oil and the effective bulk modulus plummets, softening the spring, dropping ωₙ, and making
+the axis sluggish and bouncy. Managing β — bleeding air, controlling temperature — is half of making hydraulics
+feel crisp.</p>
+
+<h2>Interactive · the hydraulic cylinder as a spring</h2>
+<h3>Bulk modulus, area, volume → stiffness and resonance</h3>
+<p>Set the oil's bulk modulus, the piston diameter, the trapped volume, and the load mass. The trapped oil is
+drawn as the spring it really is, and the demo reports its stiffness and natural frequency. Drop β to mimic air
+entrainment and watch the resonance collapse.</p>
+
+<div class="demo" data-demo="cyl">
+  <div class="stage">
+    <canvas class="pic"></canvas>
+    <canvas class="plot"></canvas>
+  </div>
+  <div class="controls four"></div>
+  <div class="readouts"></div>
+</div>
+
+<h2>Why this is the foundation</h2>
+<div class="chips">
+  <span class="chip">Analyze hydraulics with circuit tools</span>
+  <span class="chip">Mechatronics: domains mix</span>
+  <span class="chip">Bond graphs (effort × flow)</span>
+  <span class="chip">Electro-hydraulic servo valves</span>
+  <span class="chip">Physical AI &amp; fluid-powered robots</span>
+</div>
+<p>Real machines cross domains constantly: a servo valve is electrical driving hydraulic driving mechanical, all
+in one loop. Because every domain reduces to effort, flow, inertia, compliance, and resistance, you can model the
+whole chain in one consistent language — the idea formalized as <em>bond graphs</em> — and bring every tool from
+this course to bear. That is the foundation the rest of your study in robotics, mechatronics, and fluid-powered
+physical AI is built on.</p>
+
+<div class="takeaways">
+  <h3>Key takeaways</h3>
+  <ul>
+    <li><b>Mechanical, electrical, and hydraulic systems obey the same second-order equation</b> — an inertia,
+      a resistance, and a compliance term equal to a driving effort.</li>
+    <li><b>Every domain has an effort and a flow</b> (force/velocity, voltage/current, pressure/flow) whose
+      product is power.</li>
+    <li><b>The analogies are exact:</b> mass ↔ inductance ↔ fluid inertance; damping ↔ resistance ↔ valve loss;
+      stiffness ↔ 1/capacitance ↔ βA²/V.</li>
+    <li><b>Trapped oil is a spring</b> of stiffness k = βA²/V, so a hydraulic actuator has ωₙ, ζ, and resonance
+      like any other second-order system.</li>
+    <li><b>Air entrainment lowers β,</b> softening the hydraulic spring and dropping ωₙ — the classic cause of a
+      spongy, sluggish axis.</li>
+    <li><b>One language covers them all,</b> which is why a single toolkit runs robotics, power electronics, and
+      fluid power.</li>
+  </ul>
+</div>
+
+<h2>Quick check</h2>
+<details><summary>What is the electrical analog of a mechanical spring?</summary>
+  <div class="qa"><p>A capacitor. Stiffness k corresponds to 1/C (inverse capacitance): a stiff spring is like a
+  small capacitor. Both store potential energy — the spring in compression, the capacitor in its electric field.</p></div>
+</details>
+<details><summary>Why does dissolved air make a hydraulic axis feel spongy?</summary>
+  <div class="qa"><p>Air drastically lowers the oil's effective bulk modulus β. Since the hydraulic stiffness is
+  k = βA²/V, a lower β means a softer spring, a lower ωₙ, and a slower, bouncier response — the axis loses its
+  crispness.</p></div>
+</details>
+<details><summary>You double a hydraulic cylinder's piston area. What happens to its stiffness?</summary>
+  <div class="qa"><p>It quadruples. k = βA²/V depends on area <em>squared</em>, so doubling A multiplies stiffness by
+  four (and raises ωₙ by two, for a fixed load). Area is the strongest lever on hydraulic stiffness.</p></div>
+</details>
+
+<h2>Exercises</h2>
+<ol class="ex">
+  <li><b>Calculation.</b> An RLC circuit has L = 2 H, R = 4 Ω, C = 0.05 F. Write its characteristic polynomial in
+    s (use Lq̈ + Rq̇ + q/C = V) and state which mechanical parameters L, R, 1/C correspond to.</li>
+  <li><b>Calculation.</b> A hydraulic cylinder has β = 1.4 GPa, piston area A = 20 cm², trapped volume V = 0.4 L.
+    Find the hydraulic stiffness k = βA²/V (watch your units).</li>
+  <li><b>Calculation.</b> That cylinder drives a load of m = 800 kg. Estimate the natural frequency ωₙ and f in Hz.</li>
+  <li><b>Design.</b> A hydraulic press axis resonates and feels spongy near its working point. Using k = βA²/V and
+    ωₙ = √(k/m), give three distinct physical changes that would raise ωₙ (stiffen the axis), and name the practical
+    downside of each.</li>
+</ol>
+
+<details><summary>Show worked solutions</summary>
+  <div class="qa">
+    <p><b>1.</b> Dividing by L: q̈ + (R/L)q̇ + (1/LC)q = V/L. The characteristic polynomial is <b>s² + (R/L)s + 1/(LC)
+    = 0</b>, i.e. s² + 2s + 10 = 0 (since R/L = 2, 1/LC = 1/(2·0.05) = 10). Correspondences: <b>L ↔ mass m</b>
+    (inertia), <b>R ↔ damping c</b>, <b>1/C ↔ stiffness k</b>. (Poles: s = −1 ± j3 — stable, underdamped.)</p>
+    <p><b>2.</b> Convert units: A = 20 cm² = 20×10⁻⁴ m² = 2×10⁻³ m²; V = 0.4 L = 0.4×10⁻³ m³ = 4×10⁻⁴ m³;
+    β = 1.4×10⁹ Pa. Then k = βA²/V = (1.4×10⁹)(2×10⁻³)²/(4×10⁻⁴) = (1.4×10⁹)(4×10⁻⁶)/(4×10⁻⁴) = (5.6×10³)/(4×10⁻⁴)
+    = <b>1.4×10⁷ N/m</b> (14 MN/m).</p>
+    <p><b>3.</b> ωₙ = √(k/m) = √(1.4×10⁷ / 800) = √(1.75×10⁴) ≈ <b>132 rad/s</b>, so f = ωₙ/2π ≈ <b>21 Hz</b>. A stiff,
+    fairly high-frequency resonance typical of a hydraulic axis.</p>
+    <p><b>4.</b> From k = βA²/V and ωₙ = √(k/m): <b>(a) Raise β</b> — bleed entrained air and control oil temperature to
+    keep bulk modulus high; downside: requires good maintenance and can't exceed the oil's intrinsic β. <b>(b) Increase
+    piston area A</b> — the strongest lever since k ∝ A²; downside: a bigger cylinder needs more flow for the same speed
+    and costs more. <b>(c) Reduce trapped volume V</b> — shorten hoses, minimize dead volume, mount the valve close to
+    the cylinder; downside: less room for accumulators/cushioning and tighter packaging. (Also valid: reduce load mass m,
+    though that's often fixed by the job.) Each raises ωₙ but trades against flow demand, size, cost, or serviceability —
+    the real engineering balance in fluid power.</p>
+  </div>
+</details>
+
+<footer>
+  Lesson 8 · self-contained, no external libraries or network · the three analogs and the hydraulic cylinder are all
+  the same second-order model, computed live. This completes the core sequence — next come the two mini-projects.
+</footer>
+
+</div><!-- /wrap -->
+
+<script>
+"use strict";
+(function(){
+  const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const COL={in:'#E8A33D',out:'#22C3AE',grid2:'#16262F',axis:'#3A5464',text:'#7FA0AE',blue:'#9BD0FF',oil:'rgba(232,163,61,0.30)'};
+
+  function el(tag,cls){const e=document.createElement(tag); if(cls)e.className=cls; return e;}
+  function fitCanvas(cv,aspect){
+    const dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1));
+    const cssW=cv.clientWidth || cv.parentElement.clientWidth || 240;
+    const cssH=Math.round(cssW*aspect);
+    cv.style.height=cssH+'px'; cv.width=Math.round(cssW*dpr); cv.height=Math.round(cssH*dpr);
+    const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); return {ctx,W:cssW,H:cssH};
+  }
+  function addSliders(container,defs,params,onChange,handles){
+    defs.forEach(p=>{ params[p.key]=p.value;
+      const c=el('div','ctrl'), row=el('div','row');
+      const name=el('span','name'); name.innerHTML=p.label;
+      const val=el('span','val'); const fmt=p.fmt||(v=>v.toFixed(2)); val.textContent=fmt(p.value);
+      row.appendChild(name); row.appendChild(val);
+      const inp=document.createElement('input'); inp.type='range';
+      inp.min=p.min; inp.max=p.max; inp.step=p.step; inp.value=p.value;
+      inp.setAttribute('aria-label',(p.aria||p.label).replace(/<[^>]+>/g,''));
+      inp.addEventListener('input',()=>{ params[p.key]=parseFloat(inp.value); val.textContent=fmt(params[p.key]); onChange&&onChange(); });
+      c.appendChild(row); c.appendChild(inp); container.appendChild(c);
+      if(handles) handles[p.key]={inp,val,fmt};
+    });
+  }
+  function setReadouts(container,items){ container.innerHTML='';
+    items.forEach(r=>{ const s=el('span', r.warn?'ro warn':'ro'); s.innerHTML=r.label+' <b>'+r.value+'</b>'; container.appendChild(s); }); }
+  function rk4(f,s,dt){const k1=f(s),k2=f(s.map((x,i)=>x+dt/2*k1[i])),k3=f(s.map((x,i)=>x+dt/2*k2[i])),k4=f(s.map((x,i)=>x+dt*k3[i]));
+    return s.map((x,i)=>x+dt/6*(k1[i]+2*k2[i]+2*k3[i]+k4[i]));}
+  function spring(ctx,x1,x2,y,coils,amp){ ctx.beginPath(); ctx.moveTo(x1,y);
+    const span=x2-x1, lead=Math.min(10,Math.abs(span)*0.14); ctx.lineTo(x1+lead,y);
+    const seg=(span-2*lead)/coils; for(let i=0;i<coils;i++){ const bx=x1+lead+seg*i;
+      ctx.lineTo(bx+seg*0.25,y-amp); ctx.lineTo(bx+seg*0.75,y+amp); ctx.lineTo(bx+seg,y);} ctx.lineTo(x2,y); ctx.stroke(); }
+
+  // ---------------- Demo 1: three domains, one response ----------------
+  (function buildTrio(){
+    const root=document.querySelector('[data-demo=trio]'); if(!root) return;
+    const cMech=root.querySelector('canvas.mech'), cElec=root.querySelector('canvas.elec'),
+          cHyd=root.querySelector('canvas.hyd'), cCurve=root.querySelector('canvas.sharedcurve');
+    const controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+    const params={}; let data=null, startT=0, raf=null, phase=0, lastNow=0;
+    addSliders(controls,[
+      {key:'I',label:'inertia (m / L / I)',min:0.3,max:3,step:0.1,value:1.0,fmt:v=>v.toFixed(1)},
+      {key:'k',label:'stiffness (k / 1/C / βA²/V)',min:2,max:30,step:1,value:12,fmt:v=>v.toFixed(0)},
+      {key:'c',label:'resistance (c / R)',min:0,max:10,step:0.1,value:1.2,fmt:v=>v.toFixed(1)}
+    ],params,onChange);
+    const T=12, DT=0.004;
+    function recompute(){ let s=[1,0]; const x=[],v=[];
+      for(let t=0;t<=T+1e-9;t+=DT){ x.push(s[0]); v.push(s[1]);
+        s=rk4(st=>[st[1], -params.k/params.I*st[0]-params.c/params.I*st[1]], s, DT); }
+      data={x,v}; startT=performance.now(); if(REDUCED) drawAll(0.12*T,0); }
+    function samp(a,tt){ const i=Math.min(a.length-1,Math.max(0,Math.round(tt/DT))); return a[i]; }
+
+    function drawMech(xv){ const {ctx,W,H}=fitCanvas(cMech,0.85); ctx.clearRect(0,0,W,H);
+      const wallX=W*0.14, eqX=W*0.55, midY=H*0.5, bw=W*0.22, bh=H*0.30, sc=W*0.18;
+      const bx=eqX+xv*sc, bl=bx-bw/2;
+      ctx.strokeStyle='#5E7686'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(wallX,midY-H*0.30); ctx.lineTo(wallX,midY+H*0.30); ctx.stroke();
+      ctx.strokeStyle=COL.out; ctx.lineWidth=2.2; spring(ctx,wallX,bl,midY-H*0.10,6,5);
+      ctx.strokeStyle=COL.in; ctx.lineWidth=2.2; ctx.beginPath(); ctx.moveTo(wallX,midY+H*0.10); ctx.lineTo(bl,midY+H*0.10); ctx.stroke();
+      ctx.fillStyle='#0E1B24'; ctx.strokeStyle=COL.out; ctx.lineWidth=2; ctx.fillRect(bl,midY-bh/2,bw,bh); ctx.strokeRect(bl,midY-bh/2,bw,bh);
+      ctx.fillStyle='#DCE7EC'; ctx.font='12px ui-monospace, monospace'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('m',bx,midY); ctx.textBaseline='alphabetic';
+    }
+    function drawElec(xv,vv){ const {ctx,W,H}=fitCanvas(cElec,0.85); ctx.clearRect(0,0,W,H);
+      const L=W*0.16, R2=W*0.84, T2=H*0.20, B2=H*0.80;
+      // wires
+      ctx.strokeStyle='#5E7686'; ctx.lineWidth=2;
+      ctx.strokeRect(L,T2,R2-L,B2-T2);
+      // capacitor on bottom (gap) — charge ∝ xv
+      ctx.clearRect((L+R2)/2-16,B2-6,32,12);
+      ctx.strokeStyle='#5E7686'; ctx.beginPath(); ctx.moveTo((L+R2)/2-6,B2-9); ctx.lineTo((L+R2)/2-6,B2+9);
+      ctx.moveTo((L+R2)/2+6,B2-9); ctx.lineTo((L+R2)/2+6,B2+9); ctx.stroke();
+      const q=Math.max(-1,Math.min(1,xv)); ctx.fillStyle=q>=0?'rgba(34,195,174,0.7)':'rgba(232,163,61,0.7)';
+      ctx.fillRect((L+R2)/2-6-3, B2-3, 3, 6*Math.abs(q)+0.5); // crude charge indicator
+      ctx.fillStyle=COL.text; ctx.font='9px ui-monospace, monospace'; ctx.textAlign='center'; ctx.fillText('C',(L+R2)/2,B2+16);
+      // inductor coils on top
+      ctx.strokeStyle=COL.blue; ctx.lineWidth=2; const iy=T2, ix0=(L+R2)/2-24;
+      ctx.beginPath(); for(let i=0;i<4;i++){ ctx.arc(ix0+12*i+6, iy, 6, Math.PI, 0, false);} ctx.stroke();
+      ctx.fillStyle=COL.text; ctx.fillText('L',(L+R2)/2,T2-6);
+      // resistor zigzag on right
+      ctx.strokeStyle=COL.in; ctx.beginPath(); const rx=R2, ry0=(T2+B2)/2-20;
+      ctx.moveTo(rx,ry0); for(let i=0;i<6;i++){ ctx.lineTo(rx+(i%2?7:-7), ry0+7*(i+1)); } ctx.lineTo(rx,ry0+49); ctx.stroke();
+      ctx.fillStyle=COL.text; ctx.textAlign='left'; ctx.fillText('R',R2+6,(T2+B2)/2);
+      // source on left
+      ctx.strokeStyle='#5E7686'; ctx.beginPath(); const sxx=L, sy=(T2+B2)/2;
+      ctx.moveTo(sxx-6,sy-9); ctx.lineTo(sxx+6,sy-9); ctx.moveTo(sxx-3,sy+2); ctx.lineTo(sxx+3,sy+2); ctx.stroke();
+      // current dots (amber) around loop, phase advances with velocity vv
+      const per=2*((R2-L)+(B2-T2)); const dots=6;
+      for(let d=0;d<dots;d++){ let p=((phase + d/dots)%1+1)%1; const pt=loopPoint(L,T2,R2,B2,p);
+        ctx.fillStyle=COL.in; ctx.beginPath(); ctx.arc(pt.x,pt.y,2.6,0,7); ctx.fill(); }
+    }
+    function loopPoint(L,T2,R2,B2,p){ const w=R2-L,h=B2-T2,per=2*(w+h); let d=p*per;
+      if(d<w) return {x:L+d,y:T2}; d-=w; if(d<h) return {x:R2,y:T2+d}; d-=h; if(d<w) return {x:R2-d,y:B2}; d-=w; return {x:L,y:B2-d}; }
+    function drawHyd(xv){ const {ctx,W,H}=fitCanvas(cHyd,0.85); ctx.clearRect(0,0,W,H);
+      const cylL=W*0.12, cylR=W*0.86, midY=H*0.5, cylH=H*0.34, sc=W*0.16;
+      const pistonX=W*0.50+xv*sc;
+      // cylinder body
+      ctx.strokeStyle='#5E7686'; ctx.lineWidth=2.5; ctx.strokeRect(cylL,midY-cylH/2,cylR-cylL,cylH);
+      // trapped oil left of piston
+      ctx.fillStyle=COL.oil; ctx.fillRect(cylL+2,midY-cylH/2+2,pistonX-cylL-2,cylH-4);
+      // oil-as-spring overlay
+      ctx.strokeStyle='rgba(34,195,174,0.7)'; ctx.lineWidth=1.6; spring(ctx,cylL+4,pistonX-6,midY,5,cylH*0.16);
+      // piston + rod
+      ctx.fillStyle='#0E1B24'; ctx.strokeStyle=COL.out; ctx.lineWidth=2; ctx.fillRect(pistonX-6,midY-cylH/2,12,cylH); ctx.strokeRect(pistonX-6,midY-cylH/2,12,cylH);
+      ctx.strokeStyle='#5E7686'; ctx.beginPath(); ctx.moveTo(pistonX+6,midY); ctx.lineTo(cylR+W*0.04,midY); ctx.stroke();
+      ctx.fillStyle=COL.text; ctx.font='9px ui-monospace, monospace'; ctx.textAlign='center'; ctx.fillText('oil = spring', (cylL+pistonX)/2, midY-cylH/2-4);
+    }
+    function drawCurve(tt){ const {ctx,W,H}=fitCanvas(cCurve,0.28); const pad={l:26,r:12,t:12,b:20}; ctx.clearRect(0,0,W,H);
+      const gx=t=>pad.l+(t/T)*(W-pad.l-pad.r); const top=pad.t,bot=H-pad.b,gy=v=>top+(1-(v+1.1)/2.2)*(bot-top);
+      ctx.strokeStyle=COL.axis; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(pad.l,gy(0)); ctx.lineTo(W-pad.r,gy(0)); ctx.stroke();
+      ctx.strokeStyle=COL.out; ctx.lineWidth=2.2; ctx.beginPath();
+      for(let i=0;i<data.x.length;i++){ const X=gx(i*DT),Y=gy(data.x[i]); i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);} ctx.stroke();
+      const xv=samp(data.x,tt); ctx.fillStyle=COL.in; ctx.beginPath(); ctx.arc(gx(tt),gy(xv),4,0,7); ctx.fill();
+      ctx.fillStyle=COL.text; ctx.font='9px ui-monospace, monospace'; ctx.textAlign='right'; ctx.fillText('shared response x(t)', W-pad.r, pad.t+8); }
+    function drawAll(tt,now){ const xv=samp(data.x,tt), vv=samp(data.v,tt); drawMech(xv); drawElec(xv,vv); drawHyd(xv); drawCurve(tt); }
+    function frame(now){ let dt=lastNow?(now-lastNow)/1000:0; lastNow=now;
+      let tt=(now-startT)/1000; if(tt>T){ startT=now; tt=0; }
+      const vv=samp(data.v,tt); phase=(phase + vv*dt*0.25 + 1)%1;    // current-dot motion ∝ velocity
+      drawAll(tt,now); raf=requestAnimationFrame(frame); }
+    function onChange(){ recompute();
+      const wn=Math.sqrt(params.k/params.I), z=params.c/(2*Math.sqrt(params.k*params.I));
+      setReadouts(ro,[
+        {label:'ωₙ (all three)', value:wn.toFixed(2)+' rad/s'},
+        {label:'ζ (all three)', value:z.toFixed(2)},
+        {label:'same equation?', value:'yes — identical response'}
+      ]); }
+    window.addEventListener('resize',()=>{ if(data) drawAll(REDUCED?0.12*T:Math.min(T,(performance.now()-startT)/1000),performance.now()); });
+    onChange(); if(!REDUCED){ lastNow=0; raf=requestAnimationFrame(frame); }
+  })();
+
+  // ---------------- Demo 2: hydraulic cylinder stiffness ----------------
+  (function buildCyl(){
+    const root=document.querySelector('[data-demo=cyl]'); if(!root) return;
+    const pic=root.querySelector('.pic'), plot=root.querySelector('.plot');
+    const controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+    const params={}; let startT=0, raf=null;
+    addSliders(controls,[
+      {key:'beta',label:'bulk modulus β (GPa)',min:0.3,max:2.0,step:0.05,value:1.4,fmt:v=>v.toFixed(2)},
+      {key:'d',label:'piston Ø (mm)',min:25,max:100,step:1,value:50,fmt:v=>v.toFixed(0)},
+      {key:'V',label:'trapped volume (L)',min:0.1,max:2.0,step:0.05,value:0.5,fmt:v=>v.toFixed(2)},
+      {key:'m',label:'load mass (kg)',min:100,max:2000,step:50,value:500,fmt:v=>v.toFixed(0)}
+    ],params,onChange,{});
+    function calc(){ const A=Math.PI*Math.pow(params.d/1000/2,2), V=params.V/1000, beta=params.beta*1e9;
+      const k=beta*A*A/V, wn=Math.sqrt(k/params.m), z=0.12; return {A,V,k,wn,z}; }
+    function drawPic(t){ const {ctx,W,H}=fitCanvas(pic,0.7); ctx.clearRect(0,0,W,H);
+      const c=calc(); const cylL=W*0.10, cylR=W*0.80, midY=H*0.5, cylH=H*0.42;
+      // slow-mo small oscillation for life
+      const amp=W*0.03*Math.exp(-c.z*c.wn*((t%3))) * Math.cos(c.wn*(t%3)/6);
+      const pistonX=W*0.52+amp;
+      ctx.strokeStyle='#5E7686'; ctx.lineWidth=2.5; ctx.strokeRect(cylL,midY-cylH/2,cylR-cylL,cylH);
+      ctx.fillStyle=COL.oil; ctx.fillRect(cylL+2,midY-cylH/2+2,pistonX-cylL-2,cylH-4);
+      // stiffness-scaled spring (more coils = stiffer look)
+      const coils=Math.round(4+Math.min(8, c.k/2e6));
+      ctx.strokeStyle='rgba(34,195,174,0.8)'; ctx.lineWidth=1.8; spring(ctx,cylL+4,pistonX-6,midY,coils,cylH*0.18);
+      ctx.fillStyle='#0E1B24'; ctx.strokeStyle=COL.out; ctx.lineWidth=2; ctx.fillRect(pistonX-6,midY-cylH/2,12,cylH); ctx.strokeRect(pistonX-6,midY-cylH/2,12,cylH);
+      ctx.strokeStyle='#5E7686'; ctx.beginPath(); ctx.moveTo(pistonX+6,midY); ctx.lineTo(cylR+W*0.02,midY); ctx.stroke();
+      // load
+      ctx.fillStyle='#16262F'; ctx.strokeStyle='#5E7686'; ctx.fillRect(cylR+W*0.02,midY-H*0.16,W*0.12,H*0.32); ctx.strokeRect(cylR+W*0.02,midY-H*0.16,W*0.12,H*0.32);
+      ctx.fillStyle=COL.text; ctx.font='10px ui-monospace, monospace'; ctx.textAlign='center'; ctx.fillText('load m', cylR+W*0.08, midY);
+      ctx.fillText('trapped oil (β)', (cylL+pistonX)/2, midY-cylH/2-5);
+    }
+    function drawPlot(){ const {ctx,W,H}=fitCanvas(plot,0.7); const pad={l:30,r:12,t:14,b:24}; ctx.clearRect(0,0,W,H);
+      const c=calc(); const Tw=Math.min(1.2, 14/(c.z*c.wn)); // window ~ few periods
+      const gx=t=>pad.l+(t/Tw)*(W-pad.l-pad.r); const top=pad.t,bot=H-pad.b,gy=v=>top+(1-(v+1.1)/2.2)*(bot-top);
+      ctx.strokeStyle=COL.axis; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(pad.l,gy(0)); ctx.lineTo(W-pad.r,gy(0)); ctx.stroke();
+      const wd=c.wn*Math.sqrt(1-c.z*c.z);
+      ctx.strokeStyle=COL.out; ctx.lineWidth=2.3; ctx.beginPath();
+      for(let i=0;i<=240;i++){ const t=Tw*i/240, y=Math.exp(-c.z*c.wn*t)*Math.cos(wd*t); const X=gx(t),Y=gy(y); i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);} ctx.stroke();
+      ctx.fillStyle=COL.text; ctx.font='10px ui-monospace, monospace'; ctx.textAlign='right'; ctx.fillText('impulse response', W-pad.r, pad.t+10);
+      ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillText('time ('+(Tw*1000).toFixed(0)+' ms window) →',(pad.l+W-pad.r)/2,H-pad.b+6); }
+    function onChange(){ drawPlot();
+      const c=calc(); const air=params.beta<0.8;
+      setReadouts(ro,[
+        {label:'piston area A', value:(c.A*1e4).toFixed(1)+' cm²'},
+        {label:'stiffness k=βA²/V', value:(c.k/1e6).toFixed(2)+' MN/m'},
+        {label:'ωₙ', value:c.wn.toFixed(0)+' rad/s ('+(c.wn/2/Math.PI).toFixed(1)+' Hz)'},
+        {label: air?'air entrainment!':'β', value: air?'soft, low ωₙ':'healthy', warn:air}
+      ]); }
+    function frame(now){ drawPic(now/1000); raf=requestAnimationFrame(frame); }
+    window.addEventListener('resize',onChange);
+    onChange(); if(REDUCED){ drawPic(0.2); } else { raf=requestAnimationFrame(frame); }
+  })();
+})();
+</script>
+</body>
+</html>

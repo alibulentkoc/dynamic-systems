@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Second-Order Systems: Frequency, Damping, Resonance</title>
+<style>
+  :root{
+    --paper:#EEF2F5; --card:#FFFFFF; --ink:#17252E; --muted:#5E7686;
+    --line:#D3DDE4; --line2:#E3EAEF;
+    --panel:#0E1B24; --grid2:#16262F; --axis:#3A5464;
+    --in:#E8A33D; --out:#22C3AE; --accent:#22C3AE; --accent-ink:#0A5B52; --blue:#9BD0FF; --red:#FF8FA3;
+    --mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); line-height:1.6; font-size:17px; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:940px; margin:0 auto; padding:0 20px 120px}
+  header.hero{padding:64px 0 34px; border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono); font-size:.78rem; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); margin:0 0 14px}
+  h1{font-size:clamp(2rem,5vw,3.1rem); line-height:1.06; margin:0 0 18px; letter-spacing:-.02em; font-weight:750}
+  .lede{font-size:1.12rem; color:#33454f; max-width:60ch; margin:0}
+  h2{font-size:1.02rem; font-family:var(--mono); letter-spacing:.04em; text-transform:uppercase; color:var(--muted); margin:52px 0 14px; font-weight:600}
+  h3{font-size:1.5rem; letter-spacing:-.01em; margin:6px 0 10px; font-weight:700}
+  p{margin:0 0 16px}
+  em{font-style:normal; color:var(--accent-ink); font-weight:600}
+  .idea{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px 24px; margin:18px 0}
+  .eq{font-family:var(--mono); background:var(--panel); color:#DCE7EC; border-radius:12px; padding:18px 20px; margin:16px 0; overflow-x:auto; font-size:1.02rem; line-height:2}
+  .eq .cmt{color:#6E8794} .eq .hl-in{color:var(--in)} .eq .hl-out{color:var(--out)} .eq .hl-k{color:#9BD0FF}
+  .frac{display:inline-flex; flex-direction:column; text-align:center; vertical-align:middle; margin:0 .28em; line-height:1.05}
+  .frac .num{border-bottom:1.5px solid currentColor; padding:0 .35em}
+  .frac .den{padding:2px .35em 0}
+  .plain-eq{font-family:var(--mono); font-size:1rem; color:var(--ink); background:#F6F9FB; border:1px solid var(--line2); border-radius:9px; padding:10px 14px; display:inline-block; margin:4px 0}
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 4px}
+  .chip{font-family:var(--mono); font-size:.82rem; padding:6px 11px; border-radius:999px; background:#F0F5F8; border:1px solid var(--line); color:#3a4d57}
+  .phys{border-left:3px solid var(--accent); background:#F3FBF9; padding:14px 18px; border-radius:0 10px 10px 0; margin:18px 0; font-size:.98rem}
+  .phys .lab{font-family:var(--mono); font-size:.72rem; letter-spacing:.16em; text-transform:uppercase; color:var(--accent-ink); display:block; margin-bottom:6px}
+
+  .demo{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; margin:22px 0}
+  .demo > canvas{background:var(--panel); border-radius:10px; width:100%; height:auto; display:block}
+  .stage{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  @media (max-width:620px){ .stage{grid-template-columns:1fr} }
+  .stage canvas{background:var(--panel); border-radius:10px; width:100%; height:auto; display:block}
+  .controls{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px 20px; margin:16px 4px 4px}
+  @media (max-width:620px){ .controls{grid-template-columns:1fr} }
+  .ctrl{display:flex; flex-direction:column; gap:5px}
+  .ctrl .row{display:flex; justify-content:space-between; align-items:baseline; font-family:var(--mono); font-size:.86rem}
+  .ctrl .name{color:var(--ink)} .ctrl .val{color:var(--accent-ink); font-weight:600}
+  input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:5px; background:var(--line); border-radius:5px; outline:none; margin:6px 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none; width:18px; height:18px; border-radius:50%; background:var(--accent); border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,.25); cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--accent); border:2px solid #fff; cursor:pointer}
+  input[type=range]:focus-visible{box-shadow:0 0 0 3px rgba(34,195,174,.35)}
+  .btnrow{display:flex; flex-wrap:wrap; gap:8px; margin:14px 4px 2px; align-items:center}
+  .btn{font-family:var(--mono); font-size:.78rem; color:var(--accent-ink); background:none; border:1px solid var(--line); border-radius:8px; padding:6px 12px; cursor:pointer}
+  .btn:hover{background:#F0F5F8}
+  .readouts{display:flex; flex-wrap:wrap; gap:8px 10px; margin:14px 4px 2px; font-family:var(--mono); font-size:.82rem}
+  .ro{background:#F0F5F8; border:1px solid var(--line); border-radius:8px; padding:6px 10px; color:#3a4d57}
+  .ro b{color:var(--accent-ink)}
+  .ro.hot{background:#3a1c22; border-color:#FF8FA3} .ro.hot b{color:#FF8FA3}
+
+  .takeaways{background:var(--panel); color:#DCE7EC; border-radius:16px; padding:26px 28px; margin:40px 0}
+  .takeaways h3{color:#fff} .takeaways li{margin:9px 0} .takeaways b{color:var(--out)}
+  details{background:var(--card); border:1px solid var(--line); border-radius:11px; padding:2px 16px; margin:10px 0}
+  details[open]{padding-bottom:12px}
+  summary{cursor:pointer; font-weight:600; padding:12px 0; list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"▸ "; color:var(--accent-ink)} details[open] summary::before{content:"▾ "}
+  .qa{font-size:.97rem} .qa p{margin:8px 0}
+  ol.ex{padding-left:1.3em} ol.ex li{margin:8px 0}
+  footer{margin-top:60px; padding-top:20px; border-top:1px solid var(--line); font-family:var(--mono); font-size:.8rem; color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <p class="eyebrow">Foundations of Dynamic Systems · Lesson 6</p>
+  <h1>Second-Order Systems: Frequency, Damping, Resonance</h1>
+  <p class="lede">Push a swing at just the right rhythm and a tiny effort builds into a huge arc.
+  That's <em>resonance</em> — and it's the defining drama of second-order systems. This lesson is
+  about what happens when you drive a system with a steady rhythm, why the response can blow up, and
+  how damping is the only thing standing between a useful machine and a shattered wine glass.</p>
+</header>
+
+<h2>The one idea to hold onto</h2>
+<h3>Drive it with a sine, get a sine back — resized</h3>
+<p>Feed a linear system a steady sinusoid at frequency ω, and after the transient dies it responds
+with a sinusoid at the <em>same</em> frequency — but scaled in amplitude and shifted in time. How much
+it's scaled is the <em>frequency response</em>, and it's just the transfer function evaluated on the
+imaginary axis, s = jω:</p>
+<div class="eq">
+  amplitude gain at ω &nbsp;=&nbsp; |<span class="hl-k">G(jω)</span>| =
+  <span class="frac"><span class="num">ω<sub>n</sub><sup>2</sup></span><span class="den">√[ (ω<sub>n</sub><sup>2</sup> − ω<sup>2</sup>)<sup>2</sup> + (2ζω<sub>n</sub>ω)<sup>2</sup> ]</span></span>
+</div>
+<p>Look at the denominator. When the drive frequency ω approaches the natural frequency ωₙ, the first
+term (ωₙ²−ω²) collapses toward zero, and the only thing left holding the denominator up is the damping
+term 2ζωₙω. If ζ is small, the denominator gets tiny and the gain shoots up. <em>That</em> is resonance:
+near ωₙ, only damping limits how big the response gets.</p>
+
+<h2>Interactive · driving through resonance</h2>
+<h3>Sweep the rhythm, watch it balloon</h3>
+<p>The mass on the left is shaken by a steady force whose frequency you set with the drive slider. Its
+steady-state swing is exactly |G(jω)| times the input. Sweep the drive toward ωₙ and watch the amplitude
+balloon — then drop off past it. The curve on the right is that same amplitude versus frequency; the amber
+dot is where your drive currently sits. Now lower ζ and watch the peak turn into a spike.</p>
+
+<div class="demo" data-demo="resonance">
+  <div class="stage">
+    <canvas class="pic"></canvas>
+    <canvas class="plot"></canvas>
+  </div>
+  <div class="controls"></div>
+  <div class="readouts"></div>
+</div>
+
+<p>Two things to feel here. Far below or above ωₙ the mass barely cares about the shaking. Right at ωₙ,
+a small push produces a large motion — the input's energy arrives perfectly in step with the motion, lap
+after lap, and it accumulates. And the <em>only</em> knob that caps the peak is ζ. This is why a wine glass
+shatters at its pitch, why soldiers break step on bridges, and why every real structure needs damping.</p>
+
+<h2>Damping runs the whole show</h2>
+<h3>How much peak? Set by ζ alone</h3>
+<p>The height of the resonant peak is governed entirely by the damping ratio. For an underdamped system
+the peak sits at ωr = ωₙ√(1−2ζ²) and reaches a height of about 1/(2ζ). Engineers call that peak factor the
+<em>quality factor</em> Q ≈ 1/(2ζ):</p>
+<div class="idea">
+  <div class="chips" style="margin:0">
+    <span class="chip">ζ small → tall sharp peak (high Q, rings)</span>
+    <span class="chip">ζ = 0.707 → the peak just vanishes</span>
+    <span class="chip">ζ &gt; 0.707 → no resonance, smooth rolloff</span>
+  </div>
+</div>
+<p>There's a famous crossover at <em>ζ = 1/√2 ≈ 0.707</em>. Below it, the system amplifies a band of
+frequencies (it resonates). At or above it, the gain only ever falls with frequency — no peak at all. This
+is why 0.707 is a favourite design target: fast response, flattest possible frequency response, no
+resonant amplification.</p>
+
+<h2>Interactive · the Bode magnitude curve</h2>
+<h3>Frequency response, the engineer's plot</h3>
+<p>The standard way to show |G(jω)| is on log–log axes (decibels versus log frequency) — a <em>Bode
+magnitude plot</em>. Low frequencies pass at the DC gain; the curve peaks (or not) near ωₙ; then it rolls
+off at −40 dB per decade, the signature slope of a second-order system. Drop ζ below 0.707 and watch the
+resonant peak rise out of the curve.</p>
+
+<div class="demo" data-demo="bode">
+  <canvas class="plot"></canvas>
+  <div class="controls"></div>
+  <div class="readouts"></div>
+</div>
+
+<div class="phys"><span class="lab">Bench experiment</span>
+  Wet a fingertip and run it slowly around the rim of a wine glass. Below the right speed, nothing; hit the
+  glass's natural frequency and it suddenly sings loudly — you've driven it at resonance. A swing works the
+  same way: pump your legs at the swing's own rhythm and the arc grows with almost no effort. Both are your
+  ζ being small and your drive frequency landing on ωₙ.
+</div>
+
+<h2>Why this is everywhere</h2>
+<div class="chips">
+  <span class="chip">Wine glass shattering at pitch</span>
+  <span class="chip">Tacoma Narrows bridge</span>
+  <span class="chip">Washing machine spin-up</span>
+  <span class="chip">Car suspension (why shocks matter)</span>
+  <span class="chip">Engine mounts</span>
+  <span class="chip">Hydraulic line resonance</span>
+  <span class="chip">MEMS &amp; tuning forks</span>
+</div>
+<p>A washing machine is a lovely case: as the drum speeds up it passes <em>through</em> its resonance on the
+way to spin speed, which is the moment it shakes hardest — good machines add damping and mass to get through
+that band quickly. In fluid power, long oil lines and trapped compressible fluid form their own spring–mass
+resonances that can hammer a system apart; the fix, as always, is damping and careful design of ωₙ.</p>
+
+<div class="takeaways">
+  <h3>Key takeaways</h3>
+  <ul>
+    <li><b>Frequency response = |G(jω)|:</b> drive a linear system with a sine and it returns a sine at the
+      same frequency, scaled by |G(jω)| and phase-shifted.</li>
+    <li><b>Resonance</b> happens when the drive frequency nears ωₙ: the denominator of |G(jω)| collapses and
+      only damping limits the gain.</li>
+    <li><b>ζ controls the peak.</b> Peak height ≈ 1/(2ζ) = Q; it sits at ωr = ωₙ√(1−2ζ²).</li>
+    <li><b>ζ = 0.707 is the crossover:</b> below it the system resonates; at or above it the response only
+      rolls off, with no peak.</li>
+    <li><b>Second-order systems roll off at −40 dB/decade</b> above ωₙ — the Bode signature.</li>
+    <li>Resonance is why damping isn't optional: it's the difference between a tuned machine and a broken one.</li>
+  </ul>
+</div>
+
+<h2>Quick check</h2>
+<details><summary>Why does pushing a swing at its natural frequency work so well?</summary>
+  <div class="qa"><p>At ωₙ your pushes arrive in step with the motion every cycle, so each small input adds
+  energy that accumulates. With little damping to bleed it away, the amplitude builds far beyond what a single
+  push could do — that's resonance.</p></div>
+</details>
+<details><summary>A system has ζ = 0.9. Does it have a resonant peak?</summary>
+  <div class="qa"><p>No. Since 0.9 &gt; 0.707, there is no resonant peak — |G(jω)| starts at the DC gain and only
+  decreases with frequency. Resonant amplification requires ζ &lt; 0.707.</p></div>
+</details>
+<details><summary>Two systems have the same ωₙ but ζ = 0.05 versus ζ = 0.3. Which has the taller, sharper peak?</summary>
+  <div class="qa"><p>The ζ = 0.05 one. Peak height ≈ 1/(2ζ), so it reaches about 1/0.1 = 10× versus about 1/0.6 ≈
+  1.7× — twenty times... no, roughly six times taller, and much narrower (higher Q). Less damping means a taller,
+  sharper resonance.</p></div>
+</details>
+
+<h2>Exercises</h2>
+<ol class="ex">
+  <li><b>Calculation.</b> A system has ωₙ = 10 rad/s and ζ = 0.1. Find the resonant frequency ωr and the
+    approximate peak gain.</li>
+  <li><b>Calculation.</b> What is the quality factor Q of a system with ζ = 0.02, and what does that number
+    tell you physically?</li>
+  <li><b>Calculation.</b> Below what damping ratio does a second-order system show a resonant peak at all?</li>
+  <li><b>Design.</b> A drone camera mount resonates badly at the rotors' spin frequency, blurring video. You can
+    change the mount's stiffness/mass (to move ωₙ) and add damping (to raise ζ). Give two independent strategies
+    to kill the problem, and explain the trade-off each one carries.</li>
+</ol>
+
+<details><summary>Show worked solutions</summary>
+  <div class="qa">
+    <p><b>1.</b> ωr = ωₙ√(1−2ζ²) = 10·√(1−2·0.01) = 10·√0.98 ≈ <b>9.9 rad/s</b> (barely below ωₙ, since ζ is tiny).
+    Peak gain ≈ 1/(2ζ√(1−ζ²)) ≈ 1/(2·0.1) = <b>≈ 5×</b>. A small drive at ~10 rad/s produces roughly five times
+    the steady output it would at DC.</p>
+    <p><b>2.</b> Q ≈ 1/(2ζ) = 1/(2·0.02) = <b>25</b>. Physically, Q ≈ 25 means the resonant peak is about 25× the
+    DC gain — a very lightly damped, sharply tuned system that rings for many cycles before settling (roughly Q
+    cycles). Great for a tuning fork, dangerous for a bridge.</p>
+    <p><b>3.</b> A resonant peak appears only for <b>ζ &lt; 1/√2 ≈ 0.707</b>. At exactly 0.707 the peak degenerates
+    to the DC value; above it, |G(jω)| is monotonically decreasing.</p>
+    <p><b>4.</b> Strategy A — <b>move ωₙ away from the rotor frequency</b> by stiffening or lightening the mount (raise
+    ωₙ) or softening/adding mass (lower ωₙ), so the drive no longer lands on the peak. Trade-off: a stiffer mount
+    transmits more high-frequency buzz; a softer/heavier one sags and responds sluggishly, and you must be sure the
+    rotor frequency can't sweep back onto the new ωₙ. Strategy B — <b>add damping</b> (raise ζ toward or past 0.707)
+    so the peak flattens and can't amplify even if the drive sits on ωₙ. Trade-off: more damping means more energy
+    lost as heat and a slightly slower, softer response. In practice engineers use both: shift ωₙ out of the operating
+    band <em>and</em> add enough damping to tame whatever peak remains — exactly how real camera gimbals and engine
+    mounts are designed.</p>
+  </div>
+</details>
+
+<footer>
+  Lesson 6 · self-contained, no external libraries or network · the driven mass, the magnitude curve, and the
+  Bode plot are all computed live from |G(jω)|. Next: state-space modeling.
+</footer>
+
+</div><!-- /wrap -->
+
+<script>
+"use strict";
+(function(){
+  const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const COL={in:'#E8A33D',out:'#22C3AE',grid2:'#16262F',axis:'#3A5464',text:'#7FA0AE',blue:'#9BD0FF',red:'#FF8FA3'};
+
+  function el(tag,cls){const e=document.createElement(tag); if(cls)e.className=cls; return e;}
+  function fitCanvas(cv,aspect){
+    const dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1));
+    const cssW=cv.clientWidth || cv.parentElement.clientWidth || 300;
+    const cssH=Math.round(cssW*aspect);
+    cv.style.height=cssH+'px'; cv.width=Math.round(cssW*dpr); cv.height=Math.round(cssH*dpr);
+    const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); return {ctx,W:cssW,H:cssH};
+  }
+  function addSliders(container,defs,params,onChange,handles){
+    defs.forEach(p=>{ params[p.key]=p.value;
+      const c=el('div','ctrl'), row=el('div','row');
+      const name=el('span','name'); name.innerHTML=p.label;
+      const val=el('span','val'); const fmt=p.fmt||(v=>v.toFixed(2)); val.textContent=fmt(p.value);
+      row.appendChild(name); row.appendChild(val);
+      const inp=document.createElement('input'); inp.type='range';
+      inp.min=p.min; inp.max=p.max; inp.step=p.step; inp.value=p.value;
+      inp.setAttribute('aria-label',(p.aria||p.label).replace(/<[^>]+>/g,''));
+      inp.addEventListener('input',()=>{ params[p.key]=parseFloat(inp.value); val.textContent=fmt(params[p.key]); onChange&&onChange(); });
+      c.appendChild(row); c.appendChild(inp); container.appendChild(c);
+      if(handles) handles[p.key]={inp,val,fmt};
+    });
+  }
+  function setReadouts(container,items){ container.innerHTML='';
+    items.forEach(r=>{ const s=el('span', r.hot?'ro hot':'ro'); s.innerHTML=r.label+' <b>'+r.value+'</b>'; container.appendChild(s); }); }
+  function mag(wn,z,w){ return wn*wn/Math.hypot(wn*wn-w*w, 2*z*wn*w); }
+  function drawSpring(ctx,x1,x2,y,coils,amp){ ctx.beginPath(); ctx.moveTo(x1,y);
+    const span=x2-x1, lead=Math.min(12,Math.abs(span)*0.14); ctx.lineTo(x1+lead,y);
+    const seg=(span-2*lead)/coils; for(let i=0;i<coils;i++){ const bx=x1+lead+seg*i;
+      ctx.lineTo(bx+seg*0.25,y-amp); ctx.lineTo(bx+seg*0.75,y+amp); ctx.lineTo(bx+seg,y);} ctx.lineTo(x2,y); ctx.stroke(); }
+
+  // ---------------- Demo 1: driven resonance ----------------
+  (function buildResonance(){
+    const root=document.querySelector('[data-demo=resonance]'); if(!root) return;
+    const pic=root.querySelector('.pic'), plot=root.querySelector('.plot');
+    const controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+    const params={};
+    addSliders(controls,[
+      {key:'wn',label:'ωₙ (rad/s)',min:0.8,max:4,step:0.1,value:2.0,fmt:v=>v.toFixed(1)},
+      {key:'zeta',label:'ζ damping',min:0.05,max:1.2,step:0.01,value:0.15,fmt:v=>v.toFixed(2)},
+      {key:'r',label:'drive ω / ωₙ',min:0.1,max:2.5,step:0.02,value:1.0,fmt:v=>v.toFixed(2)}
+    ],params,onChange);
+    let raf=null;
+    function driveW(){ return params.r*params.wn; }
+    function gain(){ return mag(params.wn,params.zeta,driveW()); }
+    function drawPic(t){
+      const {ctx,W,H}=fitCanvas(pic,0.72); ctx.clearRect(0,0,W,H);
+      const wallX=W*0.10, eqX=W*0.56, midY=H*0.46, bw=W*0.16, bh=H*0.34;
+      const G=gain(), wd=driveW();
+      const refPx=W*0.045;                       // input reference amplitude
+      const ampPx=Math.min(G,6)*refPx;           // mass amplitude (capped display)
+      const disp=ampPx*Math.sin(wd*t);
+      const bx=eqX+disp, blockLeft=bx-bw/2;
+      // wall
+      ctx.strokeStyle='#5E7686'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(wallX,midY-H*0.32); ctx.lineTo(wallX,midY+H*0.30); ctx.stroke();
+      // equilibrium
+      ctx.strokeStyle='#3A5464'; ctx.setLineDash([3,4]); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(eqX,midY-H*0.36); ctx.lineTo(eqX,midY+H*0.34); ctx.stroke(); ctx.setLineDash([]);
+      // input amplitude reference bracket (grey)
+      ctx.strokeStyle='#5E7686'; ctx.lineWidth=1; ctx.beginPath();
+      ctx.moveTo(eqX-refPx,midY-H*0.30); ctx.lineTo(eqX+refPx,midY-H*0.30); ctx.stroke();
+      ctx.fillStyle=COL.text; ctx.font='9px ui-monospace, monospace'; ctx.textAlign='center'; ctx.fillText('input', eqX, midY-H*0.32);
+      // spring + damper
+      ctx.strokeStyle=COL.out; ctx.lineWidth=2.3; drawSpring(ctx,wallX,blockLeft,midY-H*0.10,6,6);
+      ctx.strokeStyle=COL.in; ctx.lineWidth=2.3; ctx.beginPath(); ctx.moveTo(wallX,midY+H*0.10); ctx.lineTo(blockLeft,midY+H*0.10); ctx.stroke();
+      // block
+      const near = params.zeta<0.7 && Math.abs(params.r-1)<0.12;
+      ctx.fillStyle='#0E1B24'; ctx.strokeStyle=near?COL.red:COL.out; ctx.lineWidth=near?3:2;
+      ctx.beginPath(); const r=8, x=bx-bw/2,y=midY-bh/2,w=bw,h=bh;
+      ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle='#DCE7EC'; ctx.font='14px ui-monospace, monospace'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('m',bx,midY); ctx.textBaseline='alphabetic';
+      // drive force arrow (small, oscillating with drive)
+      const fArrow=refPx*1.4*Math.sin(wd*t);
+      ctx.strokeStyle=COL.in; ctx.fillStyle=COL.in; ctx.lineWidth=2;
+      if(Math.abs(fArrow)>2){ const sgn=Math.sign(fArrow), tip=bx+fArrow;
+        ctx.beginPath(); ctx.moveTo(bx,midY+bh*0.30); ctx.lineTo(tip,midY+bh*0.30); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(tip,midY+bh*0.30); ctx.lineTo(tip-7*sgn,midY+bh*0.30-4); ctx.lineTo(tip-7*sgn,midY+bh*0.30+4); ctx.closePath(); ctx.fill(); }
+      ctx.fillStyle=COL.text; ctx.font='9px ui-monospace, monospace'; ctx.textAlign='left'; ctx.fillText('drive F·sin(ωt)',8,H-8);
+      if(near){ ctx.fillStyle=COL.red; ctx.textAlign='right'; ctx.font='11px ui-monospace, monospace'; ctx.fillText('RESONANCE', W-10, 18); }
+    }
+    function drawCurve(){
+      const {ctx,W,H}=fitCanvas(plot,0.72); const pad={l:34,r:12,t:16,b:26}; ctx.clearRect(0,0,W,H);
+      const wmax=3*params.wn, G=gain();
+      const peakV = params.zeta<0.707? 1/(2*params.zeta*Math.sqrt(1-params.zeta*params.zeta)):1.05;
+      const ymax=Math.max(1.4, Math.min(6.5, peakV*1.15));
+      const gx=w=>pad.l+(w/wmax)*(W-pad.l-pad.r);
+      const gy=v=>(H-pad.b)-(Math.min(v,ymax)/ymax)*(H-pad.t-pad.b);
+      // axes + gain=1 ref
+      ctx.strokeStyle=COL.grid2; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(pad.l,pad.t); ctx.lineTo(pad.l,H-pad.b); ctx.lineTo(W-pad.r,H-pad.b); ctx.stroke();
+      ctx.strokeStyle=COL.axis; ctx.setLineDash([3,4]); ctx.beginPath(); ctx.moveTo(pad.l,gy(1)); ctx.lineTo(W-pad.r,gy(1)); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle=COL.text; ctx.font='9px ui-monospace, monospace'; ctx.textAlign='left'; ctx.fillText('gain=1', pad.l+3, gy(1)-3);
+      // ωn marker
+      const xwn=gx(params.wn); ctx.strokeStyle='rgba(155,208,255,0.5)'; ctx.setLineDash([2,3]); ctx.beginPath(); ctx.moveTo(xwn,pad.t); ctx.lineTo(xwn,H-pad.b); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle=COL.blue; ctx.textAlign='center'; ctx.fillText('ωₙ', xwn, H-pad.b+10);
+      // magnitude curve
+      ctx.strokeStyle=COL.out; ctx.lineWidth=2.4; ctx.beginPath();
+      for(let i=0;i<=240;i++){ const w=wmax*i/240, v=mag(params.wn,params.zeta,w); const X=gx(w),Y=gy(v); i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);} ctx.stroke();
+      // drive dot
+      const wd=driveW(); ctx.fillStyle=COL.in; ctx.beginPath(); ctx.arc(gx(wd),gy(G),5,0,7); ctx.fill();
+      ctx.strokeStyle=COL.in; ctx.lineWidth=1; ctx.setLineDash([2,3]); ctx.beginPath(); ctx.moveTo(gx(wd),gy(G)); ctx.lineTo(gx(wd),H-pad.b); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle=COL.text; ctx.textAlign='right'; ctx.textBaseline='alphabetic'; ctx.fillText('|G(jω)|', W-pad.r, pad.t+8);
+      ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillText('drive ω →',(pad.l+W-pad.r)/2,H-pad.b+18);
+    }
+    function onChange(){ drawCurve();
+      const G=gain(); const near=params.zeta<0.7 && Math.abs(params.r-1)<0.12;
+      setReadouts(ro,[
+        {label:'drive ω', value:driveW().toFixed(2)+' rad/s'},
+        {label:'amplitude gain', value:G.toFixed(2)+'×', hot:near},
+        {label:'peak Q≈1/2ζ', value:(1/(2*params.zeta)).toFixed(1)},
+        {label:'resonance', value: params.zeta<0.707?'yes (ζ<0.707)':'none (ζ≥0.707)'}
+      ]);
+    }
+    function frame(now){ drawPic(now/1000); drawCurve(); raf=requestAnimationFrame(frame); }
+    window.addEventListener('resize',onChange);
+    onChange();
+    if(REDUCED){ drawPic(0.25); } else { raf=requestAnimationFrame(frame); }
+  })();
+
+  // ---------------- Demo 2: Bode magnitude ----------------
+  (function buildBode(){
+    const root=document.querySelector('[data-demo=bode]'); if(!root) return;
+    const plot=root.querySelector('.plot');
+    const controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+    const params={};
+    addSliders(controls,[
+      {key:'wn',label:'ωₙ (rad/s)',min:0.5,max:5,step:0.1,value:2.0,fmt:v=>v.toFixed(1)},
+      {key:'zeta',label:'ζ damping',min:0.03,max:1.4,step:0.01,value:0.2,fmt:v=>v.toFixed(2)}
+    ],params,onChange);
+    function draw(){
+      const {ctx,W,H}=fitCanvas(plot,0.5); const pad={l:44,r:14,t:16,b:30}; ctx.clearRect(0,0,W,H);
+      const wn=params.wn, z=params.zeta;
+      const wlo=wn/10, whi=wn*10, l0=Math.log10(wlo), l1=Math.log10(whi);
+      const dbMin=-60, dbMax=30;
+      const gx=w=>pad.l+((Math.log10(w)-l0)/(l1-l0))*(W-pad.l-pad.r);
+      const gy=db=>(H-pad.b)-((db-dbMin)/(dbMax-dbMin))*(H-pad.t-pad.b);
+      // grid: decade lines + dB lines
+      ctx.font='9px ui-monospace, monospace'; ctx.fillStyle=COL.text;
+      for(let d=Math.ceil(l0); d<=Math.floor(l1); d++){ const w=Math.pow(10,d), X=gx(w);
+        ctx.strokeStyle=COL.grid2; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(X,pad.t); ctx.lineTo(X,H-pad.b); ctx.stroke();
+        ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillText('10^'+d, X, H-pad.b+6); }
+      for(let db=dbMax; db>=dbMin; db-=20){ const Y=gy(db);
+        ctx.strokeStyle=(db===0?COL.axis:COL.grid2); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(pad.l,Y); ctx.lineTo(W-pad.r,Y); ctx.stroke();
+        ctx.textAlign='right'; ctx.textBaseline='middle'; ctx.fillText(db+'dB', pad.l-5, Y); }
+      // ωn marker
+      const xwn=gx(wn); ctx.strokeStyle='rgba(155,208,255,0.5)'; ctx.setLineDash([2,3]); ctx.beginPath(); ctx.moveTo(xwn,pad.t); ctx.lineTo(xwn,H-pad.b); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle=COL.blue; ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillText('ωₙ', xwn, pad.t+2);
+      // -40 dB/decade asymptote beyond wn
+      ctx.strokeStyle='rgba(232,163,61,0.4)'; ctx.setLineDash([5,4]); ctx.lineWidth=1.4; ctx.beginPath();
+      ctx.moveTo(gx(wn),gy(0)); ctx.lineTo(gx(whi),gy(-40*(Math.log10(whi)-Math.log10(wn)))); ctx.stroke(); ctx.setLineDash([]);
+      // curve
+      ctx.strokeStyle=COL.out; ctx.lineWidth=2.6; ctx.beginPath();
+      let peakDb=-999, peakW=wlo;
+      for(let i=0;i<=300;i++){ const w=Math.pow(10, l0+(l1-l0)*i/300); const db=20*Math.log10(mag(wn,z,w));
+        if(db>peakDb){peakDb=db;peakW=w;} const X=gx(w),Y=gy(db); i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);} ctx.stroke();
+      // peak marker (if resonant)
+      if(z<0.707){ ctx.fillStyle=COL.red; ctx.beginPath(); ctx.arc(gx(peakW),gy(peakDb),4,0,7); ctx.fill();
+        ctx.textAlign='left'; ctx.textBaseline='bottom'; ctx.fillText('peak '+peakDb.toFixed(1)+'dB', gx(peakW)+6, gy(peakDb)-3); }
+      ctx.fillStyle=COL.text; ctx.font='10px ui-monospace, monospace'; ctx.textAlign='right'; ctx.textBaseline='top';
+      ctx.fillText('|G(jω)| (dB)', W-pad.r, pad.t+2);
+      ctx.textAlign='center'; ctx.fillText('frequency ω (log) →',(pad.l+W-pad.r)/2, H-6);
+    }
+    function onChange(){ draw();
+      const z=params.zeta, wn=params.wn, res=z<0.707;
+      const wr= res? wn*Math.sqrt(1-2*z*z):0;
+      const Mr= res? 1/(2*z*Math.sqrt(1-z*z)):1;
+      setReadouts(ro,[
+        {label:'resonance', value: res?'yes':'none (ζ≥0.707)'},
+        {label:'ωr', value: res? wr.toFixed(2)+' rad/s':'—'},
+        {label:'peak', value: res? (20*Math.log10(Mr)).toFixed(1)+' dB ('+Mr.toFixed(1)+'×)':'0 dB', hot:res&&z<0.2},
+        {label:'Q≈1/2ζ', value:(1/(2*z)).toFixed(1)}
+      ]);
+    }
+    window.addEventListener('resize',onChange);
+    onChange();
+  })();
+})();
+</script>
+</body>
+</html>

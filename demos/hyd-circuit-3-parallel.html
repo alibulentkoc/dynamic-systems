@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hydraulic Circuits · 3 · Cylinders in Parallel</title>
+<style>
+  :root{
+    --paper:#EEF2F5; --card:#FFFFFF; --ink:#17252E; --muted:#5E7686; --line:#D3DDE4; --line2:#E3EAEF;
+    --panel:#0E1B24; --grid2:#16262F; --axis:#3A5464;
+    --in:#E8A33D; --out:#22C3AE; --accent:#22C3AE; --accent-ink:#0A5B52; --blue:#9BD0FF; --red:#FF8FA3;
+    --mono: ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    --sans: system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box} html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.6;font-size:17px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:940px;margin:0 auto;padding:0 20px 120px}
+  header.hero{padding:64px 0 34px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono);font-size:.78rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+  h1{font-size:clamp(2rem,5vw,3.1rem);line-height:1.06;margin:0 0 18px;letter-spacing:-.02em;font-weight:750}
+  .lede{font-size:1.12rem;color:#33454f;max-width:62ch;margin:0}
+  h2{font-size:1.02rem;font-family:var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:52px 0 14px;font-weight:600}
+  h3{font-size:1.5rem;letter-spacing:-.01em;margin:6px 0 10px;font-weight:700}
+  p{margin:0 0 16px} em{font-style:normal;color:var(--accent-ink);font-weight:600}
+  .goal{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:0 14px 14px 0;padding:18px 22px;margin:20px 0}
+  .goal .lab{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-ink);display:block;margin-bottom:6px}
+  .eq{font-family:var(--mono);background:var(--panel);color:#DCE7EC;border-radius:12px;padding:18px 20px;margin:16px 0;overflow-x:auto;font-size:.98rem;line-height:2}
+  .eq .cmt{color:#6E8794} .eq .hl-in{color:var(--in)} .eq .hl-out{color:var(--out)} .eq .hl-k{color:#9BD0FF}
+  .plain-eq{font-family:var(--mono);font-size:1rem;color:var(--ink);background:#F6F9FB;border:1px solid var(--line2);border-radius:9px;padding:10px 14px;display:inline-block;margin:4px 0}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px}
+  .chip{font-family:var(--mono);font-size:.82rem;padding:6px 11px;border-radius:999px;background:#F0F5F8;border:1px solid var(--line);color:#3a4d57}
+  .demo{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:22px 0}
+  .demo>canvas{background:var(--panel);border-radius:10px;width:100%;height:auto;display:block}
+  .controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px 20px;margin:16px 4px 4px}
+  @media (max-width:640px){.controls{grid-template-columns:1fr}}
+  .ctrl{display:flex;flex-direction:column;gap:5px}
+  .ctrl .row{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:.86rem}
+  .ctrl .name{color:var(--ink)} .ctrl .val{color:var(--accent-ink);font-weight:600}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:5px;background:var(--line);border-radius:5px;outline:none;margin:6px 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.25);cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--accent);border:2px solid #fff;cursor:pointer}
+  .btnrow{display:flex;flex-wrap:wrap;gap:8px;margin:14px 4px 2px;align-items:center}
+  .btn{font-family:var(--mono);font-size:.78rem;color:var(--accent-ink);background:none;border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}
+  .btn:hover{background:#F0F5F8} .btn.on{background:var(--accent);color:#04302b;border-color:var(--accent)}
+  .readouts{display:flex;flex-wrap:wrap;gap:8px 10px;margin:14px 4px 2px;font-family:var(--mono);font-size:.82rem}
+  .ro{background:#F0F5F8;border:1px solid var(--line);border-radius:8px;padding:6px 10px;color:#3a4d57} .ro b{color:var(--accent-ink)}
+  .ro.good{background:#eafaf6;border-color:var(--accent)} .ro.good b{color:var(--accent-ink)}
+  .ro.warn{background:#fff2e0;border-color:var(--in)} .ro.warn b{color:#8a5a12}
+  .takeaways{background:var(--panel);color:#DCE7EC;border-radius:16px;padding:26px 28px;margin:40px 0}
+  .takeaways h3{color:#fff} .takeaways li{margin:9px 0} .takeaways b{color:var(--out)}
+  details{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:2px 16px;margin:10px 0}
+  details[open]{padding-bottom:12px}
+  summary{cursor:pointer;font-weight:600;padding:12px 0;list-style:none}
+  summary::-webkit-details-marker{display:none} summary::before{content:"▸ ";color:var(--accent-ink)} details[open] summary::before{content:"▾ "}
+  .qa{font-size:.97rem} .qa p{margin:8px 0}
+  ol.ex{padding-left:1.3em} ol.ex li{margin:8px 0}
+  footer{margin-top:60px;padding-top:20px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.8rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+  <p class="eyebrow">Foundations of Dynamic Systems · Hydraulic Circuits · 3</p>
+  <h1>Cylinders in Parallel</h1>
+  <p class="lede">Feed two cylinders from the <em>same</em> supply line and you'd expect them to move together.
+  They don't. Because a parallel connection shares one pressure, oil rushes to whichever cylinder is easiest to
+  move — the lighter load extends fully <em>first</em>, and only then does the heavier one budge. It's the most
+  famous gotcha in fluid power, and the reason flow dividers exist.</p>
+</header>
+
+<div class="goal"><span class="lab">The mission</span>
+  Put two cylinders across one pump line and discover the rule of a parallel circuit: <em>pressure is shared,
+  flow divides</em> — and unequal flow runs to the path of least resistance. Watch the light load win the race,
+  then add a flow divider and force them to synchronize.
+</div>
+
+<h2>Step 1 · One pressure, split flow</h2>
+<h3>Oil takes the easy path</h3>
+<p>In parallel, both cylinders' cap ports hang off the same node, so they see the <em>same</em> pressure. To move a
+cylinder against load F you need pressure P = F/A. The pump raises the line pressure until <em>some</em> cylinder can
+move — and that's the one with the <em>lightest</em> load, because it needs the least pressure. All the flow goes to
+it while the heavier one stays locked, waiting:</p>
+<div class="eq">
+  P<sub>needed</sub> = <span class="frac">F / A</span> &nbsp;→&nbsp; the <span class="hl-out">smallest F moves first</span>
+  &nbsp;&nbsp;&nbsp; then P rises to the next load, and so on
+  &nbsp;&nbsp;<span class="cmt">// shared pressure, flow to least resistance</span>
+</div>
+
+<h2>Step 2 · Race the cylinders</h2>
+<h3>Different loads → they sequence, not synchronize</h3>
+<p>Give the two cylinders different loads and start the flow. The lighter one shoots out first at full speed while the
+heavier one sits still; when the light one bottoms out, the pressure climbs and the heavy one finally moves. Now flip
+on the <em>flow divider</em> and watch them lock together — the divider forces an equal split regardless of load.</p>
+
+<div class="demo" data-demo="parallel">
+  <canvas class="pic"></canvas>
+  <div class="btnrow">
+    <button class="btn" data-div="off">no flow divider</button>
+    <button class="btn" data-div="on">flow divider ON</button>
+    <button class="btn" data-reset>reset</button>
+  </div>
+  <div class="controls"></div>
+  <div class="readouts"></div>
+</div>
+
+<p>Without the divider, the shared-pressure rule guarantees sequencing: only the cylinder whose load matches the
+current line pressure can move. With the divider, each branch is forced to take half the pump flow, so both extend at
+the same speed and the pressures in each branch are free to differ to match their own loads.</p>
+
+<h2>Step 3 · Series vs parallel, side by side</h2>
+<h3>The two ways to split a pump</h3>
+<p>These two circuits are mirror images, and knowing which is which is half of circuit design:</p>
+<div class="chips">
+  <span class="chip">SERIES: shared flow · speeds coupled · pressures add</span>
+  <span class="chip">PARALLEL: shared pressure · flow divides · least load moves first</span>
+  <span class="chip">sync a parallel pair → flow divider</span>
+  <span class="chip">sync a series pair → matched areas</span>
+</div>
+
+<div class="takeaways">
+  <h3>Key takeaways</h3>
+  <ul>
+    <li><b>Parallel cylinders share one pressure</b> and split the flow — the opposite of a series circuit.</li>
+    <li><b>The lightest load moves first.</b> Oil follows the path of least resistance, so an unloaded cylinder
+      extends fully before a loaded one begins — they sequence, they don't synchronize.</li>
+    <li><b>A flow divider forces an equal split</b>, making both cylinders move together regardless of their loads.</li>
+    <li><b>Line pressure tracks the moving cylinder's load</b>, rising step-by-step as each heavier cylinder takes its
+      turn.</li>
+    <li>Series adds pressures and couples speeds; parallel shares pressure and divides flow. Pick the one whose
+      coupling you want.</li>
+  </ul>
+</div>
+
+<h2>Investigate further</h2>
+<ol class="ex">
+  <li><b>Who moves first?</b> Two parallel cylinders (same bore) carry 6 kN and 18 kN. Which extends first, and what line
+    pressure is needed to start each?</li>
+  <li><b>Speed.</b> Without a divider, how fast does the moving cylinder go compared to the pump's rated cylinder speed?
+    With a 50/50 divider?</li>
+  <li><b>Fix it.</b> A machine needs two parallel cylinders to lift a platform evenly. Why will a plain parallel circuit
+    tip the platform, and what component fixes it?</li>
+  <li><b>Contrast.</b> In one sentence each, state what is shared and what divides in a series versus a parallel circuit.</li>
+</ol>
+<details><summary>Show discussion &amp; answers</summary>
+  <div class="qa">
+    <p><b>1.</b> The <b>6 kN</b> cylinder moves first. It needs P = F/A ≈ 6 000/19.63×10⁻⁴ ≈ <b>31 bar</b>; the 18 kN
+    cylinder needs ≈ <b>92 bar</b>. The pump only reaches 31 bar first, so the light one runs to its end before pressure
+    climbs to 92 bar and the heavy one starts.</p>
+    <p><b>2.</b> Without a divider the single moving cylinder gets <b>all</b> the flow, so it runs at the full v = Q/A. With
+    a 50/50 divider each gets Q/2, so both run at <b>half</b> that speed — but together.</p>
+    <p><b>3.</b> A plain parallel circuit lets the least-loaded corner move first, so the platform lifts unevenly and tips.
+    A <b>flow divider</b> (or two matched pumps, or a mechanical tie/rack) forces equal flow to each cylinder so they rise
+    together.</p>
+    <p><b>4.</b> <b>Series:</b> the cylinders share one flow stream (speeds are coupled) while pressures add. <b>Parallel:</b>
+    the cylinders share one pressure while the flow divides between them.</p>
+  </div>
+</details>
+
+<footer>Hydraulic Circuits 3 · self-contained, no external libraries or network · sequencing and division computed live.
+Next: on/off (bang-bang) control.</footer>
+</div>
+
+<script>
+"use strict";
+(function(){
+  const REDUCED=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const COL={in:'#E8A33D',out:'#22C3AE',grid2:'#16262F',axis:'#3A5464',text:'#7FA0AE',blue:'#9BD0FF',red:'#FF8FA3',steel:'#6E8794',ret:'#6E8794'};
+  const BORE=0.050, ROD=0.028, STROKE=0.24, Ac=Math.PI/4*BORE*BORE, Aa=Ac-Math.PI/4*ROD*ROD;
+  function el(t,c){const e=document.createElement(t);if(c)e.className=c;return e;}
+  function fit(cv,a){const dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1));const w=cv.clientWidth||cv.parentElement.clientWidth||300;const h=Math.round(w*a);cv.style.height=h+'px';cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);return{ctx:x,W:w,H:h};}
+  function sliders(cont,defs,p,cb){defs.forEach(d=>{p[d.key]=d.value;const c=el('div','ctrl'),r=el('div','row');const n=el('span','name');n.innerHTML=d.label;const v=el('span','val');const f=d.fmt||(x=>x.toFixed(2));v.textContent=f(d.value);r.appendChild(n);r.appendChild(v);const i=document.createElement('input');i.type='range';i.min=d.min;i.max=d.max;i.step=d.step;i.value=d.value;i.setAttribute('aria-label',d.label.replace(/<[^>]+>/g,''));i.addEventListener('input',()=>{p[d.key]=parseFloat(i.value);v.textContent=f(p[d.key]);cb&&cb();});c.appendChild(r);c.appendChild(i);cont.appendChild(c);});}
+  function reads(cont,items){cont.innerHTML='';items.forEach(r=>{const s=el('span','ro'+(r.cls?' '+r.cls:''));s.innerHTML=r.label+' <b>'+r.value+'</b>';cont.appendChild(s);});}
+  // draw a cylinder with SIDE ports at the EXTREME ends; the piston travels strictly
+  // BETWEEN the two ports and never covers them. Rod + load translate as oil enters.
+  // Returns port tips, current piston x, and the full-stroke piston x (fullX).
+  function drawCyl(ctx,x,y,w,h,frac,capSide,rodSide,label,moving){
+    const capPX=x+w*0.08, rodPX=x+w*0.92;        // ports right at the ends
+    const pistW=8, clr=7;
+    const leftStop=capPX+clr+pistW/2, rightStop=rodPX-clr-pistW/2;
+    const pistonX=leftStop+(rightStop-leftStop)*Math.max(0,Math.min(1,frac));
+    const rodH=h*0.30, rodY=y+h/2, travel=pistonX-leftStop, rodTip=x+w+14+travel;
+    // rod-side oil (piston -> rod-end wall)
+    ctx.fillStyle='rgba(155,208,255,0.16)';ctx.fillRect(pistonX+pistW/2,y+1,(x+w-1)-(pistonX+pistW/2),h-2);
+    // cap-side oil (cap wall -> piston)
+    ctx.fillStyle='rgba(232,163,61,0.30)';ctx.fillRect(x+1,y+1,(pistonX-pistW/2)-(x+1),h-2);
+    // barrel
+    ctx.strokeStyle=moving?COL.out:COL.steel;ctx.lineWidth=moving?2.9:2.6;ctx.strokeRect(x,y,w,h);
+    // piston
+    ctx.fillStyle='#8296a0';ctx.fillRect(pistonX-pistW/2,y+2,pistW,h-4);
+    // rod out through rod-end wall to load
+    ctx.fillRect(pistonX,rodY-rodH/2,rodTip-pistonX,rodH);
+    // load (translates with rod)
+    const lw=w*0.26,lh=h*1.55;
+    ctx.fillStyle='#0E1B24';ctx.strokeStyle=moving?COL.out:COL.steel;ctx.lineWidth=2.4;
+    ctx.fillRect(rodTip,rodY-lh/2,lw,lh);ctx.strokeRect(rodTip,rodY-lh/2,lw,lh);
+    ctx.fillStyle=COL.text;ctx.font='10px ui-monospace,monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('load',rodTip+lw/2,rodY);ctx.textBaseline='alphabetic';
+    // side ports at the extreme ends (piston never reaches them)
+    const stub=h*0.55;
+    function port(px,side,col,name){const ey=side==='top'?y:y+h,ty=side==='top'?y-stub:y+h+stub;
+      ctx.strokeStyle=COL.steel;ctx.lineWidth=3.2;ctx.beginPath();ctx.moveTo(px,ey);ctx.lineTo(px,ty);ctx.stroke();
+      ctx.fillStyle=col;ctx.beginPath();ctx.arc(px,ty,3,0,7);ctx.fill();
+      ctx.font='8px ui-monospace,monospace';ctx.textAlign='center';ctx.fillText(name,px,side==='top'?ty-5:ty+11);return {x:px,y:ty};}
+    const cap=port(capPX,capSide,'#E8A33D','cap'), rod=port(rodPX,rodSide,'#9BD0FF','rod');
+    ctx.fillStyle=COL.text;ctx.font='10px ui-monospace,monospace';ctx.textAlign='left';ctx.fillText(label,x,y+h+stub+22);
+    return {cap,rod,pistonX,leftStop,rightStop,rodTip,y,h};
+  }
+  function pipe(ctx,pts,active,phase,color){
+    ctx.strokeStyle=active?(color||COL.in):'#2b3d47';ctx.lineWidth=active?3:2.4;
+    ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.stroke();
+    if(active){ctx.fillStyle=color||COL.in;let segs=[],tot=0;
+      for(let i=0;i<pts.length-1;i++){const a=pts[i],b=pts[i+1];const L=Math.hypot(b[0]-a[0],b[1]-a[1]);segs.push({a,b,L});tot+=L;}
+      const n=Math.max(2,Math.floor(tot/26));
+      for(let k=0;k<n;k++){let d=(phase*46+k*tot/n)%tot;for(const s of segs){if(d<=s.L){const t=d/s.L,mx=s.a[0]+(s.b[0]-s.a[0])*t,my=s.a[1]+(s.b[1]-s.a[1])*t,ux=(s.b[0]-s.a[0])/s.L,uy=(s.b[1]-s.a[1])/s.L;ctx.beginPath();ctx.moveTo(mx+ux*4,my+uy*4);ctx.lineTo(mx-ux*3+uy*3,my-uy*3-ux*3);ctx.lineTo(mx-ux*3-uy*3,my-uy*3+ux*3);ctx.closePath();ctx.fill();break;}d-=s.L;}}}
+  }
+  function pump(ctx,x,y,r){ctx.strokeStyle=COL.steel;ctx.lineWidth=2.4;ctx.fillStyle='#0E1B24';ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();ctx.stroke();ctx.fillStyle=COL.out;ctx.beginPath();ctx.moveTo(x-r*0.4,y-r*0.5);ctx.lineTo(x+r*0.6,y);ctx.lineTo(x-r*0.4,y+r*0.5);ctx.closePath();ctx.fill();ctx.fillStyle=COL.text;ctx.font='9px ui-monospace,monospace';ctx.textAlign='center';ctx.fillText('pump',x,y+r+11);}
+  function tank(ctx,x,y){ctx.strokeStyle=COL.steel;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x-12,y-8);ctx.lineTo(x-12,y+8);ctx.lineTo(x+12,y+8);ctx.lineTo(x+12,y-8);ctx.stroke();ctx.fillStyle=COL.text;ctx.font='9px ui-monospace,monospace';ctx.textAlign='center';ctx.fillText('tank',x,y+20);}
+
+  const root=document.querySelector('[data-demo=parallel]'); if(!root) return;
+  const pic=root.querySelector('.pic'), controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+  const p={}; let divider=false, xA=0.02, xB=0.02, raf=null, last=null, phase=0;
+  sliders(controls,[
+    {key:'Q',label:'pump flow (L/min)',min:4,max:36,step:1,value:20,fmt:v=>v.toFixed(0)},
+    {key:'FA',label:'load A (kN)',min:1,max:24,step:1,value:6,fmt:v=>v.toFixed(0)},
+    {key:'FB',label:'load B (kN)',min:1,max:24,step:1,value:18,fmt:v=>v.toFixed(0)}
+  ],p,null);
+  const offBtn=root.querySelector('[data-div=off]'), onBtn=root.querySelector('[data-div=on]'); offBtn.classList.add('on');
+  offBtn.addEventListener('click',()=>{divider=false;offBtn.classList.add('on');onBtn.classList.remove('on');});
+  onBtn.addEventListener('click',()=>{divider=true;onBtn.classList.add('on');offBtn.classList.remove('on');});
+  root.querySelector('[data-reset]').addEventListener('click',()=>{xA=0.02;xB=0.02;});
+  function draw(now){
+    const {ctx,W,H}=fit(pic,0.82); let dt=last?Math.min(0.05,(now-last)/1000):0.016; last=now; phase+=dt;
+    const Q=p.Q/60000, PA=(p.FA*1000)/Ac, PB=(p.FB*1000)/Ac;
+    let vA=0,vB=0,Pline=0; const aDone=xA>=STROKE-1e-4,bDone=xB>=STROKE-1e-4;
+    if(divider){const q=Q/2;if(!aDone)vA=q/Ac;if(!bDone)vB=q/Ac;Pline=Math.max(PA,PB);}
+    else{const c=[];if(!aDone)c.push(['A',PA]);if(!bDone)c.push(['B',PB]);if(c.length){c.sort((x,y)=>x[1]-y[1]);Pline=c[0][1];if(c[0][0]==='A')vA=Q/Ac;else vB=Q/Ac;}}
+    if(!aDone)xA=Math.min(STROKE,xA+vA*dt); if(!bDone)xB=Math.min(STROKE,xB+vB*dt);
+    ctx.clearRect(0,0,W,H);
+    const bw=W*0.30,bh=H*0.14, cx=W*0.24, c1y=H*0.13, c2y=H*0.55;
+    const gA=drawCyl(ctx,cx,c1y,bw,bh,xA/STROKE,'top','top','cylinder A \u00b7 '+p.FA+' kN'+(aDone?' (end)':''),vA>0);
+    const gB=drawCyl(ctx,cx,c2y,bw,bh,xB/STROKE,'top','top','cylinder B \u00b7 '+p.FB+' kN'+(bDone?' (end)':''),vB>0);
+    const busX=W*0.10, pumpX=W*0.05, pumpY=(gA.cap.y+gB.cap.y)/2; pump(ctx,pumpX,pumpY,H*0.05);
+    pipe(ctx,[[pumpX+H*0.05,pumpY],[busX,pumpY]],(vA>0||vB>0),phase,COL.in);
+    pipe(ctx,[[busX,gA.cap.y],[busX,gB.cap.y]],(vA>0||vB>0),phase,COL.in);
+    if(divider){ctx.strokeStyle=COL.out;ctx.lineWidth=2;ctx.strokeRect(busX-7,pumpY-10,14,20);ctx.fillStyle=COL.out;ctx.font='8px ui-monospace,monospace';ctx.textAlign='center';ctx.fillText('\u00f7',busX,pumpY+3);}
+    pipe(ctx,[[busX,gA.cap.y],[gA.cap.x,gA.cap.y]],vA>0,phase,COL.in);
+    pipe(ctx,[[busX,gB.cap.y],[gB.cap.x,gB.cap.y]],vB>0,phase,COL.in);
+    const rbusX=W*0.93, tankY=H*0.94;
+    pipe(ctx,[[gA.rod.x,gA.rod.y],[rbusX,gA.rod.y]],vA>0,phase,COL.ret);
+    pipe(ctx,[[gB.rod.x,gB.rod.y],[rbusX,gB.rod.y]],vB>0,phase,COL.ret);
+    pipe(ctx,[[rbusX,gA.rod.y],[rbusX,tankY],[W*0.80,tankY]],(vA>0||vB>0),phase,COL.ret);
+    tank(ctx,W*0.80,tankY);
+    ctx.fillStyle=COL.text;ctx.font='10px ui-monospace,monospace';ctx.textAlign='right';
+    ctx.fillText(divider?'flow divider ON \u2192 synchronized':'no divider \u2192 light load moves first',W-8,12);
+    reads(ro,[
+      {label:'line pressure',value:(Pline/1e5).toFixed(0)+' bar'},
+      {label:'A speed',value:(vA*1000).toFixed(0)+' mm/s',cls:vA>0?'good':''},
+      {label:'B speed',value:(vB*1000).toFixed(0)+' mm/s',cls:vB>0?'good':''},
+      {label:'mode',value:divider?'divided 50/50':'sequencing',cls:divider?'good':'warn'}
+    ]);
+    raf=requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',()=>{if(REDUCED)fit(pic,0.82);});
+  if(REDUCED){last=performance.now();draw(performance.now());cancelAnimationFrame(raf);} else raf=requestAnimationFrame(draw);
+})();
+
+</script>
+</body>
+</html>

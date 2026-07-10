@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orders of Dynamic Systems — 0th, 1st, 2nd, 3rd</title>
+<style>
+  :root{
+    --paper:#EEF2F5; --card:#FFFFFF; --ink:#17252E; --muted:#5E7686;
+    --line:#D3DDE4; --line2:#E3EAEF;
+    --panel:#0E1B24; --grid:#1E3240; --grid2:#16262F;
+    --in:#E8A33D;  /* amber input trace */
+    --out:#22C3AE; /* teal output trace */
+    --accent:#22C3AE; --accent-ink:#0A5B52;
+    --warn:#E8A33D;
+    --mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--sans); line-height:1.6; font-size:17px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:940px; margin:0 auto; padding:0 20px 120px}
+  a{color:var(--accent-ink)}
+
+  /* ---------- header ---------- */
+  header.hero{padding:64px 0 34px; border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono); font-size:.78rem; letter-spacing:.22em;
+    text-transform:uppercase; color:var(--muted); margin:0 0 14px}
+  h1{font-size:clamp(2.1rem,5.4vw,3.3rem); line-height:1.04; margin:0 0 18px;
+    letter-spacing:-.02em; font-weight:750}
+  .lede{font-size:1.12rem; color:#33454f; max-width:60ch; margin:0}
+
+  /* ---------- big idea ---------- */
+  h2{font-size:1.02rem; font-family:var(--mono); letter-spacing:.04em;
+    text-transform:uppercase; color:var(--muted); margin:52px 0 14px; font-weight:600}
+  h3{font-size:1.5rem; letter-spacing:-.01em; margin:6px 0 10px; font-weight:700}
+  p{margin:0 0 16px}
+  .idea{background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:22px 24px; margin:18px 0}
+  .idea strong{color:var(--accent-ink)}
+  .three-defs{display:grid; grid-template-columns:1fr; gap:10px; margin:14px 0 0;
+    font-family:var(--mono); font-size:.92rem}
+  .three-defs div{padding:11px 14px; background:#F6F9FB; border:1px solid var(--line2);
+    border-radius:9px}
+  .three-defs b{color:var(--accent-ink)}
+
+  /* tank svg */
+  .tanks{width:100%; height:auto; display:block; margin:8px 0 2px}
+  .tanks text{font-family:var(--mono); fill:var(--muted); font-size:12px}
+
+  /* ---------- order sections ---------- */
+  .order{margin:66px 0 0; scroll-margin-top:20px}
+  .order-head{display:flex; align-items:baseline; gap:18px; border-top:2px solid var(--ink);
+    padding-top:14px}
+  .onum{font-family:var(--mono); font-weight:700; font-size:clamp(2.6rem,9vw,4.2rem);
+    line-height:.8; letter-spacing:-.04em; color:var(--ink)}
+  .otag{font-family:var(--mono); font-size:.74rem; letter-spacing:.16em;
+    text-transform:uppercase; color:var(--muted)}
+  .order-head h3{margin:0}
+
+  /* equation block */
+  .eq{font-family:var(--mono); background:var(--panel); color:#DCE7EC;
+    border-radius:12px; padding:18px 20px; margin:16px 0; overflow-x:auto;
+    font-size:1.02rem; line-height:2}
+  .eq .cmt{color:#6E8794}
+  .eq .hl-in{color:var(--in)} .eq .hl-out{color:var(--out)} .eq .hl-k{color:#9BD0FF}
+  .frac{display:inline-flex; flex-direction:column; text-align:center;
+    vertical-align:middle; margin:0 .28em; line-height:1.05}
+  .frac .num{border-bottom:1.5px solid currentColor; padding:0 .35em}
+  .frac .den{padding:2px .35em 0}
+  .plain-eq{font-family:var(--mono); font-size:1rem; color:var(--ink);
+    background:#F6F9FB; border:1px solid var(--line2); border-radius:9px;
+    padding:10px 14px; display:inline-block; margin:4px 0}
+
+  /* examples chips */
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 4px}
+  .chip{font-family:var(--mono); font-size:.82rem; padding:6px 11px; border-radius:999px;
+    background:#F0F5F8; border:1px solid var(--line); color:#3a4d57}
+
+  /* physical demo callout */
+  .phys{border-left:3px solid var(--accent); background:#F3FBF9;
+    padding:14px 18px; border-radius:0 10px 10px 0; margin:18px 0; font-size:.98rem}
+  .phys .lab{font-family:var(--mono); font-size:.72rem; letter-spacing:.16em;
+    text-transform:uppercase; color:var(--accent-ink); display:block; margin-bottom:6px}
+
+  /* ---------- physical bench demo ---------- */
+  .bench{border:1px solid var(--line); border-left:3px solid var(--accent);
+    background:var(--card); border-radius:0 16px 16px 0; padding:18px 18px 16px; margin:22px 0}
+  .bench .lab{font-family:var(--mono); font-size:.72rem; letter-spacing:.16em;
+    text-transform:uppercase; color:var(--accent-ink); display:block; margin-bottom:8px}
+  .bench p{font-size:.97rem; margin:0 0 14px}
+  .stage{display:grid; grid-template-columns:1.05fr .95fr; gap:14px}
+  @media (max-width:600px){ .stage{grid-template-columns:1fr} }
+  .stage canvas{background:var(--panel); border-radius:10px; width:100%; height:auto}
+  .note{font-family:var(--mono); font-size:.78rem; color:var(--muted); margin:12px 4px 0}
+
+  /* ---------- demo widget ---------- */
+  .demo{background:var(--card); border:1px solid var(--line); border-radius:16px;
+    padding:16px; margin:20px 0; box-shadow:0 1px 0 rgba(20,40,55,.03)}
+  .scopewrap{position:relative; background:var(--panel); border-radius:10px; overflow:hidden}
+  canvas{display:block; width:100%; height:auto}
+  .controls{display:grid; grid-template-columns:1fr 1fr; gap:12px 22px; margin:16px 4px 4px}
+  @media (max-width:560px){ .controls{grid-template-columns:1fr} }
+  .ctrl{display:flex; flex-direction:column; gap:5px}
+  .ctrl .row{display:flex; justify-content:space-between; align-items:baseline;
+    font-family:var(--mono); font-size:.86rem}
+  .ctrl .name{color:var(--ink)} .ctrl .val{color:var(--accent-ink); font-weight:600}
+  input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:5px;
+    background:var(--line); border-radius:5px; outline:none; margin:6px 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none;
+    width:18px; height:18px; border-radius:50%; background:var(--accent);
+    border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,.25); cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%;
+    background:var(--accent); border:2px solid #fff; cursor:pointer}
+  input[type=range]:focus-visible{box-shadow:0 0 0 3px rgba(34,195,174,.35)}
+  .readouts{display:flex; flex-wrap:wrap; gap:8px 10px; margin:14px 4px 2px;
+    font-family:var(--mono); font-size:.82rem}
+  .ro{background:#F0F5F8; border:1px solid var(--line); border-radius:8px;
+    padding:6px 10px; color:#3a4d57}
+  .ro b{color:var(--accent-ink)}
+  .replay{font-family:var(--mono); font-size:.78rem; color:var(--accent-ink);
+    background:none; border:1px solid var(--line); border-radius:8px; padding:6px 12px;
+    cursor:pointer; margin-top:12px}
+  .replay:hover{background:#F0F5F8}
+
+  /* summary table */
+  table{width:100%; border-collapse:collapse; margin:18px 0; font-size:.92rem}
+  th,td{text-align:left; padding:11px 12px; border-bottom:1px solid var(--line)}
+  th{font-family:var(--mono); font-size:.74rem; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--muted); font-weight:600}
+  td:first-child{font-family:var(--mono); font-weight:700; color:var(--accent-ink)}
+  .takeaways{background:var(--panel); color:#DCE7EC; border-radius:16px; padding:26px 28px;
+    margin:40px 0}
+  .takeaways h3{color:#fff}
+  .takeaways li{margin:9px 0}
+  .takeaways b{color:var(--out)}
+  footer{margin-top:60px; padding-top:20px; border-top:1px solid var(--line);
+    font-family:var(--mono); font-size:.8rem; color:var(--muted)}
+
+  details{background:#FFFFFF;border:1px solid #D3DDE4;border-radius:11px;padding:2px 16px;margin:10px 0}
+  details[open]{padding-bottom:12px}
+  summary{cursor:pointer;font-weight:600;padding:12px 0;list-style:none}
+  summary::-webkit-details-marker{display:none} summary::before{content:"\25B8 ";color:#0A5B52} details[open] summary::before{content:"\25BE "}
+  .qa{font-size:.97rem} .qa p{margin:8px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <p class="eyebrow">Foundations of Dynamic Systems · Interactive Lesson</p>
+  <h1>Orders of a System</h1>
+  <p class="lede">Zeroth, first, second, third. The “order” of a system is one of the most
+  useful numbers in all of engineering — it tells you, before you solve anything, how the
+  thing will respond to a push. Here we build that intuition one order at a time, with live
+  traces you can drive yourself.</p>
+</header>
+
+<h2>The one idea to hold onto</h2>
+<h3>Order = how many things store energy</h3>
+<p>Every dynamic system responds the way it does because it can <em>store energy</em> and
+release it over time. Count the independent energy-storage elements and you have the order.
+That single count shows up three equivalent ways:</p>
+
+<div class="idea">
+  <div class="three-defs">
+    <div><b>Physics view —</b> the number of independent <b>energy stores</b> (a moving mass,
+      a compressed spring, a charged capacitor, oil under pressure, water in a tank).</div>
+    <div><b>Math view —</b> the order of the <b>highest derivative</b> in the system’s
+      differential equation.</div>
+    <div><b>Systems view —</b> the number of <b>poles</b> in the transfer function
+      (we meet poles properly in a later lesson — here just note the count matches).</div>
+  </div>
+</div>
+
+<p>Our physical anchor for the whole lesson is a stack of <strong>water tanks</strong>, each
+draining into the next. One tank stores water one way, so it’s first order. Add tanks and you
+add stores — and add order. It’s the cleanest picture of what “order” means, and it happens to
+be pure fluid power.</p>
+
+<svg class="tanks" viewBox="0 0 620 150" role="img" aria-label="One, two, and three tanks in cascade">
+  <!-- 1 tank -->
+  <g transform="translate(20,20)">
+    <rect x="0" y="30" width="60" height="70" fill="none" stroke="#5E7686" stroke-width="2"/>
+    <rect x="0" y="70" width="60" height="30" fill="#22C3AE" opacity=".35"/>
+    <line x1="30" y1="0" x2="30" y2="30" stroke="#E8A33D" stroke-width="3"/>
+    <line x1="60" y1="90" x2="90" y2="90" stroke="#5E7686" stroke-width="2"/>
+    <text x="30" y="125" text-anchor="middle">1 tank</text>
+    <text x="30" y="140" text-anchor="middle">1st order</text>
+  </g>
+  <!-- 2 tanks -->
+  <g transform="translate(230,20)">
+    <rect x="0" y="30" width="52" height="70" fill="none" stroke="#5E7686" stroke-width="2"/>
+    <rect x="0" y="72" width="52" height="28" fill="#22C3AE" opacity=".35"/>
+    <line x1="26" y1="0" x2="26" y2="30" stroke="#E8A33D" stroke-width="3"/>
+    <line x1="52" y1="90" x2="72" y2="90" stroke="#5E7686" stroke-width="2"/>
+    <rect x="72" y="42" width="52" height="70" fill="none" stroke="#5E7686" stroke-width="2"/>
+    <rect x="72" y="86" width="52" height="26" fill="#22C3AE" opacity=".35"/>
+    <line x1="124" y1="102" x2="144" y2="102" stroke="#5E7686" stroke-width="2"/>
+    <text x="62" y="132" text-anchor="middle">2 tanks · 2nd order</text>
+  </g>
+  <!-- 3 tanks -->
+  <g transform="translate(430,20)">
+    <rect x="0" y="20" width="42" height="60" fill="none" stroke="#5E7686" stroke-width="2"/>
+    <rect x="0" y="58" width="42" height="22" fill="#22C3AE" opacity=".35"/>
+    <line x1="21" y1="0" x2="21" y2="20" stroke="#E8A33D" stroke-width="3"/>
+    <line x1="42" y1="72" x2="58" y2="72" stroke="#5E7686" stroke-width="2"/>
+    <rect x="58" y="34" width="42" height="60" fill="none" stroke="#5E7686" stroke-width="2"/>
+    <rect x="58" y="70" width="42" height="24" fill="#22C3AE" opacity=".35"/>
+    <line x1="100" y1="86" x2="116" y2="86" stroke="#5E7686" stroke-width="2"/>
+    <rect x="116" y="48" width="42" height="60" fill="none" stroke="#5E7686" stroke-width="2"/>
+    <rect x="116" y="84" width="42" height="24" fill="#22C3AE" opacity=".35"/>
+    <line x1="158" y1="100" x2="174" y2="100" stroke="#5E7686" stroke-width="2"/>
+    <text x="85" y="128" text-anchor="middle">3 tanks · 3rd order</text>
+  </g>
+</svg>
+<p style="font-family:var(--mono); font-size:.82rem; color:var(--muted)">Amber = inflow you
+command · teal = water stored · the level of the last tank is what you measure.</p>
+
+<!-- ============ ORDER 0 ============ -->
+<section class="order" id="order0">
+  <div class="order-head">
+    <span class="onum">0</span>
+    <div>
+      <span class="otag">Zeroth order · algebraic</span>
+      <h3>No memory at all</h3>
+    </div>
+  </div>
+  <p>A zeroth-order system has <em>no</em> energy storage, so it has nothing to remember. The
+  output is just the input scaled by a constant, <em>instantly</em>. Change the input and the
+  output changes in the same breath — no lag, no settling, no overshoot.</p>
+
+  <div class="eq">
+    <span class="hl-out">y(t)</span> = <span class="hl-k">K</span> · <span class="hl-in">u(t)</span>
+    &nbsp;&nbsp;<span class="cmt">// output = gain × input, right now</span>
+  </div>
+  <p>Every symbol: <span class="plain-eq"><b>u</b> = input you apply</span>
+  <span class="plain-eq"><b>y</b> = output you measure</span>
+  <span class="plain-eq"><b>K</b> = the gain (how much output per unit input)</span>. Turn
+  <b>K</b> up and the output step gets taller; that is the <em>only</em> thing that can change,
+  because there is no time behavior to shape.</p>
+
+  <div class="chips">
+    <span class="chip">Resistor · V = I·R</span>
+    <span class="chip">Lever &amp; gear ratio</span>
+    <span class="chip">Potentiometer</span>
+    <span class="chip">Ideal amplifier gain</span>
+    <span class="chip">Stiff spring · F = k·x</span>
+  </div>
+
+  <div class="demo" data-demo="order0">
+    <div class="scopewrap"><canvas></canvas></div>
+    <div class="controls"></div>
+    <div class="readouts"></div>
+    <button class="replay">▷ replay sweep</button>
+  </div>
+
+  <div class="bench" data-bench="lever">
+    <span class="lab">Bench experiment · the lever</span>
+    <p>A ruler on the table edge is a lever — a pure zeroth-order machine. Push the free end
+    down and the other end lifts <em>at the same instant</em>, by the input times the lever
+    ratio. Drag the push distance and the ratio: the output moves in perfect lock-step, no
+    lag ever. The right panel plots output vs input — always a straight line through the
+    dot, because <b>y = K·u</b> with nothing in between.</p>
+    <div class="stage">
+      <canvas class="pic"></canvas>
+      <canvas class="plot"></canvas>
+    </div>
+    <div class="controls"></div>
+    <div class="readouts"></div>
+    <p class="note">Try it at home: press a ruler's overhang down 1 cm — the far end jumps up
+    instantly. That instant, memory-free response <em>is</em> zeroth order.</p>
+  </div>
+</section>
+
+<!-- ============ ORDER 1 ============ -->
+<section class="order" id="order1">
+  <div class="order-head">
+    <span class="onum">1</span>
+    <div>
+      <span class="otag">First order · one energy store</span>
+      <h3>The exponential approach</h3>
+    </div>
+  </div>
+  <p>Give the system one place to store energy — one tank of water, one capacitor, the thermal
+  mass of a cup of coffee — and it can no longer jump. It <em>chases</em> the target, fast at
+  first (big gap) then easing in. The result is the famous exponential rise.</p>
+
+  <div class="eq">
+    <span class="hl-k">τ</span> <span class="frac"><span class="num">d<span class="hl-out">y</span></span><span class="den">dt</span></span>
+    + <span class="hl-out">y</span> = <span class="hl-k">K</span> <span class="hl-in">u</span>
+    &nbsp;&nbsp;<span class="cmt">// step response:</span>
+    &nbsp; <span class="hl-out">y(t)</span> = <span class="hl-k">K</span>(1 − e<sup>−t/τ</sup>)
+  </div>
+  <p>The new symbol is <span class="plain-eq"><b>τ</b> = the time constant (seconds)</span> — the
+  single number that sets the pace. After one <b>τ</b> the output has covered <b>63%</b> of the
+  way; after about <b>5τ</b> it is essentially there. Bigger <b>τ</b> → slower, more sluggish
+  system. Drag it below and watch the curve stretch or snap.</p>
+
+  <div class="demo" data-demo="order1">
+    <div class="scopewrap"><canvas></canvas></div>
+    <div class="controls"></div>
+    <div class="readouts"></div>
+    <button class="replay">▷ replay sweep</button>
+  </div>
+
+  <div class="chips">
+    <span class="chip">RC circuit charging</span>
+    <span class="chip">Coffee cooling</span>
+    <span class="chip">Filling one tank</span>
+    <span class="chip">Low-pass filter</span>
+    <span class="chip">Car reaching top speed</span>
+  </div>
+
+  <div class="bench" data-bench="bottle">
+    <span class="lab">Bench experiment · the draining bottle</span>
+    <p>Poke a hole near the bottom of a bottle and the water level falls fast when full (lots
+    of pressure) and slows as it empties — a first-order exponential. Widen the hole and it
+    drains quicker; use a fatter bottle and it drains slower. Both change the same thing: the
+    <b>time constant τ</b>. Watch the level drop and the curve on the right rebuild itself.</p>
+    <div class="stage">
+      <canvas class="pic"></canvas>
+      <canvas class="plot"></canvas>
+    </div>
+    <div class="controls"></div>
+    <div class="readouts"></div>
+    <p class="note">Idealized as a linear tank, so the drop is a clean exponential and
+    τ = (tank area)×(flow resistance). A real sharp-edged hole follows Torricelli (∝√h) and
+    empties in a finite time; a thin tube gives the textbook exponential shown here.</p>
+  </div>
+</section>
+
+<!-- ============ ORDER 2 ============ -->
+<section class="order" id="order2">
+  <div class="order-head">
+    <span class="onum">2</span>
+    <div>
+      <span class="otag">Second order · two energy stores</span>
+      <h3>Where oscillation is born</h3>
+    </div>
+  </div>
+  <p>Two energy stores that can <em>trade</em> energy back and forth — a mass (kinetic) and a
+  spring (potential) — and suddenly the system can <strong>overshoot and ring</strong>. This is
+  the most important order in engineering: suspensions, circuits, structures, and the closed
+  loop of almost every controller behave second-order.</p>
+
+  <div class="eq">
+    <span class="frac"><span class="num">1</span><span class="den">ω<sub>n</sub><sup>2</sup></span></span>
+    <span class="frac"><span class="num">d²<span class="hl-out">y</span></span><span class="den">dt²</span></span>
+    + <span class="frac"><span class="num">2ζ</span><span class="den">ω<sub>n</sub></span></span>
+    <span class="frac"><span class="num">d<span class="hl-out">y</span></span><span class="den">dt</span></span>
+    + <span class="hl-out">y</span> = <span class="hl-k">K</span> <span class="hl-in">u</span>
+  </div>
+  <p>Two new symbols do all the work:
+  <span class="plain-eq"><b>ω<sub>n</sub></b> = natural frequency — how <em>fast</em> it wants
+  to oscillate</span>
+  <span class="plain-eq"><b>ζ</b> (zeta) = damping ratio — how <em>much</em> the oscillation
+  is bled away</span>. Watch what <b>ζ</b> does:</p>
+  <div class="chips">
+    <span class="chip">ζ = 0 — undamped, rings forever</span>
+    <span class="chip">0 &lt; ζ &lt; 1 — underdamped, overshoots then settles</span>
+    <span class="chip">ζ = 1 — critically damped, fastest with no overshoot</span>
+    <span class="chip">ζ &gt; 1 — overdamped, sluggish like two first-orders</span>
+  </div>
+
+  <div class="demo" data-demo="order2">
+    <div class="scopewrap"><canvas></canvas></div>
+    <div class="controls"></div>
+    <div class="readouts"></div>
+    <button class="replay">▷ replay sweep</button>
+  </div>
+
+  <div class="chips">
+    <span class="chip">Mass–spring–damper</span>
+    <span class="chip">Car suspension</span>
+    <span class="chip">RLC circuit</span>
+    <span class="chip">Pendulum (small swing)</span>
+    <span class="chip">Two tanks in series</span>
+  </div>
+
+  <div class="bench" data-bench="cantilever">
+    <span class="lab">Bench experiment · the twanging ruler</span>
+    <p>Clamp a ruler to the desk, overhang most of it, and twang the free end. It vibrates at
+    a set pitch and the vibration dies away — a textbook second-order impulse response. Slide
+    it out to overhang more and the pitch <em>drops fast</em> (natural frequency falls as
+    1/length²). Add damping and the ringing fades sooner. The beam is shown in slow motion so
+    you can see the cycles; the right panel plots the true tip motion.</p>
+    <div class="stage">
+      <canvas class="pic"></canvas>
+      <canvas class="plot"></canvas>
+    </div>
+    <div class="controls"></div>
+    <div class="readouts"></div>
+    <p class="note">A twanged ruler is a cantilever beam: ωₙ ∝ √(stiffness/mass) and, for a
+    fixed ruler, that works out to ωₙ ∝ 1/length². Doubling the overhang quarters the pitch.</p>
+  </div>
+</section>
+
+<!-- ============ ORDER 3 ============ -->
+<section class="order" id="order3">
+  <div class="order-head">
+    <span class="onum">3</span>
+    <div>
+      <span class="otag">Third order · three energy stores</span>
+      <h3>Delay stacked on oscillation</h3>
+    </div>
+  </div>
+  <p>Add a third store — often an <em>actuator</em> that can’t respond instantly (a valve
+  spool, a motor’s inductance, a third tank) — and its lag piles on top of the second-order
+  behavior. The response now starts <strong>slowly</strong> (an S-shaped toe) before it rings.
+  This is the honest model of a real machine, where the thing doing the pushing has dynamics too.</p>
+
+  <div class="eq">
+    <span class="hl-out">Y</span> = 
+    <span class="frac"><span class="num"><span class="hl-k">K</span> ω<sub>n</sub><sup>2</sup></span><span class="den">s² + 2ζω<sub>n</sub>s + ω<sub>n</sub><sup>2</sup></span></span>
+    ·
+    <span class="frac"><span class="num">1</span><span class="den">τ<sub>a</sub> s + 1</span></span>
+    <span class="hl-in">U</span>
+    &nbsp;&nbsp;<span class="cmt">// 2nd-order plant × actuator lag</span>
+  </div>
+  <p>Same <b>ω<sub>n</sub></b> and <b>ζ</b> as before, plus one more:
+  <span class="plain-eq"><b>τ<sub>a</sub></b> = actuator time constant — how slow the “pusher”
+  is</span>. Turn <b>τ<sub>a</sub></b> up and notice the output no longer leaves the gate
+  immediately: there’s a soft toe at the start. That built-in delay is exactly what makes
+  third-order systems harder to control.</p>
+
+  <div class="demo" data-demo="order3">
+    <div class="scopewrap"><canvas></canvas></div>
+    <div class="controls"></div>
+    <div class="readouts"></div>
+    <button class="replay">▷ replay sweep</button>
+  </div>
+
+  <div class="chips">
+    <span class="chip">Three tanks in series</span>
+    <span class="chip">DC motor → position</span>
+    <span class="chip">Hydraulic servo (valve + cylinder + load)</span>
+    <span class="chip">Actuator + mass–spring</span>
+  </div>
+
+  <div class="phys"><span class="lab">Do it yourself</span>
+  Line up three cups with small holes, pouring top-to-bottom. Pour a steady stream into the top
+  cup and watch the <em>bottom</em> cup. Its level barely moves at first (water is still working
+  through the upper two), then rises in an S-curve. That slow toe is the signature of a
+  third-order system — and it’s the classic model of a hydraulic servo axis.</div>
+</section>
+
+<!-- ============ SUMMARY ============ -->
+<h2>Seeing all four at once</h2>
+<h3>The same step, four orders</h3>
+<p>Here is one identical input step fed into all four systems on the same axes. Read left to
+right and you can watch “order” accumulate: instant → smooth lag → overshoot → delayed
+overshoot.</p>
+<div class="demo" data-demo="summary">
+  <div class="scopewrap"><canvas></canvas></div>
+  <div class="readouts" style="margin-top:14px">
+    <span class="ro" style="color:var(--in)"><b style="color:var(--in)">━</b> input step</span>
+    <span class="ro"><b>━ 0th</b> instant</span>
+    <span class="ro"><b>━ 1st</b> exponential</span>
+    <span class="ro"><b>━ 2nd</b> overshoot</span>
+    <span class="ro"><b>━ 3rd</b> delayed</span>
+  </div>
+  <button class="replay">▷ replay sweep</button>
+</div>
+
+<table>
+  <thead><tr><th>Order</th><th>Energy stores</th><th>Highest derivative</th>
+    <th>Can it overshoot?</th><th>Real example</th></tr></thead>
+  <tbody>
+    <tr><td>0</td><td>none</td><td>—</td><td>never</td><td>resistor, lever</td></tr>
+    <tr><td>1</td><td>one</td><td>dy/dt</td><td>never</td><td>RC filter, one tank</td></tr>
+    <tr><td>2</td><td>two</td><td>d²y/dt²</td><td>yes, if ζ&lt;1</td><td>suspension, RLC</td></tr>
+    <tr><td>3</td><td>three</td><td>d³y/dt³</td><td>yes, plus delay</td><td>hydraulic servo</td></tr>
+  </tbody>
+</table>
+
+<div class="takeaways">
+  <h3>Key takeaways</h3>
+  <ul>
+    <li><b>Order = number of independent energy stores</b> = order of the highest derivative =
+      number of poles. Count the stores and you know a lot before doing any algebra.</li>
+    <li><b>0th order can’t lag, 1st order can’t overshoot.</b> Overshoot and oscillation need
+      <em>two</em> stores that can trade energy — that’s why second order is the star.</li>
+    <li><b>ζ (damping) decides the personality</b> of a second-order system: ring, overshoot,
+      critical, or sluggish.</li>
+    <li><b>A third store adds delay</b> — an S-shaped toe — which is why real actuated machines
+      (hydraulic servos, motor axes) are harder to control than the textbook mass-spring.</li>
+    <li>Higher orders are almost always <b>lower-order pieces stacked in series</b>. Learn 1st
+      and 2nd cold and the rest is combination.</li>
+  </ul>
+</div>
+
+<h2>Quick-check quiz</h2>
+<details><summary>1 · What does a system's "order" count, physically?</summary>
+  <div class="qa"><p>The number of <b>independent energy stores</b>. Equivalently, it's the order of the highest
+  derivative in the equation of motion, and the number of <b>poles</b>. Count the stores and you know the order before
+  any algebra.</p></div></details>
+<details><summary>2 · Why can a first-order system never overshoot?</summary>
+  <div class="qa"><p>It has only <b>one</b> energy store, so there's nothing for that energy to trade <em>with</em>.
+  Overshoot and oscillation require <b>two</b> stores passing energy back and forth (e.g. a mass and a spring). One
+  store can only ease toward its target — the exponential approach.</p></div></details>
+<details><summary>3 · A mass on a spring — what order, and why?</summary>
+  <div class="qa"><p><b>Second order.</b> Two independent stores: kinetic energy in the moving <b>mass</b> and potential
+  energy in the stretched <b>spring</b>. They exchange energy, which is exactly what produces oscillation.</p></div></details>
+<details><summary>4 · Which parameter sets a second-order system's personality — ringing vs. sluggish?</summary>
+  <div class="qa"><p>The <b>damping ratio ζ</b>. ζ &lt; 1 rings (underdamped) with overshoot, ζ = 1 is critically damped
+  (fastest with no overshoot), ζ &gt; 1 is overdamped and sluggish.</p></div></details>
+<details><summary>5 · Why is a hydraulic servo axis third-order and harder to control than a textbook mass-spring?</summary>
+  <div class="qa"><p>It carries an <b>extra energy store</b> — the compressible oil / valve-flow dynamics — stacked on the
+  mass-and-spring. That third store adds an S-shaped <b>delay toe</b> to the response, and delay is what makes a loop
+  harder to keep stable.</p></div></details>
+
+<h2>Exercises</h2>
+<details><summary>C1 · A car body bouncing on its suspension springs (ignore the tire) — how many stores, what order?</summary>
+  <div class="qa"><p>Two stores: kinetic energy in the body <b>mass</b> and potential energy in the suspension
+  <b>spring</b> → <b>second order</b>. This is the simplest ride model.</p></div></details>
+<details><summary>C2 · Now include the tire's own springiness and the unsprung wheel mass — what order?</summary>
+  <div class="qa"><p>Four stores: body mass, suspension spring, wheel (unsprung) mass, and tire spring → <b>fourth
+  order</b>. That's the quarter-car model from Project 1 — two coupled second-order systems.</p></div></details>
+<details><summary>D1 · Design: a step response shows a slight S-shaped toe before it rises. What minimum order, and what causes the toe?</summary>
+  <div class="qa"><p>At least <b>third order</b>. A pure first- or second-order response starts rising immediately; an
+  S-shaped toe (slow start, then acceleration) betrays a <b>third energy store</b> adding delay — for example
+  compressible oil in a hydraulic actuator or an extra filter/lag in the loop.</p></div></details>
+
+<footer>
+  Self-contained lesson · no external libraries, no network, no build step · renders on any
+  browser. Every trace is integrated live in JavaScript from the equations shown above.
+</footer>
+
+</div><!-- /wrap -->
+
+<script>
+"use strict";
+(function(){
+  const REDUCED = window.matchMedia &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const COL = { in:'#E8A33D', out:'#22C3AE', grid:'#1E3240', grid2:'#16262F',
+                axis:'#3A5464', text:'#7FA0AE',
+                c0:'#9BD0FF', c1:'#22C3AE', c2:'#E8A33D', c3:'#FF8FA3' };
+
+  // ---- RK4 integrator for a state vector ----
+  function rk4(deriv, state, u, dt){
+    const k1 = deriv(state, u);
+    const k2 = deriv(state.map((s,i)=>s+0.5*dt*k1[i]), u);
+    const k3 = deriv(state.map((s,i)=>s+0.5*dt*k2[i]), u);
+    const k4 = deriv(state.map((s,i)=>s+dt*k3[i]), u);
+    return state.map((s,i)=>s + dt/6*(k1[i]+2*k2[i]+2*k3[i]+k4[i]));
+  }
+
+  // ---- generic simulate: returns {t,u,y} arrays ----
+  // model: {n, deriv(state,u)->dstate, out(state)->y}   step at tStep
+  function simulate(model, T, dt, tStep){
+    const t=[], u=[], y=[];
+    let state = new Array(model.n).fill(0);
+    for(let time=0; time<=T+1e-9; time+=dt){
+      const ui = time>=tStep ? 1 : 0;
+      t.push(time); u.push(ui); y.push(model.out(state));
+      state = rk4(model.deriv, state, ui, dt);
+    }
+    return {t,u,y};
+  }
+
+  // ---------- drawing ----------
+  function setupCanvas(cv){
+    const dpr = Math.max(1, Math.min(3, window.devicePixelRatio||1));
+    const cssW = cv.parentElement.clientWidth;
+    const cssH = Math.round(Math.min(340, Math.max(240, cssW*0.52)));
+    cv.style.height = cssH+'px';
+    cv.width = Math.round(cssW*dpr);
+    cv.height = Math.round(cssH*dpr);
+    const ctx = cv.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    return {ctx, W:cssW, H:cssH};
+  }
+
+  function makeScope(cv){
+    const pad = {l:46, r:14, t:16, b:30};
+    function draw(state){
+      const {ctx,W,H} = setupCanvas(cv);
+      const {T, yMax, yMin, traces, markers, progress} = state;
+      ctx.clearRect(0,0,W,H);
+      const px = t => pad.l + (t/T)*(W-pad.l-pad.r);
+      const py = v => (H-pad.b) - ((v-yMin)/(yMax-yMin))*(H-pad.t-pad.b);
+      // grid
+      ctx.lineWidth=1;
+      ctx.strokeStyle=COL.grid2;
+      const yticks=5, xticks=6;
+      ctx.font='11px ui-monospace, Menlo, Consolas, monospace';
+      ctx.fillStyle=COL.text;
+      for(let i=0;i<=yticks;i++){
+        const v=yMin+(yMax-yMin)*i/yticks, yy=py(v);
+        ctx.beginPath(); ctx.moveTo(pad.l,yy); ctx.lineTo(W-pad.r,yy);
+        ctx.strokeStyle = (Math.abs(v)<1e-9)?COL.axis:COL.grid2; ctx.stroke();
+        ctx.textAlign='right'; ctx.textBaseline='middle';
+        ctx.fillText(v.toFixed(1), pad.l-6, yy);
+      }
+      for(let i=0;i<=xticks;i++){
+        const tt=T*i/xticks, xx=px(tt);
+        ctx.beginPath(); ctx.moveTo(xx,pad.t); ctx.lineTo(xx,H-pad.b);
+        ctx.strokeStyle=COL.grid2; ctx.stroke();
+        ctx.textAlign='center'; ctx.textBaseline='top';
+        ctx.fillText(tt.toFixed(0)+'s', xx, H-pad.b+6);
+      }
+      // traces
+      const cut = Math.max(2, Math.floor(traces[0].data.length*progress));
+      traces.forEach(tr=>{
+        ctx.beginPath();
+        ctx.lineWidth = tr.w||2.4; ctx.strokeStyle=tr.color;
+        if(tr.dash) ctx.setLineDash(tr.dash); else ctx.setLineDash([]);
+        for(let i=0;i<cut && i<tr.data.length;i++){
+          const X=px(tr.time[i]), Y=py(tr.data[i]);
+          if(i===0) ctx.moveTo(X,Y); else ctx.lineTo(X,Y);
+        }
+        ctx.stroke();
+      });
+      ctx.setLineDash([]);
+      // markers (only when fully drawn)
+      if(markers && progress>=0.999){
+        markers.forEach(m=>{
+          const X=px(m.t), Y=py(m.y);
+          ctx.fillStyle=m.color||COL.out;
+          ctx.beginPath(); ctx.arc(X,Y,3.5,0,7); ctx.fill();
+          if(m.label){
+            ctx.font='11px ui-monospace, Menlo, monospace';
+            ctx.fillStyle=m.color||COL.out;
+            ctx.textAlign=m.align||'left'; ctx.textBaseline='bottom';
+            ctx.fillText(m.label, X+(m.align==='right'?-6:6), Y-6);
+          }
+        });
+      }
+    }
+    return {draw};
+  }
+
+  // ---------- widget factory ----------
+  function buildWidget(root, cfg){
+    const cv = root.querySelector('canvas');
+    const controlsEl = root.querySelector('.controls');
+    const readoutsEl = root.querySelector('.readouts');
+    const replayBtn = root.querySelector('.replay');
+    const scope = makeScope(cv);
+    const params = {};
+    (cfg.params||[]).forEach(p=>params[p.key]=p.value);
+
+    // build sliders
+    (cfg.params||[]).forEach(p=>{
+      const c=document.createElement('div'); c.className='ctrl';
+      const row=document.createElement('div'); row.className='row';
+      const name=document.createElement('span'); name.className='name'; name.innerHTML=p.label;
+      const val=document.createElement('span'); val.className='val';
+      row.appendChild(name); row.appendChild(val);
+      const inp=document.createElement('input'); inp.type='range';
+      inp.min=p.min; inp.max=p.max; inp.step=p.step; inp.value=p.value;
+      inp.setAttribute('aria-label', p.aria||p.label.replace(/<[^>]+>/g,''));
+      const fmt=p.fmt||(v=>v.toFixed(2));
+      val.textContent=fmt(p.value);
+      inp.addEventListener('input',()=>{
+        params[p.key]=parseFloat(inp.value);
+        val.textContent=fmt(params[p.key]);
+        recompute(true);
+      });
+      c.appendChild(row); c.appendChild(inp); controlsEl.appendChild(c);
+    });
+
+    let data, raf=null;
+    function recompute(animate){
+      data = cfg.compute(params);
+      // readouts
+      if(cfg.readouts){
+        readoutsEl.innerHTML='';
+        cfg.readouts(data,params).forEach(r=>{
+          const s=document.createElement('span'); s.className='ro';
+          s.innerHTML=r.label+' <b>'+r.value+'</b>';
+          readoutsEl.appendChild(s);
+        });
+      }
+      run(animate);
+    }
+    function frame(progress){
+      scope.draw({T:cfg.T, yMax:cfg.yMax, yMin:cfg.yMin,
+        traces:data.traces, markers:data.markers, progress});
+    }
+    function run(animate){
+      if(raf) cancelAnimationFrame(raf);
+      if(REDUCED || !animate){ frame(1); return; }
+      const dur=1100; const start=performance.now();
+      (function step(now){
+        const p=Math.min(1,(now-start)/dur);
+        frame(p);
+        if(p<1) raf=requestAnimationFrame(step);
+      })(performance.now());
+    }
+    if(replayBtn) replayBtn.addEventListener('click',()=>run(true));
+    window.addEventListener('resize',()=>frame(1));
+    recompute(true);
+  }
+
+  // ---------- per-order configs ----------
+  const T1=10, T2=12, T3=14, DT=0.01, STEP=0.4;
+
+  // ORDER 0
+  buildWidget(document.querySelector('[data-demo=order0]'),{
+    T:8, yMax:3.2, yMin:0,
+    params:[{key:'K',label:'gain&nbsp;K',min:0.2,max:3,step:0.1,value:1.5,
+             fmt:v=>v.toFixed(1)}],
+    compute:(p)=>{
+      const t=[],u=[],y=[]; const T=8, tStep=0.4;
+      for(let x=0;x<=T;x+=DT){const ui=x>=tStep?1:0; t.push(x);u.push(ui*1.0);y.push(p.K*ui);}
+      return {traces:[
+        {time:t,data:u.map(v=>v),color:COL.in,w:2,dash:[5,4]},
+        {time:t,data:y,color:COL.out,w:2.8}
+      ], markers:[{t:T*0.85,y:p.K,color:COL.out,label:'y = '+p.K.toFixed(1),align:'right'}]};
+    },
+    readouts:(d,p)=>[
+      {label:'output', value:'K·u = '+p.K.toFixed(1)},
+      {label:'lag', value:'0 s (instant)'},
+      {label:'overshoot', value:'none'}
+    ]
+  });
+
+  // ORDER 1
+  buildWidget(document.querySelector('[data-demo=order1]'),{
+    T:T1, yMax:1.25, yMin:0,
+    params:[{key:'tau',label:'τ&nbsp;(time&nbsp;constant)',min:0.2,max:2.0,step:0.05,value:0.8,
+             fmt:v=>v.toFixed(2)+' s'}],
+    compute:(p)=>{
+      const model={n:1,
+        deriv:(s,u)=>[ (1*u - s[0])/p.tau ],
+        out:s=>s[0] };
+      const sim=simulate(model,T1,DT,STEP);
+      // 63% marker at t = tStep + tau
+      const tMark=STEP+p.tau;
+      return {traces:[
+        {time:sim.t,data:sim.u,color:COL.in,w:2,dash:[5,4]},
+        {time:sim.t,data:sim.y,color:COL.out,w:2.8}
+      ], markers:[
+        {t:tMark,y:0.632,color:COL.out,label:'63% @ τ',align:'left'}
+      ]};
+    },
+    readouts:(d,p)=>[
+      {label:'τ', value:p.tau.toFixed(2)+' s'},
+      {label:'63% reached at', value:(STEP+p.tau).toFixed(2)+' s'},
+      {label:'~settled (5τ)', value:(STEP+5*p.tau).toFixed(1)+' s'}
+    ]
+  });
+
+  // ORDER 2
+  function secondOrderModel(wn,zeta){
+    return {n:2,
+      deriv:(s,u)=>[ s[1], wn*wn*(1*u - s[0]) - 2*zeta*wn*s[1] ],
+      out:s=>s[0] };
+  }
+  buildWidget(document.querySelector('[data-demo=order2]'),{
+    T:T2, yMax:2.0, yMin:0,
+    params:[
+      {key:'wn',label:'ω<sub>n</sub>&nbsp;(natural&nbsp;freq)',min:0.5,max:4,step:0.1,value:2.0,
+        fmt:v=>v.toFixed(1)+' rad/s'},
+      {key:'zeta',label:'ζ&nbsp;(damping)',min:0,max:1.6,step:0.02,value:0.3,
+        fmt:v=>v.toFixed(2)}
+    ],
+    compute:(p)=>{
+      const sim=simulate(secondOrderModel(p.wn,p.zeta),T2,DT,STEP);
+      // overshoot
+      let peak=0,peakT=0;
+      for(let i=0;i<sim.y.length;i++){ if(sim.y[i]>peak){peak=sim.y[i];peakT=sim.t[i];} }
+      const Mp=Math.max(0,(peak-1))*100;
+      const markers=[];
+      if(p.zeta<1 && peak>1.001){
+        markers.push({t:peakT,y:peak,color:COL.out,
+          label:'overshoot '+Mp.toFixed(0)+'%',align:peakT>T2*0.7?'right':'left'});
+      }
+      return {traces:[
+        {time:sim.t,data:sim.u,color:COL.in,w:2,dash:[5,4]},
+        {time:sim.t,data:sim.y,color:COL.out,w:2.8}
+      ], markers, _Mp:Mp, _peak:peak};
+    },
+    readouts:(d,p)=>{
+      let regime = p.zeta===0?'undamped (rings)':
+                   p.zeta<1?'underdamped':
+                   Math.abs(p.zeta-1)<0.03?'critically damped':'overdamped';
+      const Mp = p.zeta<1 && p.zeta>0 ?
+        (Math.exp(-p.zeta*Math.PI/Math.sqrt(1-p.zeta*p.zeta))*100).toFixed(0)+'%' :
+        (p.zeta===0?'∞ (never settles)':'0%');
+      return [
+        {label:'regime', value:regime},
+        {label:'predicted overshoot', value:Mp},
+        {label:'ω<sub>n</sub>', value:p.wn.toFixed(1)+' rad/s'}
+      ];
+    }
+  });
+
+  // ORDER 3  (2nd-order plant with an actuator lag in series)
+  buildWidget(document.querySelector('[data-demo=order3]'),{
+    T:T3, yMax:2.0, yMin:0,
+    params:[
+      {key:'wn',label:'ω<sub>n</sub>',min:0.5,max:4,step:0.1,value:2.0,
+        fmt:v=>v.toFixed(1)},
+      {key:'zeta',label:'ζ',min:0,max:1.6,step:0.02,value:0.3,fmt:v=>v.toFixed(2)},
+      {key:'ta',label:'τ<sub>a</sub>&nbsp;(actuator&nbsp;lag)',min:0.0,max:1.5,step:0.05,value:0.6,
+        fmt:v=>v.toFixed(2)+' s'}
+    ],
+    compute:(p)=>{
+      // state: [w (lag out), y, ydot]
+      const ta=Math.max(0.001,p.ta);
+      const model={n:3,
+        deriv:(s,u)=>{
+          const w=s[0], y=s[1], v=s[2];
+          const dw=(1*u - w)/ta;
+          const dv=p.wn*p.wn*(w - y) - 2*p.zeta*p.wn*v;
+          return [dw, v, dv];
+        }, out:s=>s[1] };
+      const sim=simulate(model,T3,DT,STEP);
+      // find 10% "toe" time to illustrate delay
+      let toeT=null;
+      for(let i=0;i<sim.y.length;i++){ if(sim.y[i]>=0.1){toeT=sim.t[i];break;} }
+      const markers=[];
+      if(toeT!==null) markers.push({t:toeT,y:0.1,color:COL.in,label:'toe delay',align:'left'});
+      return {traces:[
+        {time:sim.t,data:sim.u,color:COL.in,w:2,dash:[5,4]},
+        {time:sim.t,data:sim.y,color:COL.out,w:2.8}
+      ], markers, _toe:toeT};
+    },
+    readouts:(d,p)=>[
+      {label:'actuator lag τ<sub>a</sub>', value:p.ta.toFixed(2)+' s'},
+      {label:'10% reached at', value:(d._toe!==null?d._toe.toFixed(2)+' s':'—')},
+      {label:'stores', value:'3 (order 3)'}
+    ]
+  });
+
+  // SUMMARY overlay: all four
+  buildWidget(document.querySelector('[data-demo=summary]'),{
+    T:T3, yMax:1.8, yMin:0,
+    params:[],
+    compute:()=>{
+      const tStep=STEP;
+      // 0th
+      const t=[],u=[],o0=[];
+      for(let x=0;x<=T3;x+=DT){const ui=x>=tStep?1:0;t.push(x);u.push(ui);o0.push(ui);}
+      const s1=simulate({n:1,deriv:(s,ui)=>[(ui-s[0])/0.9],out:s=>s[0]},T3,DT,tStep);
+      const s2=simulate(secondOrderModel(2.0,0.3),T3,DT,tStep);
+      const s3=simulate({n:3,deriv:(s,ui)=>{
+          const w=s[0],y=s[1],v=s[2];
+          return [(ui-w)/0.6, v, 2*2*(w-y)-2*0.3*2*v];
+        },out:s=>s[1]},T3,DT,tStep);
+      return {traces:[
+        {time:t,data:u,color:COL.in,w:1.8,dash:[5,4]},
+        {time:t,data:o0,color:COL.c0,w:2.2},
+        {time:s1.t,data:s1.y,color:COL.c1,w:2.6},
+        {time:s2.t,data:s2.y,color:COL.c2,w:2.6},
+        {time:s3.t,data:s3.y,color:COL.c3,w:2.6}
+      ], markers:[]};
+    }
+  });
+
+  // ============================================================
+  //  PHYSICAL BENCH DEMOS  (custom canvas, self-contained)
+  // ============================================================
+  function el(tag,cls){const e=document.createElement(tag); if(cls)e.className=cls; return e;}
+  function fitCanvas(cv,aspect){
+    const dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1));
+    const cssW=cv.clientWidth || cv.parentElement.clientWidth || 300;
+    const cssH=Math.round(cssW*aspect);
+    cv.style.height=cssH+'px';
+    cv.width=Math.round(cssW*dpr); cv.height=Math.round(cssH*dpr);
+    const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0);
+    return {ctx,W:cssW,H:cssH};
+  }
+  function addSliders(container,defs,params,onChange){
+    defs.forEach(p=>{
+      params[p.key]=p.value;
+      const c=el('div','ctrl'), row=el('div','row');
+      const name=el('span','name'); name.innerHTML=p.label;
+      const val=el('span','val'); const fmt=p.fmt||(v=>v.toFixed(2));
+      val.textContent=fmt(p.value);
+      row.appendChild(name); row.appendChild(val);
+      const inp=document.createElement('input'); inp.type='range';
+      inp.min=p.min; inp.max=p.max; inp.step=p.step; inp.value=p.value;
+      inp.setAttribute('aria-label',(p.aria||p.label).replace(/<[^>]+>/g,''));
+      inp.addEventListener('input',()=>{ params[p.key]=parseFloat(inp.value);
+        val.textContent=fmt(params[p.key]); onChange(); });
+      c.appendChild(row); c.appendChild(inp); container.appendChild(c);
+    });
+  }
+  function setReadouts(container,items){
+    container.innerHTML='';
+    items.forEach(r=>{ const s=el('span','ro'); s.innerHTML=r.label+' <b>'+r.value+'</b>';
+      container.appendChild(s); });
+  }
+
+  // ---------- 0th order: the lever ----------
+  (function buildLever(){
+    const root=document.querySelector('[data-bench=lever]'); if(!root) return;
+    const pic=root.querySelector('.pic'), plot=root.querySelector('.plot');
+    const controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+    const params={};
+    addSliders(controls,[
+      {key:'push',label:'free-end push (cm)',min:0,max:5,step:0.1,value:2.0,
+        fmt:v=>v.toFixed(1)+' cm'},
+      {key:'K',label:'lever ratio K',min:0.3,max:3,step:0.1,value:1.5,fmt:v=>'×'+v.toFixed(1)}
+    ],params,draw);
+    function draw(){
+      // ----- picture: rigid lever rotating about a fixed table-edge pivot -----
+      const {ctx,W,H}=fitCanvas(pic,0.64);
+      ctx.clearRect(0,0,W,H);
+      const pivotX=W*0.5, pivotY=H*0.48;
+      // table surface to the LEFT of the pivot (on-table arm rests here)
+      ctx.fillStyle='#16262F'; ctx.fillRect(0,pivotY,pivotX,H-pivotY);
+      ctx.strokeStyle='#2b4653'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(0,pivotY); ctx.lineTo(pivotX,pivotY); ctx.stroke();
+      // arms set by the lever ratio K = (on-table arm)/(overhang arm); pivot pinned
+      const Ltot=W*0.55, rightArm=Ltot/(1+params.K), leftArm=Ltot-rightArm;
+      // tilt angle from the push (schematic); both ends share one rigid rotation
+      const theta=(params.push/5)*0.45, s=Math.sin(theta), cs=Math.cos(theta);
+      const freeX=pivotX+rightArm*cs, freeY=pivotY+rightArm*s;  // overhang, pushed down
+      const fixX =pivotX-leftArm*cs,  fixY =pivotY-leftArm*s;   // on-table, lifts up
+      // rest position (dashed) through the pivot
+      ctx.strokeStyle='#3A5464'; ctx.setLineDash([4,4]); ctx.lineWidth=1.2;
+      ctx.beginPath(); ctx.moveTo(pivotX-leftArm,pivotY); ctx.lineTo(pivotX+rightArm,pivotY); ctx.stroke();
+      ctx.setLineDash([]);
+      // the ruler — one straight rod through the pivot
+      ctx.strokeStyle=COL.out; ctx.lineWidth=5; ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(fixX,fixY); ctx.lineTo(freeX,freeY); ctx.stroke();
+      // fulcrum triangle at the table edge + contact dot on the rod
+      ctx.fillStyle=COL.in; ctx.beginPath();
+      ctx.moveTo(pivotX,pivotY); ctx.lineTo(pivotX-9,pivotY+15); ctx.lineTo(pivotX+9,pivotY+15);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle='#EEF2F5'; ctx.beginPath(); ctx.arc(pivotX,pivotY,2.6,0,7); ctx.fill();
+      ctx.font='11px ui-monospace, Menlo, monospace'; ctx.textAlign='center';
+      ctx.fillStyle=COL.in;  ctx.fillText('push', freeX, freeY+18);
+      ctx.fillStyle=COL.out; ctx.fillText('lifts', fixX, fixY-9);
+      // ----- plot: output vs input, y = K x, dot on the line -----
+      const p2=fitCanvas(plot,0.64), c=p2.ctx, PW=p2.W, PH=p2.H;
+      const pad={l:36,r:12,t:14,b:28}; c.clearRect(0,0,PW,PH);
+      const xmax=5, ymax=15;
+      const gx=x=>pad.l+(x/xmax)*(PW-pad.l-pad.r);
+      const gy=y=>(PH-pad.b)-(y/ymax)*(PH-pad.t-pad.b);
+      c.strokeStyle=COL.grid2; c.lineWidth=1;
+      c.beginPath(); c.moveTo(pad.l,pad.t); c.lineTo(pad.l,PH-pad.b); c.lineTo(PW-pad.r,PH-pad.b); c.stroke();
+      c.fillStyle=COL.text; c.font='10px ui-monospace, monospace';
+      c.textAlign='center'; c.fillText('input push (cm)',(pad.l+PW-pad.r)/2,PH-7);
+      c.save(); c.translate(11,(pad.t+PH-pad.b)/2); c.rotate(-Math.PI/2);
+      c.fillText('output lift (cm)',0,0); c.restore();
+      c.strokeStyle=COL.out; c.lineWidth=2.2;
+      let xe=xmax, ye=params.K*xmax; if(ye>ymax){ye=ymax; xe=ymax/params.K;}
+      c.beginPath(); c.moveTo(gx(0),gy(0)); c.lineTo(gx(xe),gy(ye)); c.stroke();
+      const yout=Math.min(ymax,params.K*params.push);
+      c.fillStyle=COL.in; c.beginPath(); c.arc(gx(params.push),gy(yout),4.5,0,7); c.fill();
+      setReadouts(ro,[
+        {label:'output lift', value:(params.K*params.push).toFixed(2)+' cm'},
+        {label:'relation', value:'y = '+params.K.toFixed(1)+'·u'},
+        {label:'lag', value:'0 s'}
+      ]);
+    }
+    window.addEventListener('resize',draw); draw();
+  })();
+
+  // ---------- 1st order: the draining bottle ----------
+  (function buildBottle(){
+    const root=document.querySelector('[data-bench=bottle]'); if(!root) return;
+    const pic=root.querySelector('.pic'), plot=root.querySelector('.plot');
+    const controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+    const params={}; let tau=1, startT=0, PLAYBACK=1, raf=null;
+    addSliders(controls,[
+      {key:'d',label:'hole diameter (mm)',min:2,max:12,step:0.5,value:6,fmt:v=>v.toFixed(1)+' mm'},
+      {key:'w',label:'bottle width (cm)',min:4,max:12,step:0.5,value:8,fmt:v=>v.toFixed(1)+' cm'}
+    ],params,reset);
+    function reset(){
+      tau=3.375*params.w*params.w/(params.d*params.d);
+      PLAYBACK=Math.max(1,(5*tau)/4.5);
+      setReadouts(ro,[
+        {label:'τ', value:tau.toFixed(1)+' s'},
+        {label:'fall to ⅓ at', value:(tau*Math.log(3)).toFixed(1)+' s'},
+        {label:'≈empty (5τ)', value:(5*tau).toFixed(0)+' s'}
+      ]);
+      if(REDUCED){ drawPic(Math.exp(-1)); drawPlot(tau,Math.exp(-1)); }
+      else { startT=performance.now(); }
+    }
+    function drawPic(h){
+      const {ctx,W,H}=fitCanvas(pic,0.72); ctx.clearRect(0,0,W,H);
+      const bw=Math.min(W*0.52,22+params.w*7), bx=(W-bw)/2, bTop=H*0.10, bBot=H*0.86;
+      const bh=bBot-bTop, wl=bBot-h*bh;
+      ctx.fillStyle='rgba(34,195,174,0.32)'; ctx.fillRect(bx,wl,bw,bBot-wl);
+      ctx.strokeStyle=COL.out; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.moveTo(bx,wl); ctx.lineTo(bx+bw,wl); ctx.stroke();
+      ctx.strokeStyle='#5E7686'; ctx.lineWidth=2.5; ctx.strokeRect(bx,bTop,bh?bw:bw,bh);
+      // jet
+      const hx=bx+bw, hy=bBot-5;
+      if(h>0.012){
+        const speed=Math.sqrt(Math.max(0,h)); const Lr=(26+params.d*5)*speed;
+        ctx.strokeStyle=COL.out; ctx.globalAlpha=0.75; ctx.lineWidth=Math.max(1.5,params.d*0.45);
+        ctx.beginPath(); ctx.moveTo(hx,hy);
+        for(let i=1;i<=16;i++){ const tx=i/16, x=hx+Lr*tx, y=hy+H*0.55*tx*tx;
+          if(y>H-2) break; ctx.lineTo(x,y); }
+        ctx.stroke(); ctx.globalAlpha=1;
+      }
+      ctx.fillStyle=COL.text; ctx.font='11px ui-monospace, monospace'; ctx.textAlign='center';
+      ctx.fillText('water level h(t)', W/2, bTop-4);
+    }
+    function drawPlot(tsim,h){
+      const {ctx,W,H}=fitCanvas(plot,0.72); const pad={l:34,r:12,t:14,b:26};
+      ctx.clearRect(0,0,W,H); const T=5*tau;
+      const gx=t=>pad.l+(t/T)*(W-pad.l-pad.r);
+      const gy2=v=>(H-pad.b)-(v)*((H-pad.b)-pad.t);
+      ctx.strokeStyle=COL.grid2; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(pad.l,pad.t); ctx.lineTo(pad.l,H-pad.b); ctx.lineTo(W-pad.r,H-pad.b); ctx.stroke();
+      ctx.strokeStyle=COL.out; ctx.lineWidth=2.4; ctx.beginPath();
+      for(let i=0;i<=120;i++){ const t=T*i/120, v=Math.exp(-t/tau), X=gx(t), Y=gy2(v);
+        i?ctx.lineTo(X,Y):ctx.moveTo(X,Y); } ctx.stroke();
+      const xt=gx(tau); ctx.strokeStyle=COL.in; ctx.setLineDash([4,4]);
+      ctx.beginPath(); ctx.moveTo(xt,pad.t); ctx.lineTo(xt,H-pad.b); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle=COL.in; ctx.font='10px ui-monospace, monospace'; ctx.textAlign='left';
+      ctx.fillText('τ', xt+3, pad.t+10);
+      ctx.fillStyle=COL.out; ctx.beginPath(); ctx.arc(gx(Math.min(tsim,T)),gy2(h),4,0,7); ctx.fill();
+      ctx.fillStyle=COL.text; ctx.textAlign='right'; ctx.fillText('h/h₀',pad.l-4,pad.t+8);
+    }
+    function frame(now){
+      let tsim=((now-startT)/1000)*PLAYBACK;
+      if(tsim>5*tau){ startT=now; tsim=0; }
+      const h=Math.exp(-tsim/tau); drawPic(h); drawPlot(tsim,h);
+      raf=requestAnimationFrame(frame);
+    }
+    reset(); if(!REDUCED) raf=requestAnimationFrame(frame);
+    window.addEventListener('resize',()=>{ if(REDUCED){ drawPic(Math.exp(-1)); drawPlot(tau,Math.exp(-1)); } });
+  })();
+
+  // ---------- 2nd order: the twanging ruler (cantilever) ----------
+  (function buildCantilever(){
+    const root=document.querySelector('[data-bench=cantilever]'); if(!root) return;
+    const pic=root.querySelector('.pic'), plot=root.querySelector('.plot');
+    const controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+    const params={}; const SLOW=6, Cf=1800;
+    let f=1,wn=1,wd=1,startT=0,raf=null;
+    addSliders(controls,[
+      {key:'L',label:'overhang length (cm)',min:8,max:32,step:1,value:16,fmt:v=>v.toFixed(0)+' cm'},
+      {key:'zeta',label:'damping ζ',min:0.01,max:0.2,step:0.005,value:0.04,fmt:v=>v.toFixed(3)}
+    ],params,onChange);
+    function recalc(){
+      f=Cf/(params.L*params.L); wn=2*Math.PI*f;
+      wd=wn*Math.sqrt(Math.max(1e-4,1-params.zeta*params.zeta));
+      setReadouts(ro,[
+        {label:'natural freq', value:f.toFixed(1)+' Hz'},
+        {label:'period', value:(1000/f).toFixed(0)+' ms'},
+        {label:'ζ', value:params.zeta.toFixed(3)},
+        {label:'settling', value:(4/(params.zeta*wn)).toFixed(2)+' s'}
+      ]);
+    }
+    function onChange(){ recalc(); startT=performance.now(); if(REDUCED){ drawBeam(0.6); drawTrace(0); } }
+    function drawBeam(a){
+      const {ctx,W,H}=fitCanvas(pic,0.72); ctx.clearRect(0,0,W,H);
+      const clampX=W*0.15, midY=H*0.5;
+      ctx.fillStyle='#16262F'; ctx.fillRect(0,midY-24,clampX,48);
+      ctx.strokeStyle='#2b4653'; ctx.lineWidth=1; ctx.strokeRect(0,midY-24,clampX,48);
+      const beamLen=(W-clampX-14)*(0.45+0.55*(params.L-8)/24);
+      const tipDefl=a*(H*0.30);
+      ctx.strokeStyle=COL.out; ctx.lineWidth=5; ctx.lineCap='round'; ctx.beginPath();
+      ctx.moveTo(clampX,midY);
+      for(let i=1;i<=24;i++){ const xx=i/24, phi=(3*xx*xx-xx*xx*xx)/2;
+        ctx.lineTo(clampX+beamLen*xx, midY-tipDefl*phi); }
+      ctx.stroke();
+      ctx.fillStyle=COL.in; ctx.beginPath();
+      ctx.arc(clampX+beamLen, midY-tipDefl,4,0,7); ctx.fill();
+      ctx.fillStyle=COL.text; ctx.font='11px ui-monospace, monospace'; ctx.textAlign='left';
+      ctx.fillText('slow-motion ×'+SLOW, clampX, H-8);
+    }
+    function drawTrace(ts){
+      const {ctx,W,H}=fitCanvas(plot,0.72); const pad={l:30,r:12,t:14,b:22};
+      ctx.clearRect(0,0,W,H);
+      const Twin=Math.min(2.4, 5/(params.zeta*wn));
+      const gx=t=>pad.l+(t/Twin)*(W-pad.l-pad.r);
+      const top=pad.t, bot=H-pad.b, gy=v=>top+(1-(v+1)/2)*(bot-top);
+      ctx.strokeStyle=COL.axis; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(pad.l,gy(0)); ctx.lineTo(W-pad.r,gy(0)); ctx.stroke();
+      ctx.strokeStyle='rgba(232,163,61,0.5)'; ctx.setLineDash([3,3]);
+      for(const sgn of [1,-1]){ ctx.beginPath();
+        for(let i=0;i<=100;i++){ const t=Twin*i/100, e=sgn*Math.exp(-params.zeta*wn*t);
+          i?ctx.lineTo(gx(t),gy(e)):ctx.moveTo(gx(t),gy(e)); } ctx.stroke(); }
+      ctx.setLineDash([]);
+      ctx.strokeStyle=COL.out; ctx.lineWidth=2.2; ctx.beginPath();
+      for(let i=0;i<=220;i++){ const t=Twin*i/220,
+        v=Math.exp(-params.zeta*wn*t)*Math.cos(wd*t);
+        i?ctx.lineTo(gx(t),gy(v)):ctx.moveTo(gx(t),gy(v)); } ctx.stroke();
+      if(ts<=Twin){ const v=Math.exp(-params.zeta*wn*ts)*Math.cos(wd*ts);
+        ctx.fillStyle=COL.in; ctx.beginPath(); ctx.arc(gx(ts),gy(v),4,0,7); ctx.fill(); }
+      ctx.fillStyle=COL.text; ctx.font='10px ui-monospace, monospace'; ctx.textAlign='right';
+      ctx.fillText('tip', pad.l-3, gy(1)+3);
+    }
+    function frame(now){
+      let ts=((now-startT)/1000)/SLOW;
+      if(Math.exp(-params.zeta*wn*ts)<0.03){ startT=now; ts=0; }
+      drawBeam(Math.exp(-params.zeta*wn*ts)*Math.cos(wd*ts)); drawTrace(ts);
+      raf=requestAnimationFrame(frame);
+    }
+    recalc(); startT=performance.now();
+    if(REDUCED){ drawBeam(0.6); drawTrace(0); } else { raf=requestAnimationFrame(frame); }
+    window.addEventListener('resize',()=>{ if(REDUCED){ drawBeam(0.6); drawTrace(0); } });
+  })();
+
+})();
+</script>
+</body>
+</html>

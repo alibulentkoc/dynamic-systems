@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hydraulic Circuits · 4 · On/Off Control</title>
+<style>
+  :root{
+    --paper:#EEF2F5; --card:#FFFFFF; --ink:#17252E; --muted:#5E7686; --line:#D3DDE4; --line2:#E3EAEF;
+    --panel:#0E1B24; --grid2:#16262F; --axis:#3A5464;
+    --in:#E8A33D; --out:#22C3AE; --accent:#22C3AE; --accent-ink:#0A5B52; --blue:#9BD0FF; --red:#FF8FA3;
+    --mono: ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    --sans: system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box} html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.6;font-size:17px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:940px;margin:0 auto;padding:0 20px 120px}
+  header.hero{padding:64px 0 34px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono);font-size:.78rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+  h1{font-size:clamp(2rem,5vw,3.1rem);line-height:1.06;margin:0 0 18px;letter-spacing:-.02em;font-weight:750}
+  .lede{font-size:1.12rem;color:#33454f;max-width:62ch;margin:0}
+  h2{font-size:1.02rem;font-family:var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:52px 0 14px;font-weight:600}
+  h3{font-size:1.5rem;letter-spacing:-.01em;margin:6px 0 10px;font-weight:700}
+  p{margin:0 0 16px} em{font-style:normal;color:var(--accent-ink);font-weight:600}
+  .goal{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:0 14px 14px 0;padding:18px 22px;margin:20px 0}
+  .goal .lab{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-ink);display:block;margin-bottom:6px}
+  .eq{font-family:var(--mono);background:var(--panel);color:#DCE7EC;border-radius:12px;padding:18px 20px;margin:16px 0;overflow-x:auto;font-size:.98rem;line-height:2}
+  .eq .cmt{color:#6E8794} .eq .hl-in{color:var(--in)} .eq .hl-out{color:var(--out)} .eq .hl-k{color:#9BD0FF}
+  .plain-eq{font-family:var(--mono);font-size:1rem;color:var(--ink);background:#F6F9FB;border:1px solid var(--line2);border-radius:9px;padding:10px 14px;display:inline-block;margin:4px 0}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px}
+  .chip{font-family:var(--mono);font-size:.82rem;padding:6px 11px;border-radius:999px;background:#F0F5F8;border:1px solid var(--line);color:#3a4d57}
+  .demo{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:22px 0}
+  .demo>canvas{background:var(--panel);border-radius:10px;width:100%;height:auto;display:block}
+  .stage{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:640px){.stage{grid-template-columns:1fr}}
+  .stage canvas{background:var(--panel);border-radius:10px;width:100%;height:auto;display:block}
+  .controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px 20px;margin:16px 4px 4px}
+  @media (max-width:640px){.controls{grid-template-columns:1fr}}
+  .ctrl{display:flex;flex-direction:column;gap:5px}
+  .ctrl .row{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:.86rem}
+  .ctrl .name{color:var(--ink)} .ctrl .val{color:var(--accent-ink);font-weight:600}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:5px;background:var(--line);border-radius:5px;outline:none;margin:6px 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.25);cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--accent);border:2px solid #fff;cursor:pointer}
+  .readouts{display:flex;flex-wrap:wrap;gap:8px 10px;margin:14px 4px 2px;font-family:var(--mono);font-size:.82rem}
+  .ro{background:#F0F5F8;border:1px solid var(--line);border-radius:8px;padding:6px 10px;color:#3a4d57} .ro b{color:var(--accent-ink)}
+  .ro.good{background:#eafaf6;border-color:var(--accent)} .ro.good b{color:var(--accent-ink)}
+  .ro.warn{background:#fff2e0;border-color:var(--in)} .ro.warn b{color:#8a5a12}
+  .takeaways{background:var(--panel);color:#DCE7EC;border-radius:16px;padding:26px 28px;margin:40px 0}
+  .takeaways h3{color:#fff} .takeaways li{margin:9px 0} .takeaways b{color:var(--out)}
+  details{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:2px 16px;margin:10px 0}
+  details[open]{padding-bottom:12px}
+  summary{cursor:pointer;font-weight:600;padding:12px 0;list-style:none}
+  summary::-webkit-details-marker{display:none} summary::before{content:"▸ ";color:var(--accent-ink)} details[open] summary::before{content:"▾ "}
+  .qa{font-size:.97rem} .qa p{margin:8px 0}
+  ol.ex{padding-left:1.3em} ol.ex li{margin:8px 0}
+  footer{margin-top:60px;padding-top:20px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.8rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+  <p class="eyebrow">Foundations of Dynamic Systems · Hydraulic Circuits · 4</p>
+  <h1>On/Off Control</h1>
+  <p class="lede">The simplest way to steer a cylinder to a target is a solenoid valve that's either fully open one
+  way, fully open the other, or shut. Cheap, rugged, and everywhere — but it can never sit still. Because the valve
+  only knows "full speed" or "stop," the cylinder overshoots, reverses, overshoots again, and <em>hunts</em> forever
+  around the target in a limit cycle.</p>
+</header>
+
+<div class="goal"><span class="lab">The mission</span>
+  Position a cylinder with a three-position on/off (bang-bang) valve and watch it hunt. Learn why a real valve's
+  switching delay guarantees a limit cycle, and how a <em>deadband</em> trades chatter for a wider band of acceptable
+  error — the fundamental compromise of on/off control.
+</div>
+
+<h2>Step 1 · The control law</h2>
+<h3>Three states: extend, retract, or hold</h3>
+<p>An on/off controller compares the piston position x to a target x*. If it's low, drive full-speed out; if it's high,
+drive full-speed back; if it's within a small <em>deadband</em> of the target, shut the valve:</p>
+<div class="eq">
+  x &lt; x* − d &nbsp;→&nbsp; <span class="hl-out">extend</span> at +V &nbsp;&nbsp;|&nbsp;&nbsp;
+  x &gt; x* + d &nbsp;→&nbsp; <span class="hl-out">retract</span> at −V &nbsp;&nbsp;|&nbsp;&nbsp;
+  |x − x*| ≤ d &nbsp;→&nbsp; <span class="hl-k">hold</span>
+  <br><span class="cmt">// V = Q/A is the only speed available — there is no "slow down near the target"</span>
+</div>
+<p>The catch: a real solenoid valve takes a few tens of milliseconds to switch, and oil keeps flowing during that lag.
+So the piston sails <em>past</em> the deadband edge before it can stop, then the controller reverses, and it sails past
+the other edge. The result is a self-sustaining oscillation — a <em>limit cycle</em>.</p>
+
+<h2>Step 2 · Watch it hunt</h2>
+<h3>It never settles — it circles the target</h3>
+<p>Set a target and let it run. The cylinder charges to the setpoint, overshoots because of the valve delay, reverses,
+overshoots the other way, and locks into a steady buzz around x*. Widen the deadband and the buzz gets slower and
+larger in position but the valve switches less; narrow it and the valve chatters furiously. You cannot make it simply
+stop.</p>
+
+<div class="demo" data-demo="onoff">
+  <div class="stage">
+    <canvas class="pic"></canvas>
+    <canvas class="plot"></canvas>
+  </div>
+  <div class="controls"></div>
+  <div class="readouts"></div>
+</div>
+
+<p>Every on/off system lives with this. Widening the deadband is the honest knob: it reduces valve wear and chatter at
+the cost of a larger dead zone where the piston is "close enough." The limit-cycle amplitude is roughly the deadband
+plus the distance the piston coasts during the valve's switching delay, V·τ.</p>
+
+<h2>Step 3 · When on/off is the right choice</h2>
+<div class="chips">
+  <span class="chip">simple, cheap, rugged</span>
+  <span class="chip">only full-speed or stop</span>
+  <span class="chip">always hunts (limit cycle)</span>
+  <span class="chip">deadband trades chatter ↔ accuracy</span>
+  <span class="chip">no smooth approach</span>
+</div>
+<p>On/off control is perfect when you just need to reach an end stop or toggle between fixed positions — a clamp, a
+gate, a tipping bucket. When you need to stop <em>gently</em> and sit <em>precisely</em> on an arbitrary target, you
+need a valve that can meter flow in proportion to the error — which is exactly the next project.</p>
+
+<div class="takeaways">
+  <h3>Key takeaways</h3>
+  <ul>
+    <li><b>On/off (bang-bang) control</b> drives the cylinder at full speed toward the target and shuts off inside a
+      deadband — there is no proportional slowdown.</li>
+    <li><b>It always hunts.</b> Valve switching delay lets the piston overshoot the deadband, producing a self-sustaining
+      limit cycle around the setpoint.</li>
+    <li><b>Limit-cycle amplitude ≈ deadband + V·τ</b> (coast distance during the valve delay).</li>
+    <li><b>Deadband is the tuning compromise:</b> wider = less chatter and valve wear, but a larger zone of acceptable
+      error; narrower = tighter but buzzes hard.</li>
+    <li>Great for reaching end stops or fixed positions; poor for precise, gentle positioning — use proportional control
+      for that.</li>
+  </ul>
+</div>
+
+<h2>Investigate further</h2>
+<ol class="ex">
+  <li><b>Amplitude.</b> With full speed V = 170 mm/s, valve delay τ = 60 ms, and deadband d = 3 mm, estimate the
+    limit-cycle half-amplitude.</li>
+  <li><b>Chatter.</b> If you halve the deadband, what happens to the hunting frequency and to valve wear?</li>
+  <li><b>Zero deadband.</b> What happens as the deadband approaches zero, and why is that bad for the valve?</li>
+  <li><b>Design.</b> Name one application where on/off cylinder control is entirely appropriate, and one where its limit
+    cycle would be unacceptable.</li>
+</ol>
+<details><summary>Show discussion &amp; answers</summary>
+  <div class="qa">
+    <p><b>1.</b> Half-amplitude ≈ d + V·τ = 3 mm + (170 mm/s)(0.06 s) = 3 + 10.2 ≈ <b>13 mm</b>. The coast during the valve
+    delay dominates the deadband here.</p>
+    <p><b>2.</b> Halving the deadband makes the limit cycle smaller in position but the valve switches roughly twice as
+    often — <b>higher chatter frequency and more valve wear</b>. Tighter control costs valve life.</p>
+    <p><b>3.</b> As d → 0 the amplitude shrinks toward the coast term V·τ but the valve switches as fast as it physically
+    can, essentially continuously — extreme chatter that overheats and destroys the solenoid and wastes energy. Some
+    deadband is mandatory.</p>
+    <p><b>4.</b> Appropriate: driving a clamp or gate to a hard end stop, or toggling a diverter between two fixed
+    positions — the limit cycle at the stop is harmless. Unacceptable: positioning a robot joint, a machine-tool axis, or
+    a camera platform to an arbitrary precise point, where the constant buzz would blur the result and shake the machine.</p>
+  </div>
+</details>
+
+<footer>Hydraulic Circuits 4 · self-contained, no external libraries or network · the limit cycle is integrated live.
+Next: proportional control.</footer>
+</div>
+
+<script>
+"use strict";
+(function(){
+  const REDUCED=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const COL={in:'#E8A33D',out:'#22C3AE',grid2:'#16262F',axis:'#3A5464',text:'#7FA0AE',blue:'#9BD0FF',red:'#FF8FA3',steel:'#5E7686'};
+  const BORE=0.050, STROKE=0.30, Ac=Math.PI/4*BORE*BORE, Vmax=(20/60000)/Ac; // ~0.17 m/s
+  function el(t,c){const e=document.createElement(t);if(c)e.className=c;return e;}
+  function fit(cv,a){const dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1));const w=cv.clientWidth||cv.parentElement.clientWidth||300;const h=Math.round(w*a);cv.style.height=h+'px';cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);return{ctx:x,W:w,H:h};}
+  function sliders(cont,defs,p,cb){defs.forEach(d=>{p[d.key]=d.value;const c=el('div','ctrl'),r=el('div','row');const n=el('span','name');n.innerHTML=d.label;const v=el('span','val');const f=d.fmt||(x=>x.toFixed(2));v.textContent=f(d.value);r.appendChild(n);r.appendChild(v);const i=document.createElement('input');i.type='range';i.min=d.min;i.max=d.max;i.step=d.step;i.value=d.value;i.setAttribute('aria-label',d.label.replace(/<[^>]+>/g,''));i.addEventListener('input',()=>{p[d.key]=parseFloat(i.value);v.textContent=f(p[d.key]);cb&&cb();});c.appendChild(r);c.appendChild(i);cont.appendChild(c);});}
+  function reads(cont,items){cont.innerHTML='';items.forEach(r=>{const s=el('span','ro'+(r.cls?' '+r.cls:''));s.innerHTML=r.label+' <b>'+r.value+'</b>';cont.appendChild(s);});}
+
+  const root=document.querySelector('[data-demo=onoff]'); if(!root) return;
+  const pic=root.querySelector('.pic'), plot=root.querySelector('.plot');
+  const controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+  const p={}; let x=0.02, cmd=0, pend=0, pendTime=0, last=null, hist=[], raf=null, tsim=0, switches=0, swWindow=[];
+  sliders(controls,[
+    {key:'tgt',label:'target (mm)',min:60,max:240,step:5,value:150,fmt:v=>v.toFixed(0)},
+    {key:'db',label:'deadband (mm)',min:0.5,max:20,step:0.5,value:4,fmt:v=>v.toFixed(1)},
+    {key:'tau',label:'valve delay (ms)',min:10,max:140,step:5,value:60,fmt:v=>v.toFixed(0)}
+  ],p,null);
+  function controller(){ const tgt=p.tgt/1000, db=p.db/1000; let want=0;
+    if(x < tgt-db) want=1; else if(x > tgt+db) want=-1; else want=0;
+    return want; }
+  function draw(now){
+    const {ctx,W,H}=fit(pic,0.66); let dt=last?Math.min(0.04,(now-last)/1000):0.016; last=now; tsim+=dt;
+    // controller with switching delay tau
+    const want=controller();
+    if(want!==pend){ pend=want; pendTime=tsim; }
+    if(tsim-pendTime >= p.tau/1000 && cmd!==pend){ cmd=pend; switches++; swWindow.push(tsim); }
+    // integrate
+    const v=cmd*Vmax; x=Math.max(0,Math.min(STROKE,x+v*dt));
+    hist.push({t:tsim,x:x}); if(hist.length>900)hist.shift();
+    swWindow=swWindow.filter(s=>s>tsim-2);
+    // ---- left: cylinder + valve ----
+    ctx.clearRect(0,0,W,H);
+    const midY=H*0.42, cylL=W*0.10, cylR=W*0.80, cylTop=midY-H*0.13, cylBot=midY+H*0.13;
+    ctx.strokeStyle=COL.steel;ctx.lineWidth=2.4;ctx.strokeRect(cylL,cylTop,cylR-cylL,cylBot-cylTop);
+    const px=cylL+8+(cylR-cylL-16)*(x/STROKE);
+    ctx.fillStyle='rgba(232,163,61,0.24)';ctx.fillRect(cylL+1,cylTop+1,px-cylL-1,cylBot-cylTop-2);
+    ctx.fillStyle=COL.steel;ctx.fillRect(px-3,cylTop+2,6,cylBot-cylTop-4);
+    ctx.fillRect(px,midY-6,(cylR-px)+W*0.02,12);
+    // target line + deadband band
+    const tgtPx=cylL+8+(cylR-cylL-16)*(p.tgt/1000/STROKE);
+    const dbPx=(cylR-cylL-16)*(p.db/1000/STROKE);
+    ctx.fillStyle='rgba(155,208,255,0.14)';ctx.fillRect(tgtPx-dbPx,cylTop,2*dbPx,cylBot-cylTop);
+    ctx.strokeStyle=COL.blue;ctx.setLineDash([4,3]);ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(tgtPx,cylTop-6);ctx.lineTo(tgtPx,cylBot+6);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=COL.blue;ctx.font='9px ui-monospace,monospace';ctx.textAlign='center';ctx.fillText('target',tgtPx,cylTop-10);
+    // valve state indicator
+    ctx.fillStyle=COL.text;ctx.font='11px ui-monospace,monospace';ctx.textAlign='left';
+    const state=cmd>0?'▶ EXTEND':cmd<0?'◀ RETRACT':'■ HOLD';
+    ctx.fillStyle=cmd!==0?COL.in:COL.out;ctx.fillText('valve: '+state,cylL,H-10);
+    // ---- right: position-vs-time trace ----
+    const g=fit(plot,0.66); const P=g.ctx,PW=g.W,PH=g.H,pad={l:30,r:10,t:14,b:22};
+    P.clearRect(0,0,PW,PH);
+    const t0=Math.max(0,tsim-6);
+    const gx=t=>pad.l+((t-t0)/6)*(PW-pad.l-pad.r);
+    const gy=xx=>pad.t+(1-(xx/STROKE))*(PH-pad.t-pad.b);
+    // target + deadband band
+    P.fillStyle='rgba(155,208,255,0.14)';P.fillRect(pad.l,gy((p.tgt+p.db)/1000),PW-pad.l-pad.r,gy((p.tgt-p.db)/1000)-gy((p.tgt+p.db)/1000));
+    P.strokeStyle=COL.blue;P.setLineDash([4,3]);P.beginPath();P.moveTo(pad.l,gy(p.tgt/1000));P.lineTo(PW-pad.r,gy(p.tgt/1000));P.stroke();P.setLineDash([]);
+    P.strokeStyle=COL.out;P.lineWidth=2;P.beginPath();let started=false;
+    for(const h of hist){ if(h.t<t0)continue; const X=gx(h.t),Y=gy(h.x); started?P.lineTo(X,Y):(P.moveTo(X,Y),started=true); } P.stroke();
+    P.fillStyle=COL.text;P.font='9px ui-monospace,monospace';P.textAlign='right';P.fillText('position(t)',PW-pad.r,pad.t+8);
+    P.textAlign='center';P.textBaseline='top';P.fillText('time →',(pad.l+PW-pad.r)/2,PH-pad.b+6);
+    // readouts
+    const amp=(p.db/1000 + Vmax*(p.tau/1000))*1000;
+    const freq= swWindow.length/2/2; // switches per second /2 = cycles/s
+    reads(ro,[
+      {label:'valve', value: cmd>0?'extend':cmd<0?'retract':'hold', cls: cmd!==0?'warn':'good'},
+      {label:'error', value:((x-p.tgt/1000)*1000).toFixed(1)+' mm'},
+      {label:'limit-cycle ~±', value:amp.toFixed(0)+' mm', cls:'warn'},
+      {label:'hunting freq', value:freq.toFixed(1)+' Hz'}
+    ]);
+    raf=requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',()=>{if(REDUCED){fit(pic,0.66);fit(plot,0.66);}});
+  if(REDUCED){last=performance.now();draw(performance.now());cancelAnimationFrame(raf);} else raf=requestAnimationFrame(draw);
+})();
+</script>
+</body>
+</html>

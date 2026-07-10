@@ -1,0 +1,48 @@
+# Jupyter Book configuration
+# Docs: https://jupyterbook.org/customize/config.html
+
+title: "Foundations of Dynamic Systems"
+author: "Generated with Claude"
+logo: ""
+copyright: "2026"
+
+# Force re-execution of notebooks on each build so plots are always fresh.
+execute:
+  execute_notebooks: "off"
+  timeout: 400
+  allow_errors: false
+
+# Parse and render settings
+parse:
+  myst_enable_extensions:
+    - amsmath          # nice LaTeX math environments
+    - dollarmath       # $...$ and $$...$$ math
+    - colon_fence      # ::: fenced admonitions
+    - deflist
+    - html_image
+
+# Add a bibliography file (optional, referenced by references.md)
+# bibtex_bibfiles:
+#   - references.bib
+
+# HTML output options
+html:
+  use_issues_button: false
+  use_repository_button: false
+  home_page_in_navbar: true
+
+# Launch buttons let students run notebooks live (configure a repo to enable)
+launch_buttons:
+  notebook_interface: "jupyterlab"
+  thebe: true          # enables in-browser "live code" via Thebe
+
+# Copy the self-contained standalone HTML demos verbatim into the built site,
+# so they can be embedded via iframe AND opened directly forever.
+sphinx:
+  config:
+    html_extra_path: ["demos"]
+    html_show_copyright: true
+    mathjax3_config:
+      tex:
+        macros:
+          "diff": ["\\frac{d#1}{d#2}", 2]

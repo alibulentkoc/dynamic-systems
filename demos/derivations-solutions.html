@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Derivations &amp; Solutions</title>
+<style>
+  :root{
+    --paper:#EEF2F5; --card:#FFFFFF; --ink:#17252E; --muted:#5E7686;
+    --line:#D3DDE4; --line2:#E3EAEF;
+    --panel:#0E1B24; --grid2:#16262F; --axis:#3A5464;
+    --in:#E8A33D; --out:#22C3AE; --accent:#22C3AE; --accent-ink:#0A5B52; --blue:#9BD0FF; --red:#FF8FA3; --violet:#C6A8FF;
+    --mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); line-height:1.6; font-size:17px; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:940px; margin:0 auto; padding:0 20px 120px}
+  header.hero{padding:64px 0 34px; border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono); font-size:.78rem; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); margin:0 0 14px}
+  h1{font-size:clamp(2rem,5vw,3.1rem); line-height:1.06; margin:0 0 18px; letter-spacing:-.02em; font-weight:750}
+  .lede{font-size:1.12rem; color:#33454f; max-width:62ch; margin:0}
+  h2{font-size:1.02rem; font-family:var(--mono); letter-spacing:.04em; text-transform:uppercase; color:var(--muted); margin:52px 0 14px; font-weight:600}
+  h3{font-size:1.5rem; letter-spacing:-.01em; margin:6px 0 10px; font-weight:700}
+  h4{font-size:1.06rem; margin:22px 0 6px; font-weight:700; color:#28414d}
+  p{margin:0 0 16px}
+  em{font-style:normal; color:var(--accent-ink); font-weight:600}
+  .route{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:6px 24px 20px; margin:22px 0}
+  .routetag{display:inline-block; font-family:var(--mono); font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:#fff; background:var(--accent-ink); border-radius:0 0 8px 8px; padding:5px 12px; margin-left:-24px; margin-bottom:6px}
+  .eq{font-family:var(--mono); background:var(--panel); color:#DCE7EC; border-radius:12px; padding:16px 20px; margin:14px 0; overflow-x:auto; font-size:1.0rem; line-height:2.1}
+  .eq.small{font-size:.92rem; line-height:1.9}
+  .eq .cmt{color:#6E8794} .eq .hl-in{color:var(--in)} .eq .hl-out{color:var(--out)} .eq .hl-k{color:#9BD0FF} .eq .hl-v{color:var(--violet)}
+  .step{display:flex; gap:12px; align-items:flex-start; margin:10px 0}
+  .step .num{flex:0 0 auto; width:26px; height:26px; border-radius:50%; background:#F0F5F8; border:1px solid var(--line); color:var(--accent-ink); font-family:var(--mono); font-size:.8rem; display:flex; align-items:center; justify-content:center; font-weight:600; margin-top:2px}
+  .step .body{flex:1}
+  .frac{display:inline-flex; flex-direction:column; text-align:center; vertical-align:middle; margin:0 .28em; line-height:1.05}
+  .frac .num2{border-bottom:1.5px solid currentColor; padding:0 .4em}
+  .frac .den{padding:2px .4em 0}
+  .plain-eq{font-family:var(--mono); font-size:.98rem; color:var(--ink); background:#F6F9FB; border:1px solid var(--line2); border-radius:9px; padding:9px 13px; display:inline-block; margin:4px 6px 4px 0}
+  table.tbl{width:100%; border-collapse:collapse; margin:14px 0; font-family:var(--mono); font-size:.9rem}
+  table.tbl th,table.tbl td{text-align:left; padding:9px 12px; border-bottom:1px solid var(--line)}
+  table.tbl th{font-size:.7rem; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:600; font-family:var(--sans)}
+  table.tbl td:first-child{color:var(--accent-ink)}
+  .cases{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin:14px 0}
+  @media (max-width:640px){ .cases{grid-template-columns:1fr} }
+  .case{background:#F6F9FB; border:1px solid var(--line2); border-radius:10px; padding:12px 14px}
+  .case .h{font-family:var(--mono); font-size:.76rem; color:var(--accent-ink); text-transform:uppercase; letter-spacing:.08em; margin-bottom:6px}
+  .case .m{font-family:var(--mono); font-size:.86rem; line-height:1.7}
+  .match{background:#eafaf6; border:1px solid var(--accent); border-radius:10px; padding:12px 16px; margin:14px 0; font-size:.96rem}
+  .match b{color:var(--accent-ink)}
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 4px}
+  .chip{font-family:var(--mono); font-size:.82rem; padding:6px 11px; border-radius:999px; background:#F0F5F8; border:1px solid var(--line); color:#3a4d57}
+
+  .demo{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; margin:22px 0}
+  .demo > canvas{background:var(--panel); border-radius:10px; width:100%; height:auto; display:block}
+  .controls{display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:12px 20px; margin:16px 4px 4px}
+  @media (max-width:640px){ .controls{grid-template-columns:1fr 1fr} }
+  .ctrl{display:flex; flex-direction:column; gap:5px}
+  .ctrl .row{display:flex; justify-content:space-between; align-items:baseline; font-family:var(--mono); font-size:.84rem}
+  .ctrl .name{color:var(--ink)} .ctrl .val{color:var(--accent-ink); font-weight:600}
+  input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:5px; background:var(--line); border-radius:5px; outline:none; margin:6px 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none; width:18px; height:18px; border-radius:50%; background:var(--accent); border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,.25); cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--accent); border:2px solid #fff; cursor:pointer}
+  .readouts{display:flex; flex-wrap:wrap; gap:8px 10px; margin:14px 4px 2px; font-family:var(--mono); font-size:.82rem}
+  .ro{background:#F0F5F8; border:1px solid var(--line); border-radius:8px; padding:6px 10px; color:#3a4d57}
+  .ro b{color:var(--accent-ink)} .ro.good{background:#eafaf6; border-color:var(--accent)} .ro.good b{color:var(--accent-ink)}
+  .legend{display:flex; gap:16px; flex-wrap:wrap; font-family:var(--mono); font-size:.78rem; color:var(--muted); margin:6px 4px}
+  .legend span::before{content:"■ "; }
+
+  .takeaways{background:var(--panel); color:#DCE7EC; border-radius:16px; padding:26px 28px; margin:40px 0}
+  .takeaways h3{color:#fff} .takeaways li{margin:9px 0} .takeaways b{color:var(--out)}
+  details{background:var(--card); border:1px solid var(--line); border-radius:11px; padding:2px 16px; margin:10px 0}
+  details[open]{padding-bottom:12px}
+  summary{cursor:pointer; font-weight:600; padding:12px 0; list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"▸ "; color:var(--accent-ink)} details[open] summary::before{content:"▾ "}
+  .qa{font-size:.97rem} .qa p{margin:8px 0}
+  ol.ex{padding-left:1.3em} ol.ex li{margin:8px 0}
+  footer{margin-top:60px; padding-top:20px; border-top:1px solid var(--line); font-family:var(--mono); font-size:.8rem; color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <p class="eyebrow">Foundations of Dynamic Systems · Derivations &amp; Solutions</p>
+  <h1>Three Roads to the Same x(t)</h1>
+  <p class="lede">The lessons taught the ideas; this companion does the algebra. We take the one system this whole
+  course revolves around — the mass–spring–damper — and solve it three independent ways: classically by hand, with
+  the Laplace transform, and through the state-space matrix exponential. All three land on the <em>identical</em>
+  closed-form motion x(t). Every step here was derived and cross-checked symbolically with SymPy.</p>
+</header>
+
+<h2>The running example</h2>
+<h3>One equation, in normalized form</h3>
+<p>Start from Newton's law for the mass–spring–damper (Lesson 2) and divide through by m. Writing the natural
+frequency ωₙ = √(k/m) and damping ratio ζ = c/(2√(km)) collapses the parameters into two meaningful numbers:</p>
+<div class="eq">
+  m ẍ + c ẋ + k x = <span class="hl-in">F</span>
+  &nbsp;&nbsp;⟹&nbsp;&nbsp;
+  ẍ + 2<span class="hl-k">ζ</span><span class="hl-k">ωₙ</span> ẋ + <span class="hl-k">ωₙ</span>² x = <span class="hl-k">ωₙ</span>²·<span class="hl-in">x<sub>ss</sub></span>
+  &nbsp;&nbsp;<span class="cmt">// x<sub>ss</sub> = F/k is the steady-state rest position</span>
+</div>
+<p>We solve two canonical cases: the <em>free response</em> (F = 0, released from x(0)=x₀ with velocity ẋ(0)=v₀),
+and the <em>step response</em> (a suddenly applied constant force, starting from rest). Throughout, two shorthands
+recur: the decay rate <span class="plain-eq">σ = ζωₙ</span> and the damped frequency
+<span class="plain-eq">ω<sub>d</sub> = ωₙ√(1 − ζ²)</span>.</p>
+
+<!-- ========================= ROUTE 1 ========================= -->
+<h2>Route 1 · Classical</h2>
+<h3>Guess an exponential, match the initial conditions</h3>
+<div class="route">
+  <span class="routetag">Route 1 — solve the ODE directly</span>
+
+  <div class="step"><div class="num">1</div><div class="body">
+    <b>Homogeneous equation &amp; the characteristic guess.</b> With F = 0, try x = e<sup>λt</sup>. Every derivative
+    just multiplies by λ, so the whole ODE reduces to a polynomial in λ:
+    <div class="eq small">ẍ + 2ζωₙ ẋ + ωₙ² x = 0 &nbsp;&nbsp;⟹&nbsp;&nbsp; <span class="hl-v">λ² + 2ζωₙ λ + ωₙ² = 0</span> &nbsp;&nbsp;<span class="cmt">// the characteristic equation</span></div>
+  </div></div>
+
+  <div class="step"><div class="num">2</div><div class="body">
+    <b>Roots.</b> The quadratic formula gives the two λ that make e<sup>λt</sup> a solution:
+    <div class="eq small">λ = −ζωₙ ± ωₙ√(ζ² − 1)</div>
+    These are the same numbers the course calls the <em>poles</em> — and, in Route 3, the <em>eigenvalues of A</em>.
+    Their nature depends entirely on ζ:
+  </div></div>
+
+  <div class="cases">
+    <div class="case"><div class="h">Underdamped 0≤ζ&lt;1</div><div class="m">λ = −σ ± jω<sub>d</sub><br>x<sub>h</sub> = e<sup>−σt</sup>(A cos ω<sub>d</sub>t + B sin ω<sub>d</sub>t)</div></div>
+    <div class="case"><div class="h">Critically damped ζ=1</div><div class="m">λ = −ωₙ (repeated)<br>x<sub>h</sub> = (A + B t) e<sup>−ωₙt</sup></div></div>
+    <div class="case"><div class="h">Overdamped ζ&gt;1</div><div class="m">λ = −s₁, −s₂ (real)<br>x<sub>h</sub> = A e<sup>−s₁t</sup> + B e<sup>−s₂t</sup></div></div>
+  </div>
+
+  <div class="step"><div class="num">3</div><div class="body">
+    <b>Apply the initial conditions</b> (underdamped case). Impose x(0) = x₀ and ẋ(0) = v₀ on
+    x<sub>h</sub> = e<sup>−σt</sup>(A cos ω<sub>d</sub>t + B sin ω<sub>d</sub>t). The first gives A directly; differentiating
+    and setting t = 0 gives B:
+    <div class="eq small">A = x₀ , &nbsp;&nbsp; B = <span class="frac"><span class="num2">v₀ + σx₀</span><span class="den">ω<sub>d</sub></span></span></div>
+  </div></div>
+
+  <div class="step"><div class="num">4</div><div class="body">
+    <b>The free response.</b> Substituting back:
+    <div class="eq"><span class="hl-out">x(t) = e<sup>−σt</sup> [ x₀ cos ω<sub>d</sub>t + <span class="frac"><span class="num2">v₀ + σx₀</span><span class="den">ω<sub>d</sub></span></span> sin ω<sub>d</sub>t ]</span></div>
+    A decaying envelope e<sup>−σt</sup> wrapped around an oscillation at ω<sub>d</sub> — exactly the ring-down the demos show.
+  </div></div>
+
+  <div class="step"><div class="num">5</div><div class="body">
+    <b>The step response</b> (start from rest, x₀ = v₀ = 0). Add the particular solution x<sub>p</sub> = x<sub>ss</sub>
+    (the new rest point) to the homogeneous part and re-apply the rest conditions:
+    <div class="eq"><span class="hl-out">x(t) = x<sub>ss</sub> [ 1 − e<sup>−σt</sup>( cos ω<sub>d</sub>t + <span class="frac"><span class="num2">σ</span><span class="den">ω<sub>d</sub></span></span> sin ω<sub>d</sub>t ) ]</span></div>
+    The classic overshoot-and-settle. SymPy's <span class="plain-eq">dsolve</span> returns this exactly.
+  </div></div>
+</div>
+
+<!-- ========================= ROUTE 2 ========================= -->
+<h2>Route 2 · Laplace transform</h2>
+<h3>Turn the ODE into algebra, then invert</h3>
+<div class="route">
+  <span class="routetag">Route 2 — transform, solve, invert</span>
+
+  <div class="step"><div class="num">1</div><div class="body">
+    <b>The tool.</b> The transform X(s) = ∫₀<sup>∞</sup> x(t) e<sup>−st</sup> dt has one property that matters here —
+    differentiation becomes multiplication by s, carrying the initial conditions along:
+    <div class="eq small">L{ẋ} = s X(s) − x₀ &nbsp;&nbsp;&nbsp; L{ẍ} = s² X(s) − s x₀ − v₀</div>
+  </div></div>
+
+  <div class="step"><div class="num">2</div><div class="body">
+    <b>A small transform table</b> (the only pairs we need — all verified with SymPy):
+    <table class="tbl"><thead><tr><th>x(t)</th><th>X(s)</th></tr></thead><tbody>
+      <tr><td>1</td><td>1/s</td></tr>
+      <tr><td>e<sup>−σt</sup></td><td>1/(s+σ)</td></tr>
+      <tr><td>cos ω<sub>d</sub>t</td><td>s / (s² + ω<sub>d</sub>²)</td></tr>
+      <tr><td>sin ω<sub>d</sub>t</td><td>ω<sub>d</sub> / (s² + ω<sub>d</sub>²)</td></tr>
+      <tr><td>e<sup>−σt</sup> cos ω<sub>d</sub>t</td><td>(s+σ) / ((s+σ)² + ω<sub>d</sub>²)</td></tr>
+      <tr><td>e<sup>−σt</sup> sin ω<sub>d</sub>t</td><td>ω<sub>d</sub> / ((s+σ)² + ω<sub>d</sub>²)</td></tr>
+    </tbody></table>
+  </div></div>
+
+  <div class="step"><div class="num">3</div><div class="body">
+    <b>Transform the whole equation</b> (free response) and collect X(s):
+    <div class="eq small">(s²X − s x₀ − v₀) + 2ζωₙ(sX − x₀) + ωₙ²X = 0</div>
+    <div class="eq">X(s) = <span class="frac"><span class="num2">s x₀ + v₀ + 2ζωₙ x₀</span><span class="den">s² + 2ζωₙ s + ωₙ²</span></span> &nbsp;&nbsp;<span class="cmt">// the denominator is the characteristic polynomial again</span></div>
+  </div></div>
+
+  <div class="step"><div class="num">4</div><div class="body">
+    <b>Complete the square</b> in the denominator, s² + 2ζωₙs + ωₙ² = (s+σ)² + ω<sub>d</sub>², and split the numerator so
+    each piece matches a table row:
+    <div class="eq small">X(s) = x₀ · <span class="frac"><span class="num2">s + σ</span><span class="den">(s+σ)² + ω<sub>d</sub>²</span></span> &nbsp;+&nbsp; <span class="frac"><span class="num2">v₀ + σx₀</span><span class="den">ω<sub>d</sub></span></span> · <span class="frac"><span class="num2">ω<sub>d</sub></span><span class="den">(s+σ)² + ω<sub>d</sub>²</span></span></div>
+  </div></div>
+
+  <div class="step"><div class="num">5</div><div class="body">
+    <b>Invert term by term</b> using the last two table rows:
+    <div class="eq"><span class="hl-out">x(t) = e<sup>−σt</sup> [ x₀ cos ω<sub>d</sub>t + <span class="frac"><span class="num2">v₀ + σx₀</span><span class="den">ω<sub>d</sub></span></span> sin ω<sub>d</sub>t ]</span></div>
+  </div></div>
+
+  <div class="match"><b>Same answer.</b> Route 2 reproduces Route 1 exactly — the Laplace method just trades hand-integration
+  for table lookup. For the step input, X(s) = ωₙ²x<sub>ss</sub> / [ s((s+σ)²+ω<sub>d</sub>²) ] partial-fractions to
+  x<sub>ss</sub>/s − x<sub>ss</sub>(s+2σ)/((s+σ)²+ω<sub>d</sub>²), which inverts to the same step response as Route 1.</div>
+</div>
+
+<!-- ========================= ROUTE 3 ========================= -->
+<h2>Route 3 · State-space</h2>
+<h3>The matrix exponential</h3>
+<div class="route">
+  <span class="routetag">Route 3 — e<sup>At</sup> x(0)</span>
+
+  <div class="step"><div class="num">1</div><div class="body">
+    <b>First-order form.</b> With state x = [x, ẋ]ᵀ (Lesson 7), the second-order ODE becomes ẋ = Ax:
+    <div class="eq small">A = <span class="frac"><span class="num2"> </span></span>[ [ 0, 1 ], [ −ωₙ², −2ζωₙ ] ] &nbsp;&nbsp;<span class="cmt">// characteristic polynomial of A: λ²+2ζωₙλ+ωₙ² — the same one</span></div>
+  </div></div>
+
+  <div class="step"><div class="num">2</div><div class="body">
+    <b>The solution is the matrix exponential.</b> Exactly as the scalar equation ẋ = ax has solution x = e<sup>at</sup>x₀,
+    the vector equation has:
+    <div class="eq small">x(t) = e<sup>At</sup> x(0) &nbsp;&nbsp;&nbsp; where &nbsp; e<sup>At</sup> = V e<sup>Λt</sup> V⁻¹ &nbsp;&nbsp;<span class="cmt">// eigen-decompose A = VΛV⁻¹; the eigenvalues in Λ are the poles</span></div>
+  </div></div>
+
+  <div class="step"><div class="num">3</div><div class="body">
+    <b>Evaluated</b> (underdamped), the matrix exponential is:
+    <div class="eq small">e<sup>At</sup> = e<sup>−σt</sup> <span style="display:inline-block;border-left:2px solid #5E7686;border-right:2px solid #5E7686;padding:4px 10px;margin-left:6px">
+      <table style="border-collapse:collapse"><tr><td style="padding:2px 12px">cos ω<sub>d</sub>t + (σ/ω<sub>d</sub>) sin ω<sub>d</sub>t</td><td style="padding:2px 12px">(1/ω<sub>d</sub>) sin ω<sub>d</sub>t</td></tr>
+      <tr><td style="padding:2px 12px">−(ωₙ²/ω<sub>d</sub>) sin ω<sub>d</sub>t</td><td style="padding:2px 12px">cos ω<sub>d</sub>t − (σ/ω<sub>d</sub>) sin ω<sub>d</sub>t</td></tr></table></span>
+    </div>
+  </div></div>
+
+  <div class="step"><div class="num">4</div><div class="body">
+    <b>Read off the position</b> — the top row of e<sup>At</sup> times [x₀, v₀]ᵀ:
+    <div class="eq"><span class="hl-out">x(t) = e<sup>−σt</sup> [ x₀ cos ω<sub>d</sub>t + <span class="frac"><span class="num2">σx₀ + v₀</span><span class="den">ω<sub>d</sub></span></span> sin ω<sub>d</sub>t ]</span></div>
+  </div></div>
+
+  <div class="match"><b>Same answer, a third time.</b> The matrix exponential's first row reproduces the exact x(t) of Routes 1
+  and 2. The velocity ẋ(t) falls out of the second row for free — a bonus the scalar methods don't hand you directly.</div>
+</div>
+
+<!-- ========================= INTERACTIVE ========================= -->
+<h2>Interactive · three routes, one curve</h2>
+<h3>Plot all three — they land on top of each other</h3>
+<p>Below, the free response is drawn three ways at once: the <span style="color:#0A5B52;font-weight:600">closed form</span>
+(Routes 1 &amp; 2 give the identical expression), the <span style="color:#8a5a12;font-weight:600">state-space e<sup>At</sup></span>
+evaluation, and an independent <span style="color:#7a3a8a;font-weight:600">RK4 numerical</span> integration of the raw ODE.
+Move the parameters and watch them stay perfectly superimposed — the readout reports the largest gap between them.</p>
+
+<div class="demo" data-demo="agree">
+  <canvas class="plot"></canvas>
+  <div class="legend"><span style="color:#22C3AE">closed form (Routes 1&amp;2)</span><span style="color:#E8A33D">state-space e^{At}</span><span style="color:#C6A8FF">RK4 numeric</span></div>
+  <div class="controls"></div>
+  <div class="readouts"></div>
+</div>
+
+<div class="chips">
+  <span class="chip">characteristic roots = poles = eigenvalues of A</span>
+  <span class="chip">σ = ζωₙ (decay)</span>
+  <span class="chip">ω<sub>d</sub> = ωₙ√(1−ζ²) (ring)</span>
+  <span class="chip">one x(t), three derivations</span>
+</div>
+
+<div class="takeaways">
+  <h3>Key takeaways</h3>
+  <ul>
+    <li><b>The classical method</b> guesses e<sup>λt</sup>, solves the characteristic equation, splits into three damping
+      cases, and fits the initial conditions.</li>
+    <li><b>The Laplace method</b> turns the ODE into algebra in s, solves for X(s), completes the square / partial-fractions,
+      and inverts with a small table.</li>
+    <li><b>The state-space method</b> writes ẋ = Ax and applies the matrix exponential x(t) = e<sup>At</sup>x(0), giving
+      position and velocity together.</li>
+    <li><b>All three share the same λ's</b> — characteristic roots, transfer-function poles, and eigenvalues of A are one
+      set of numbers.</li>
+    <li><b>All three yield the identical x(t)</b>, verified symbolically and numerically. Different bookkeeping, one physical
+      motion.</li>
+  </ul>
+</div>
+
+<h2>Exercises</h2>
+<ol class="ex">
+  <li><b>By hand.</b> For ωₙ = 2, ζ = 0.5, released from x₀ = 1, v₀ = 0, write σ, ω<sub>d</sub>, and the closed-form x(t).</li>
+  <li><b>Laplace.</b> Write X(s) for that same initial-value problem and identify its two poles.</li>
+  <li><b>State-space.</b> Write A for ωₙ = 2, ζ = 0.5 and confirm its eigenvalues equal the poles from Exercise 2.</li>
+  <li><b>Concept.</b> Explain why all three methods must give the same x(t), referring to what the roots/poles/eigenvalues
+    have in common.</li>
+</ol>
+
+<details><summary>Show worked solutions</summary>
+  <div class="qa">
+    <p><b>1.</b> σ = ζωₙ = 0.5·2 = <b>1</b>; ω<sub>d</sub> = ωₙ√(1−ζ²) = 2·√0.75 ≈ <b>1.732</b>. With v₀ = 0, B = σx₀/ω<sub>d</sub>
+    = 1/1.732 ≈ 0.577, so <b>x(t) = e<sup>−t</sup>(cos 1.732t + 0.577 sin 1.732t)</b>.</p>
+    <p><b>2.</b> X(s) = (s·1 + 0 + 2·0.5·2·1)/(s² + 2·0.5·2·s + 4) = <b>(s + 2)/(s² + 2s + 4)</b>. Poles solve
+    s² + 2s + 4 = 0 → s = <b>−1 ± j√3</b> (i.e. −σ ± jω<sub>d</sub>).</p>
+    <p><b>3.</b> A = [[0, 1], [−4, −2]]. Its characteristic equation is λ² − (trace)λ + det = λ² + 2λ + 4 = 0, so eigenvalues
+    <b>−1 ± j√3</b> — identical to the poles in Exercise 2.</p>
+    <p><b>4.</b> Each method is just a different way of solving the <em>same</em> linear ODE, and each locates the system's
+    natural frequencies as the roots of the <em>same</em> polynomial λ² + 2ζωₙλ + ωₙ² = 0 — called the characteristic roots
+    (classical), the poles (Laplace/transfer function), or the eigenvalues of A (state-space). Since the governing equation,
+    the initial conditions, and those defining roots are all identical, the solution x(t) they produce must be identical too.
+    The methods differ only in bookkeeping, not in physics.</p>
+  </div>
+</details>
+
+<footer>
+  Derivations &amp; Solutions · self-contained, no external libraries or network · every closed form here was derived and
+  cross-checked with SymPy (see the companion notebook). The interactive plots all three routes live.
+</footer>
+
+</div><!-- /wrap -->
+
+<script>
+"use strict";
+(function(){
+  const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const COL={out:'#22C3AE',in:'#E8A33D',violet:'#C6A8FF',grid2:'#16262F',axis:'#3A5464',text:'#7FA0AE'};
+  function el(tag,cls){const e=document.createElement(tag); if(cls)e.className=cls; return e;}
+  function fitCanvas(cv,aspect){
+    const dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1));
+    const cssW=cv.clientWidth || cv.parentElement.clientWidth || 300;
+    const cssH=Math.round(cssW*aspect);
+    cv.style.height=cssH+'px'; cv.width=Math.round(cssW*dpr); cv.height=Math.round(cssH*dpr);
+    const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); return {ctx,W:cssW,H:cssH};
+  }
+  function addSliders(container,defs,params,onChange){
+    defs.forEach(p=>{ params[p.key]=p.value;
+      const c=el('div','ctrl'), row=el('div','row');
+      const name=el('span','name'); name.innerHTML=p.label;
+      const val=el('span','val'); const fmt=p.fmt||(v=>v.toFixed(2)); val.textContent=fmt(p.value);
+      row.appendChild(name); row.appendChild(val);
+      const inp=document.createElement('input'); inp.type='range';
+      inp.min=p.min; inp.max=p.max; inp.step=p.step; inp.value=p.value;
+      inp.setAttribute('aria-label',(p.aria||p.label).replace(/<[^>]+>/g,''));
+      inp.addEventListener('input',()=>{ params[p.key]=parseFloat(inp.value); val.textContent=fmt(params[p.key]); onChange&&onChange(); });
+      c.appendChild(row); c.appendChild(inp); container.appendChild(c);
+    });
+  }
+  function setReadouts(container,items){ container.innerHTML='';
+    items.forEach(r=>{ const s=el('span','ro'+(r.cls?' '+r.cls:'')); s.innerHTML=r.label+' <b>'+r.value+'</b>'; container.appendChild(s); }); }
+
+  (function build(){
+    const root=document.querySelector('[data-demo=agree]'); if(!root) return;
+    const plot=root.querySelector('.plot');
+    const controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+    const params={};
+    addSliders(controls,[
+      {key:'wn',label:'ωₙ',min:0.6,max:4,step:0.1,value:2.0,fmt:v=>v.toFixed(1)},
+      {key:'zeta',label:'ζ',min:0.05,max:0.95,step:0.01,value:0.30,fmt:v=>v.toFixed(2)},
+      {key:'x0',label:'x₀',min:-1,max:1,step:0.05,value:1.0,fmt:v=>v.toFixed(2)},
+      {key:'v0',label:'v₀',min:-3,max:3,step:0.1,value:0.0,fmt:v=>v.toFixed(1)}
+    ],params,onChange);
+    const T=12, N=600, DT=T/N;
+    function closed(t){ const {wn,zeta,x0,v0}=params; const sig=zeta*wn, wd=wn*Math.sqrt(1-zeta*zeta);
+      return Math.exp(-sig*t)*(x0*Math.cos(wd*t)+((v0+sig*x0)/wd)*Math.sin(wd*t)); }
+    function stateExp(t){ const {wn,zeta,x0,v0}=params; const sig=zeta*wn, wd=wn*Math.sqrt(1-zeta*zeta); const e=Math.exp(-sig*t);
+      // top row of e^{At} dotted with [x0,v0]
+      const a11=e*(Math.cos(wd*t)+sig/wd*Math.sin(wd*t)), a12=e*(1/wd*Math.sin(wd*t));
+      return a11*x0 + a12*v0; }
+    function rk4series(){ const {wn,zeta,x0,v0}=params; let s=[x0,v0]; const out=[s[0]];
+      const f=st=>[st[1], -wn*wn*st[0]-2*zeta*wn*st[1]];
+      for(let i=1;i<=N;i++){ const k1=f(s),k2=f([s[0]+DT/2*k1[0],s[1]+DT/2*k1[1]]),k3=f([s[0]+DT/2*k2[0],s[1]+DT/2*k2[1]]),k4=f([s[0]+DT*k3[0],s[1]+DT*k3[1]]);
+        s=[s[0]+DT/6*(k1[0]+2*k2[0]+2*k3[0]+k4[0]), s[1]+DT/6*(k1[1]+2*k2[1]+2*k3[1]+k4[1])]; out.push(s[0]); }
+      return out; }
+    function draw(){
+      const {ctx,W,H}=fitCanvas(plot,0.5); const pad={l:34,r:12,t:14,b:24}; ctx.clearRect(0,0,W,H);
+      const rk=rk4series(); let amp=0.001; for(let i=0;i<=N;i++) amp=Math.max(amp,Math.abs(closed(i*DT)));
+      amp=Math.max(amp,Math.abs(params.x0))*1.1;
+      const gx=t=>pad.l+(t/T)*(W-pad.l-pad.r);
+      const gy=v=>pad.t+(1-(v/amp+1)/2)*(H-pad.t-pad.b);
+      ctx.strokeStyle=COL.axis; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(pad.l,gy(0)); ctx.lineTo(W-pad.r,gy(0)); ctx.stroke();
+      // RK4 (thick violet under), state-space (amber dashed), closed (teal)
+      function stroke(fn,color,w,dash){ ctx.strokeStyle=color; ctx.lineWidth=w; if(dash)ctx.setLineDash(dash); else ctx.setLineDash([]);
+        ctx.beginPath(); for(let i=0;i<=N;i++){ const t=i*DT, v=fn(i,t); const X=gx(t),Y=gy(v); i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);} ctx.stroke(); ctx.setLineDash([]); }
+      stroke((i)=>rk[i], COL.violet, 5.5);
+      stroke((i,t)=>stateExp(t), COL.in, 3, [7,5]);
+      stroke((i,t)=>closed(t), COL.out, 1.8);
+      ctx.fillStyle=COL.text; ctx.font='10px ui-monospace, monospace'; ctx.textAlign='center'; ctx.textBaseline='top';
+      ctx.fillText('time →',(pad.l+W-pad.r)/2,H-pad.b+6);
+      ctx.textAlign='right'; ctx.textBaseline='alphabetic'; ctx.fillText('x(t)',W-pad.r,pad.t+8);
+      // max deviation
+      let maxdev=0; for(let i=0;i<=N;i++){ const t=i*DT; maxdev=Math.max(maxdev, Math.abs(closed(t)-stateExp(t)), Math.abs(closed(t)-rk[i])); }
+      return maxdev;
+    }
+    function onChange(){ const dev=draw(); const {wn,zeta}=params; const sig=zeta*wn, wd=wn*Math.sqrt(1-zeta*zeta);
+      setReadouts(ro,[
+        {label:'σ = ζωₙ', value:sig.toFixed(3)},
+        {label:'ω_d', value:wd.toFixed(3)},
+        {label:'poles', value:'−'+sig.toFixed(2)+' ± j'+wd.toFixed(2)},
+        {label:'max gap between routes', value:dev.toExponential(1), cls:'good'}
+      ]);
+    }
+    window.addEventListener('resize',draw);
+    onChange();
+  })();
+})();
+</script>
+</body>
+</html>

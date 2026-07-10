@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Why the Laplace Transform Was Invented</title>
+<style>
+  :root{
+    --paper:#EEF2F5; --card:#FFFFFF; --ink:#17252E; --muted:#5E7686;
+    --line:#D3DDE4; --line2:#E3EAEF;
+    --panel:#0E1B24; --grid2:#16262F; --axis:#3A5464;
+    --in:#E8A33D; --out:#22C3AE; --accent:#22C3AE; --accent-ink:#0A5B52; --blue:#9BD0FF;
+    --mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans);
+    line-height:1.6; font-size:17px; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:940px; margin:0 auto; padding:0 20px 120px}
+  header.hero{padding:64px 0 34px; border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono); font-size:.78rem; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); margin:0 0 14px}
+  h1{font-size:clamp(2.1rem,5.4vw,3.3rem); line-height:1.05; margin:0 0 18px; letter-spacing:-.02em; font-weight:750}
+  .lede{font-size:1.12rem; color:#33454f; max-width:60ch; margin:0}
+  h2{font-size:1.02rem; font-family:var(--mono); letter-spacing:.04em; text-transform:uppercase; color:var(--muted); margin:52px 0 14px; font-weight:600}
+  h3{font-size:1.5rem; letter-spacing:-.01em; margin:6px 0 10px; font-weight:700}
+  p{margin:0 0 16px}
+  em{font-style:normal; color:var(--accent-ink); font-weight:600}
+  .idea{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px 24px; margin:18px 0}
+  .eq{font-family:var(--mono); background:var(--panel); color:#DCE7EC; border-radius:12px; padding:18px 20px; margin:16px 0; overflow-x:auto; font-size:1.02rem; line-height:2}
+  .eq .cmt{color:#6E8794} .eq .hl-in{color:var(--in)} .eq .hl-out{color:var(--out)} .eq .hl-k{color:#9BD0FF}
+  .frac{display:inline-flex; flex-direction:column; text-align:center; vertical-align:middle; margin:0 .28em; line-height:1.05}
+  .frac .num{border-bottom:1.5px solid currentColor; padding:0 .35em}
+  .frac .den{padding:2px .35em 0}
+  .plain-eq{font-family:var(--mono); font-size:1rem; color:var(--ink); background:#F6F9FB; border:1px solid var(--line2); border-radius:9px; padding:10px 14px; display:inline-block; margin:4px 0}
+  table.analogy{width:100%; border-collapse:collapse; margin:16px 0; font-size:.95rem}
+  table.analogy th,table.analogy td{text-align:left; padding:10px 12px; border-bottom:1px solid var(--line)}
+  table.analogy th{font-family:var(--mono); font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:600}
+  table.analogy td:first-child{font-family:var(--mono); color:var(--accent-ink)}
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 4px}
+  .chip{font-family:var(--mono); font-size:.82rem; padding:6px 11px; border-radius:999px; background:#F0F5F8; border:1px solid var(--line); color:#3a4d57}
+
+  .demo{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; margin:22px 0}
+  .stage{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  @media (max-width:620px){ .stage{grid-template-columns:1fr} }
+  .stage canvas{background:var(--panel); border-radius:10px; width:100%; height:auto; display:block; touch-action:none}
+  .hint{font-family:var(--mono); font-size:.76rem; color:var(--muted); margin:10px 4px 0}
+  .controls{display:grid; grid-template-columns:1fr 1fr; gap:12px 20px; margin:16px 4px 4px}
+  @media (max-width:620px){ .controls{grid-template-columns:1fr} }
+  .ctrl{display:flex; flex-direction:column; gap:5px}
+  .ctrl .row{display:flex; justify-content:space-between; align-items:baseline; font-family:var(--mono); font-size:.86rem}
+  .ctrl .name{color:var(--ink)} .ctrl .val{color:var(--accent-ink); font-weight:600}
+  input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:5px; background:var(--line); border-radius:5px; outline:none; margin:6px 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none; width:18px; height:18px; border-radius:50%; background:var(--accent); border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,.25); cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--accent); border:2px solid #fff; cursor:pointer}
+  input[type=range]:focus-visible{box-shadow:0 0 0 3px rgba(34,195,174,.35)}
+  .readouts{display:flex; flex-wrap:wrap; gap:8px 10px; margin:14px 4px 2px; font-family:var(--mono); font-size:.82rem}
+  .ro{background:#F0F5F8; border:1px solid var(--line); border-radius:8px; padding:6px 10px; color:#3a4d57}
+  .ro b{color:var(--accent-ink)}
+
+  .takeaways{background:var(--panel); color:#DCE7EC; border-radius:16px; padding:26px 28px; margin:40px 0}
+  .takeaways h3{color:#fff} .takeaways li{margin:9px 0} .takeaways b{color:var(--out)}
+  details{background:var(--card); border:1px solid var(--line); border-radius:11px; padding:2px 16px; margin:10px 0}
+  details[open]{padding-bottom:12px}
+  summary{cursor:pointer; font-weight:600; padding:12px 0; list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"▸ "; color:var(--accent-ink)} details[open] summary::before{content:"▾ "}
+  .qa{font-size:.97rem} .qa p{margin:8px 0}
+  ol.ex{padding-left:1.3em} ol.ex li{margin:8px 0}
+  footer{margin-top:60px; padding-top:20px; border-top:1px solid var(--line); font-family:var(--mono); font-size:.8rem; color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <p class="eyebrow">Foundations of Dynamic Systems · Lesson 4</p>
+  <h1>Why the Laplace Transform Was Invented</h1>
+  <p class="lede">Differential equations are hard because calculus is hard. The Laplace transform is
+  a trick that makes them easy: it turns calculus into ordinary algebra. Once you see <em>why</em>
+  anyone would want that — and what the mysterious variable <em>s</em> actually means — the whole
+  machinery of control engineering opens up.</p>
+</header>
+
+<h2>The one idea to hold onto</h2>
+<h3>It turns calculus into algebra</h3>
+<p>Solving an ODE means doing calculus: integrating, matching initial conditions, wrestling with
+derivatives. The Laplace transform sidesteps all of it with a single move — under the transform,
+<em>differentiating becomes multiplying by s</em>. A derivative, the hardest operation in the room,
+becomes a multiplication a child could do.</p>
+
+<div class="idea">
+  <p style="margin:0">You have already met this trick in another form. Multiplying big numbers is
+  tedious, so we take <b>logarithms</b>: log turns × into +, we do the easy addition, then undo the
+  log. Laplace does the identical favour for calculus.</p>
+</div>
+
+<table class="analogy">
+  <thead><tr><th>Hard world</th><th>The transform</th><th>Easy world</th><th>Then undo</th></tr></thead>
+  <tbody>
+    <tr><td>multiply numbers</td><td>logarithm</td><td>add (×→+)</td><td>anti-log</td></tr>
+    <tr><td>solve an ODE</td><td>Laplace</td><td>algebra (d/dt→×s)</td><td>inverse Laplace</td></tr>
+  </tbody>
+</table>
+
+<p>So the workflow is always the same three steps: <em>transform</em> the equation into the s-world,
+<em>solve the algebra</em> there, then <em>transform back</em> to get the answer in time. The middle
+step is where all the pain disappears.</p>
+
+<h2>The definition, and the one property that matters</h2>
+<h3>d/dt becomes ×s</h3>
+<p>The transform itself is an integral that re-weights a time signal by the exponential e<sup>−st</sup>:</p>
+<div class="eq">
+  <span class="hl-out">X(s)</span> = <span style="font-size:1.3em">∫</span><sub>0</sub><sup>∞</sup>
+  <span class="hl-in">x(t)</span> e<sup>−st</sup> dt
+  &nbsp;&nbsp;<span class="cmt">// "how much of the exponential e^{st} lives in x(t)"</span>
+</div>
+<p>You will almost never compute this by hand — that's what tables are for. What you must remember is
+the magic property that falls out of it, using integration by parts:</p>
+<div class="eq">
+  ℒ{ <span class="hl-out">ẋ</span> } = <span class="hl-k">s</span> <span class="hl-out">X(s)</span> − x(0)
+  <br>
+  ℒ{ <span class="hl-out">ẍ</span> } = <span class="hl-k">s</span><sup>2</sup> <span class="hl-out">X(s)</span> − s·x(0) − ẋ(0)
+  <br>
+  <span class="cmt">// with the system starting at rest, simply:  ẋ → sX,   ẍ → s²X</span>
+</div>
+
+<h3>Watch the mass–spring–damper collapse into algebra</h3>
+<p>Take the equation you built in Lesson 2, m·ẍ + c·ẋ + k·x = F, and transform every term (starting at
+rest). Each derivative just drops an s:</p>
+<div class="eq">
+  (<span class="hl-k">m</span> <span class="hl-k">s</span><sup>2</sup> + <span class="hl-k">c</span> <span class="hl-k">s</span> + <span class="hl-k">k</span>)·<span class="hl-out">X(s)</span> = <span class="hl-in">F(s)</span>
+  &nbsp;→&nbsp;
+  <span class="hl-out">X(s)</span> = <span class="frac"><span class="num"><span class="hl-in">F(s)</span></span><span class="den"><span class="hl-k">m</span>s<sup>2</sup> + <span class="hl-k">c</span>s + <span class="hl-k">k</span></span></span>
+</div>
+<p>The differential equation became a <em>fraction</em>. No calculus survived. And look at the
+denominator — it's exactly the characteristic polynomial from Lesson 3. Its roots (the values of s
+that make it zero) are the <em>poles</em>, and they are the same λ's you found by guessing e<sup>λt</sup>.
+Laplace didn't invent new physics; it gave the poles a home: the <em>s-plane</em>.</p>
+
+<h2>Interactive · what is s?</h2>
+<h3>The s-plane and the signal it stands for</h3>
+<p>The variable s is a <em>complex frequency</em>: s = σ + jω. Every point in the complex plane names one
+exponentially-changing signal, e<sup>st</sup> = e<sup>σt</sup>·(cosine at ω). The real part σ sets growth or
+decay; the imaginary part ω sets the oscillation frequency. Drag the point (or use the sliders) and read
+the signal it represents on the right. A pole sitting at that point means the system's natural response
+<em>contains</em> this signal.</p>
+
+<div class="demo" data-demo="splane">
+  <div class="stage">
+    <canvas class="pic"></canvas>
+    <canvas class="plot"></canvas>
+  </div>
+  <p class="hint">Drag the teal point in the s-plane, or use the sliders. Its mirror below the axis is
+  the conjugate pole that real signals always come in pairs with.</p>
+  <div class="controls"></div>
+  <div class="readouts"></div>
+</div>
+
+<p>The single most useful fact in control engineering lives in this picture. <em>Left half-plane
+(σ &lt; 0) → the signal decays → stable.</em> Right half-plane (σ &gt; 0) → it grows without bound →
+unstable. Right on the imaginary axis (σ = 0) → it oscillates forever, never settling. Stability is
+simply: are all the poles in the left half?</p>
+
+<h2>Interactive · the poles of a real system</h2>
+<h3>Where the mass–spring–damper's poles live</h3>
+<p>Now the payoff. The mass–spring–damper's two poles are the roots of m·s² + c·s + k. With m = 1 they
+sit at s = −ζωₙ ± jωₙ√(1−ζ²). Change the damping and stiffness and watch them move — and watch the
+impulse response on the right change in lock-step. The poles always ride a circle of radius ωₙ; the angle
+off the axis is set by ζ.</p>
+
+<div class="demo" data-demo="syspoles">
+  <div class="stage">
+    <canvas class="pic"></canvas>
+    <canvas class="plot"></canvas>
+  </div>
+  <div class="controls"></div>
+  <div class="readouts"></div>
+</div>
+
+<p>Read the connection straight off the plane: the poles' <em>distance left</em> of the imaginary axis
+(−ζωₙ) is the decay rate — further left means faster settling. Their <em>height</em> (ωₙ√(1−ζ²)) is the
+ringing frequency — higher means faster oscillation. Push ζ up and the pair swings down onto the real
+axis: two real poles, no oscillation, over-damped. This one diagram is why engineers "design by moving
+poles," the whole subject of the lessons ahead.</p>
+
+<div class="chips">
+  <span class="chip">σ &lt; 0 → stable (decays)</span>
+  <span class="chip">σ &gt; 0 → unstable (grows)</span>
+  <span class="chip">on jω axis → pure oscillation</span>
+  <span class="chip">poles = roots of denominator</span>
+  <span class="chip">circle radius = ωₙ</span>
+</div>
+
+<div class="takeaways">
+  <h3>Key takeaways</h3>
+  <ul>
+    <li><b>Laplace turns calculus into algebra:</b> under the transform, ẋ → sX and ẍ → s²X (at rest),
+      so an ODE becomes a polynomial equation.</li>
+    <li><b>The workflow is transform → solve algebra → invert</b> — the same favour logarithms do for
+      multiplication.</li>
+    <li><b>Transforming the mass–spring–damper</b> gives X(s) = F(s)/(ms² + cs + k). The denominator is
+      the characteristic polynomial; its roots are the <b>poles</b>.</li>
+    <li><b>s = σ + jω is a complex frequency.</b> σ sets growth/decay, ω sets oscillation. Each point
+      names one signal e<sup>st</sup>.</li>
+    <li><b>Pole location is destiny:</b> left half-plane = stable/decaying, right half = unstable,
+      imaginary axis = sustained oscillation.</li>
+    <li>The poles are the same λ's from Lesson 3 — Laplace just gave them the <b>s-plane</b> to live in.</li>
+  </ul>
+</div>
+
+<h2>Quick check</h2>
+<details><summary>Under the Laplace transform (starting at rest), what does d²x/dt² become?</summary>
+  <div class="qa"><p>s²·X(s). Each derivative multiplies by s, so the second derivative multiplies by s².
+  This is exactly why a second-order ODE turns into a second-degree polynomial in s.</p></div>
+</details>
+<details><summary>A system has a pole at s = +0.5. Is it stable?</summary>
+  <div class="qa"><p>No. A positive real part means the corresponding signal is e<sup>+0.5t</sup>, which grows
+  without bound. Any pole in the right half-plane makes the system unstable.</p></div>
+</details>
+<details><summary>Two poles sit exactly on the imaginary axis at ±j3. What does the response look like?</summary>
+  <div class="qa"><p>A pure, undying oscillation at ω = 3 rad/s — no growth, no decay. σ = 0 means zero
+  damping (ζ = 0), so energy just circulates forever, like the closed loop in Lesson 3's phase portrait.</p></div>
+</details>
+
+<h2>Exercises</h2>
+<ol class="ex">
+  <li><b>Calculation.</b> Transform the first-order equation τ·ẋ + x = u (at rest) into the s-domain and
+    write X(s)/U(s). Where is its single pole?</li>
+  <li><b>Calculation.</b> For m = 1, c = 4, k = 3, write the denominator polynomial and find the two poles.
+    Is the system stable? Does it oscillate?</li>
+  <li><b>Calculation.</b> A second-order system has ωₙ = 5 and ζ = 0.6. Give the pole locations
+    s = −ζωₙ ± jωₙ√(1−ζ²).</li>
+  <li><b>Design.</b> A machine settles too slowly and rings too much. In terms of <em>where its poles
+    sit</em>, state what you want to change about their position, and connect each move back to a physical
+    parameter (m, c, or k).</li>
+</ol>
+
+<details><summary>Show worked solutions</summary>
+  <div class="qa">
+    <p><b>1.</b> Transform: τ·sX + X = U, so (τs + 1)X = U and <b>X(s)/U(s) = 1/(τs + 1)</b>. The pole is
+    where the denominator is zero: τs + 1 = 0 → <b>s = −1/τ</b>. It's a single real pole on the negative
+    real axis — pure first-order decay with time constant τ, exactly matching Lessons 1 and 3.</p>
+    <p><b>2.</b> Denominator: <b>s² + 4s + 3 = 0</b>. Factor: (s + 1)(s + 3) = 0 → <b>s = −1 and s = −3</b>.
+    Both are real and negative, so the system is <b>stable</b> and does <b>not oscillate</b> (no imaginary
+    part) — it's over-damped, a sum of two decaying exponentials. (Check: ζ = c/(2√(km)) = 4/(2√3) ≈ 1.15 &gt; 1.)</p>
+    <p><b>3.</b> σ = −ζωₙ = −0.6·5 = −3. ωd = ωₙ√(1−ζ²) = 5·√(1−0.36) = 5·√0.64 = 5·0.8 = 4. So the poles are
+    <b>s = −3 ± j4</b>. (Their magnitude is √(9+16) = 5 = ωₙ, as it must be.)</p>
+    <p><b>4.</b> "Settles too slowly" means the poles are too close to the imaginary axis → you want to push
+    them <b>further left</b> (more negative real part, −ζωₙ), which means <b>more damping c</b> and/or a design
+    that raises ζ. "Rings too much" means the poles sit too high and too vertical (large imaginary part, small
+    angle to the jω axis) → you want to <b>rotate them toward the real axis</b>, again by raising ζ (more c, or
+    lowering the k/m ratio relative to c). The unifying goal: move the poles left and down toward the real axis.
+    Increasing c does both at once, which is why the damper is the cleanest tuning knob — the same conclusion as
+    the shock-absorber design in Lesson 2, now stated in the s-plane.</p>
+  </div>
+</details>
+
+<footer>
+  Lesson 4 · self-contained, no external libraries or network · both s-plane pictures and every waveform are
+  computed live. Next: transfer functions — packaging a system as a single ratio in s.
+</footer>
+
+</div><!-- /wrap -->
+
+<script>
+"use strict";
+(function(){
+  const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const COL={in:'#E8A33D',out:'#22C3AE',grid2:'#16262F',axis:'#3A5464',text:'#7FA0AE',
+             lhp:'rgba(34,195,174,0.07)', rhp:'rgba(232,163,61,0.09)', field:'#3f5a68', blue:'#9BD0FF'};
+
+  function el(tag,cls){const e=document.createElement(tag); if(cls)e.className=cls; return e;}
+  function fitCanvas(cv,aspect){
+    const dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1));
+    const cssW=cv.clientWidth || cv.parentElement.clientWidth || 300;
+    const cssH=Math.round(cssW*aspect);
+    cv.style.height=cssH+'px'; cv.width=Math.round(cssW*dpr); cv.height=Math.round(cssH*dpr);
+    const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); return {ctx,W:cssW,H:cssH};
+  }
+  function addSliders(container,defs,params,onChange,handles){
+    defs.forEach(p=>{ params[p.key]=p.value;
+      const c=el('div','ctrl'), row=el('div','row');
+      const name=el('span','name'); name.innerHTML=p.label;
+      const val=el('span','val'); const fmt=p.fmt||(v=>v.toFixed(2)); val.textContent=fmt(p.value);
+      row.appendChild(name); row.appendChild(val);
+      const inp=document.createElement('input'); inp.type='range';
+      inp.min=p.min; inp.max=p.max; inp.step=p.step; inp.value=p.value;
+      inp.setAttribute('aria-label',(p.aria||p.label).replace(/<[^>]+>/g,''));
+      inp.addEventListener('input',()=>{ params[p.key]=parseFloat(inp.value); val.textContent=fmt(params[p.key]); onChange(); });
+      c.appendChild(row); c.appendChild(inp); container.appendChild(c);
+      if(handles) handles[p.key]={inp,val,fmt};
+    });
+  }
+  function setReadouts(container,items){ container.innerHTML='';
+    items.forEach(r=>{ const s=el('span','ro'); s.innerHTML=r.label+' <b>'+r.value+'</b>'; container.appendChild(s); }); }
+
+  // ---------------- Demo 1: draggable s-plane ----------------
+  (function buildSplane(){
+    const root=document.querySelector('[data-demo=splane]'); if(!root) return;
+    const pic=root.querySelector('.pic'), plot=root.querySelector('.plot');
+    const controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+    const params={}, handles={};
+    addSliders(controls,[
+      {key:'sig',label:'σ (real · decay/grow)',min:-3,max:1.2,step:0.05,value:-0.5,fmt:v=>v.toFixed(2)},
+      {key:'w',label:'ω (imag · frequency)',min:0,max:4,step:0.05,value:2.5,fmt:v=>v.toFixed(2)}
+    ],params,onChange,handles);
+    const SMIN=-3.3, SMAX=1.35, WMAX=4.3;
+    let mapX, mapY, invX, invY;
+    function drawPlane(){
+      const {ctx,W,H}=fitCanvas(pic,0.98); ctx.clearRect(0,0,W,H);
+      const pad=24, cy=H/2;
+      mapX=s=>pad+((s-SMIN)/(SMAX-SMIN))*(W-2*pad);
+      mapY=w=>cy-(w/WMAX)*(cy-pad);
+      invX=px=>SMIN+((px-pad)/(W-2*pad))*(SMAX-SMIN);
+      invY=py=>((cy-py)/(cy-pad))*WMAX;
+      const x0=mapX(0);
+      // half-plane tints
+      ctx.fillStyle=COL.lhp; ctx.fillRect(pad,pad,x0-pad,H-2*pad);
+      ctx.fillStyle=COL.rhp; ctx.fillRect(x0,pad,(W-pad)-x0,H-2*pad);
+      // axes
+      ctx.strokeStyle=COL.axis; ctx.lineWidth=1.4;
+      ctx.beginPath(); ctx.moveTo(x0,pad); ctx.lineTo(x0,H-pad); ctx.stroke();   // jω axis
+      ctx.strokeStyle=COL.grid2; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(pad,cy); ctx.lineTo(W-pad,cy); ctx.stroke();   // real axis
+      ctx.fillStyle=COL.text; ctx.font='10px ui-monospace, monospace';
+      ctx.textAlign='right'; ctx.textBaseline='bottom'; ctx.fillText('σ (real) →', W-pad, cy-4);
+      ctx.textAlign='left'; ctx.textBaseline='top'; ctx.fillText('jω', x0+4, pad+2);
+      ctx.textAlign='center'; ctx.fillStyle='rgba(34,195,174,0.8)'; ctx.fillText('stable', mapX((SMIN)/2), pad+4);
+      ctx.fillStyle='rgba(232,163,61,0.9)'; ctx.fillText('unstable', mapX(SMAX/2+0.1), pad+4);
+      // pole + conjugate
+      const px=mapX(params.sig), py=mapY(params.w), pyc=mapY(-params.w);
+      ctx.strokeStyle=COL.out; ctx.lineWidth=2;
+      for(const yy of (params.w>0.03?[py,pyc]:[py])){
+        ctx.beginPath(); ctx.moveTo(px-6,yy-6); ctx.lineTo(px+6,yy+6); ctx.moveTo(px+6,yy-6); ctx.lineTo(px-6,yy+6); ctx.stroke();
+      }
+      ctx.fillStyle=COL.out; ctx.beginPath(); ctx.arc(px,py,4,0,7); ctx.fill();
+      ctx.fillStyle=COL.text; ctx.font='10px ui-monospace, monospace'; ctx.textAlign='left'; ctx.textBaseline='bottom';
+      ctx.fillText('s = '+params.sig.toFixed(2)+(params.w>=0?'+':'')+'j'+params.w.toFixed(2), px+8, py-6);
+    }
+    function drawSignal(){
+      const {ctx,W,H}=fitCanvas(plot,0.98); const pad={l:30,r:12,t:14,b:24};
+      ctx.clearRect(0,0,W,H);
+      const T=8, gx=t=>pad.l+(t/T)*(W-pad.l-pad.r);
+      const top=pad.t,bot=H-pad.b,gy=v=>top+(1-(v+1.7)/3.4)*(bot-top);
+      ctx.strokeStyle=COL.axis; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(pad.l,gy(0)); ctx.lineTo(W-pad.r,gy(0)); ctx.stroke();
+      ctx.save(); ctx.beginPath(); ctx.rect(pad.l,pad.t,W-pad.l-pad.r,H-pad.t-pad.b); ctx.clip();
+      // envelope ±e^{σt}
+      ctx.strokeStyle='rgba(232,163,61,0.45)'; ctx.setLineDash([3,3]);
+      for(const sg of [1,-1]){ ctx.beginPath();
+        for(let i=0;i<=160;i++){ const t=T*i/160, e=sg*Math.exp(params.sig*t); i?ctx.lineTo(gx(t),gy(e)):ctx.moveTo(gx(t),gy(e)); } ctx.stroke(); }
+      ctx.setLineDash([]);
+      // signal e^{σt} cos(ω t)
+      ctx.strokeStyle=COL.out; ctx.lineWidth=2.4; ctx.beginPath();
+      for(let i=0;i<=400;i++){ const t=T*i/400, v=Math.exp(params.sig*t)*Math.cos(params.w*t); i?ctx.lineTo(gx(t),gy(v)):ctx.moveTo(gx(t),gy(v)); }
+      ctx.stroke(); ctx.restore();
+      ctx.fillStyle=COL.text; ctx.font='10px ui-monospace, monospace';
+      ctx.textAlign='right'; ctx.textBaseline='alphabetic'; ctx.fillText('e^{σt}·cos(ωt)', W-pad.r, pad.t+10);
+      ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillText('time →', (pad.l+W-pad.r)/2, H-pad.b+6);
+    }
+    function onChange(){
+      drawPlane(); drawSignal();
+      const beh=params.sig<-1e-3?'decays (stable)':params.sig>1e-3?'GROWS (unstable)':'sustained oscillation';
+      setReadouts(ro,[
+        {label:'σ', value:params.sig.toFixed(2)},
+        {label:'ω', value:params.w.toFixed(2)+' rad/s'},
+        {label:'behavior', value:beh},
+        {label:'freq', value:(params.w/2/Math.PI).toFixed(2)+' Hz'},
+        {label:'τ = 1/|σ|', value: Math.abs(params.sig)>1e-3? (1/Math.abs(params.sig)).toFixed(2)+' s':'∞'}
+      ]);
+    }
+    // pointer dragging
+    let dragging=false;
+    function toParams(ev){
+      const r=pic.getBoundingClientRect();
+      const px=(ev.clientX-r.left), py=(ev.clientY-r.top);
+      let sig=Math.max(SMIN+0.02,Math.min(SMAX-0.02, invX(px)));
+      let w=Math.max(0,Math.min(WMAX-0.05, invY(py)));
+      params.sig=Math.round(sig/0.05)*0.05; params.w=Math.round(w/0.05)*0.05;
+      handles.sig.inp.value=params.sig; handles.sig.val.textContent=handles.sig.fmt(params.sig);
+      handles.w.inp.value=params.w; handles.w.val.textContent=handles.w.fmt(params.w);
+      onChange();
+    }
+    pic.addEventListener('pointerdown',e=>{ dragging=true; pic.setPointerCapture(e.pointerId); toParams(e); });
+    pic.addEventListener('pointermove',e=>{ if(dragging) toParams(e); });
+    pic.addEventListener('pointerup',()=>{ dragging=false; });
+    pic.addEventListener('pointercancel',()=>{ dragging=false; });
+    window.addEventListener('resize',onChange);
+    onChange();
+  })();
+
+  // ---------------- Demo 2: system poles + impulse response ----------------
+  (function buildSysPoles(){
+    const root=document.querySelector('[data-demo=syspoles]'); if(!root) return;
+    const pic=root.querySelector('.pic'), plot=root.querySelector('.plot');
+    const controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+    const params={};
+    addSliders(controls,[
+      {key:'wn',label:'ωₙ (rad/s)',min:0.6,max:4,step:0.1,value:2.0,fmt:v=>v.toFixed(1)},
+      {key:'zeta',label:'ζ damping',min:0,max:1.6,step:0.02,value:0.2,fmt:v=>v.toFixed(2)}
+    ],params,onChange);
+    const LIM=5, T=14, DT=0.004;
+    function poles(){
+      const wn=params.wn, z=params.zeta;
+      if(z<1){ const wd=wn*Math.sqrt(1-z*z); return [{re:-z*wn,im:wd},{re:-z*wn,im:-wd}]; }
+      const d=wn*Math.sqrt(z*z-1); return [{re:-z*wn+d,im:0},{re:-z*wn-d,im:0}]; }
+    function drawPlane(){
+      const {ctx,W,H}=fitCanvas(pic,0.98); ctx.clearRect(0,0,W,H);
+      const pad=24, cx=pad+(W-2*pad)*(LIM/(LIM+1.0)), cy=H/2;   // origin shifted right (system is left-half)
+      const sx=(W-2*pad)/(LIM+1.0), sy=(cy-pad)/LIM;
+      const gx=re=>cx+re*sx, gy=im=>cy-im*sy;
+      // half-plane tints
+      ctx.fillStyle=COL.lhp; ctx.fillRect(pad,pad,cx-pad,H-2*pad);
+      ctx.fillStyle=COL.rhp; ctx.fillRect(cx,pad,(W-pad)-cx,H-2*pad);
+      // axes
+      ctx.strokeStyle=COL.axis; ctx.lineWidth=1.4; ctx.beginPath(); ctx.moveTo(cx,pad); ctx.lineTo(cx,H-pad); ctx.stroke();
+      ctx.strokeStyle=COL.grid2; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(pad,cy); ctx.lineTo(W-pad,cy); ctx.stroke();
+      // ωn circle
+      ctx.strokeStyle='rgba(155,208,255,0.5)'; ctx.setLineDash([4,4]); ctx.lineWidth=1.3;
+      ctx.beginPath(); ctx.arc(cx,cy,params.wn*sx,0,7); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle=COL.blue; ctx.font='10px ui-monospace, monospace'; ctx.textAlign='left'; ctx.textBaseline='bottom';
+      ctx.fillText('radius = ωₙ', cx-params.wn*sx+4, cy-4);
+      // poles
+      const P=poles();
+      ctx.strokeStyle=COL.out; ctx.lineWidth=2.4;
+      P.forEach(p=>{ const X=gx(p.re), Y=gy(p.im);
+        ctx.beginPath(); ctx.moveTo(X-6,Y-6); ctx.lineTo(X+6,Y+6); ctx.moveTo(X+6,Y-6); ctx.lineTo(X-6,Y+6); ctx.stroke(); });
+      // damping ray to upper pole (angle from neg real axis = acos(zeta))
+      if(params.zeta<1){ ctx.strokeStyle='rgba(34,195,174,0.4)'; ctx.setLineDash([2,3]);
+        ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(gx(P[0].re),gy(P[0].im)); ctx.stroke(); ctx.setLineDash([]); }
+      ctx.fillStyle=COL.text; ctx.font='10px ui-monospace, monospace'; ctx.textAlign='right'; ctx.textBaseline='bottom';
+      ctx.fillText('σ →', W-pad, cy-4); ctx.textAlign='left'; ctx.textBaseline='top'; ctx.fillText('jω', cx+4, pad+2);
+    }
+    function drawImpulse(){
+      const {ctx,W,H}=fitCanvas(plot,0.98); const pad={l:28,r:12,t:14,b:24};
+      ctx.clearRect(0,0,W,H);
+      let s=[0,1]; const xs=[]; let mx=1e-6;
+      for(let tt=0;tt<=T+1e-9;tt+=DT){ xs.push(s[0]); mx=Math.max(mx,Math.abs(s[0]));
+        const k1=d(s),k2=d(add(s,k1,DT/2)),k3=d(add(s,k2,DT/2)),k4=d(add(s,k3,DT));
+        s=[s[0]+DT/6*(k1[0]+2*k2[0]+2*k3[0]+k4[0]), s[1]+DT/6*(k1[1]+2*k2[1]+2*k3[1]+k4[1])]; }
+      function d(st){ return [st[1], -params.wn*params.wn*st[0]-2*params.zeta*params.wn*st[1]]; }
+      function add(a,k,h){ return [a[0]+h*k[0], a[1]+h*k[1]]; }
+      const gx=i=>pad.l+(i/(xs.length-1))*(W-pad.l-pad.r);
+      const top=pad.t,bot=H-pad.b, gy=v=>top+(1-(v/mx+1)/2)*(bot-top);
+      ctx.strokeStyle=COL.axis; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(pad.l,gy(0)); ctx.lineTo(W-pad.r,gy(0)); ctx.stroke();
+      ctx.strokeStyle=COL.out; ctx.lineWidth=2.3; ctx.beginPath();
+      for(let i=0;i<xs.length;i++){ const X=gx(i),Y=gy(xs[i]); i?ctx.lineTo(X,Y):ctx.moveTo(X,Y); } ctx.stroke();
+      ctx.fillStyle=COL.text; ctx.font='10px ui-monospace, monospace'; ctx.textAlign='right'; ctx.textBaseline='alphabetic';
+      ctx.fillText('impulse response', W-pad.r, pad.t+10);
+      ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillText('time →', (pad.l+W-pad.r)/2, H-pad.b+6);
+    }
+    function onChange(){
+      drawPlane(); drawImpulse();
+      const P=poles(), z=params.zeta;
+      const loc = z<1 ? (P[0].re.toFixed(2)+' ± j'+P[0].im.toFixed(2))
+                      : (P[0].re.toFixed(2)+' , '+P[1].re.toFixed(2));
+      const regime = z<1e-6?'on jω axis (undamped)': z<1?'complex pair (rings)': Math.abs(z-1)<0.03?'repeated real (critical)':'two real (over-damped)';
+      setReadouts(ro,[
+        {label:'poles s', value:loc},
+        {label:'decay rate −ζωₙ', value:(-z*params.wn).toFixed(2)},
+        {label:'ring freq ωd', value:(z<1?(params.wn*Math.sqrt(1-z*z)).toFixed(2)+' rad/s':'0')},
+        {label:'type', value:regime}
+      ]);
+    }
+    window.addEventListener('resize',onChange);
+    onChange();
+  })();
+})();
+</script>
+</body>
+</html>

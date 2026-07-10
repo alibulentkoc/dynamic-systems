@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modeling with Newton's Laws — the Mass–Spring–Damper</title>
+<style>
+  :root{
+    --paper:#EEF2F5; --card:#FFFFFF; --ink:#17252E; --muted:#5E7686;
+    --line:#D3DDE4; --line2:#E3EAEF;
+    --panel:#0E1B24; --grid2:#16262F; --axis:#3A5464;
+    --in:#E8A33D;  --out:#22C3AE; --accent:#22C3AE; --accent-ink:#0A5B52;
+    --mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--sans); line-height:1.6; font-size:17px; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:940px; margin:0 auto; padding:0 20px 120px}
+  a{color:var(--accent-ink)}
+
+  header.hero{padding:64px 0 34px; border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono); font-size:.78rem; letter-spacing:.22em;
+    text-transform:uppercase; color:var(--muted); margin:0 0 14px}
+  h1{font-size:clamp(2.1rem,5.4vw,3.3rem); line-height:1.05; margin:0 0 18px;
+    letter-spacing:-.02em; font-weight:750}
+  .lede{font-size:1.12rem; color:#33454f; max-width:60ch; margin:0}
+
+  h2{font-size:1.02rem; font-family:var(--mono); letter-spacing:.04em; text-transform:uppercase;
+    color:var(--muted); margin:52px 0 14px; font-weight:600}
+  h3{font-size:1.5rem; letter-spacing:-.01em; margin:6px 0 10px; font-weight:700}
+  p{margin:0 0 16px}
+  em{font-style:normal; color:var(--accent-ink); font-weight:600}
+
+  .idea{background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:20px 24px; margin:18px 0}
+  .three{display:grid; grid-template-columns:1fr; gap:10px; margin:6px 0 0; font-family:var(--mono);
+    font-size:.92rem}
+  .three div{padding:11px 14px; background:#F6F9FB; border:1px solid var(--line2); border-radius:9px}
+  .three b{color:var(--accent-ink)}
+
+  .fbd{width:100%; height:auto; display:block; margin:6px 0}
+  .fbd text{font-family:var(--mono); fill:var(--muted); font-size:13px}
+  .fbd .fin{fill:var(--in)} .fbd .fout{fill:var(--out)}
+
+  .eq{font-family:var(--mono); background:var(--panel); color:#DCE7EC; border-radius:12px;
+    padding:18px 20px; margin:16px 0; overflow-x:auto; font-size:1.02rem; line-height:2}
+  .eq .cmt{color:#6E8794} .eq .hl-in{color:var(--in)} .eq .hl-out{color:var(--out)}
+  .eq .hl-k{color:#9BD0FF}
+  .frac{display:inline-flex; flex-direction:column; text-align:center; vertical-align:middle;
+    margin:0 .28em; line-height:1.05}
+  .frac .num{border-bottom:1.5px solid currentColor; padding:0 .35em}
+  .frac .den{padding:2px .35em 0}
+  .plain-eq{font-family:var(--mono); font-size:1rem; color:var(--ink); background:#F6F9FB;
+    border:1px solid var(--line2); border-radius:9px; padding:10px 14px; display:inline-block; margin:4px 0}
+
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 4px}
+  .chip{font-family:var(--mono); font-size:.82rem; padding:6px 11px; border-radius:999px;
+    background:#F0F5F8; border:1px solid var(--line); color:#3a4d57}
+
+  .phys{border-left:3px solid var(--accent); background:#F3FBF9; padding:14px 18px;
+    border-radius:0 10px 10px 0; margin:18px 0; font-size:.98rem}
+  .phys .lab{font-family:var(--mono); font-size:.72rem; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--accent-ink); display:block; margin-bottom:6px}
+
+  .bench{border:1px solid var(--line); border-left:3px solid var(--accent); background:var(--card);
+    border-radius:0 16px 16px 0; padding:18px 18px 16px; margin:22px 0}
+  .bench .lab{font-family:var(--mono); font-size:.72rem; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--accent-ink); display:block; margin-bottom:8px}
+  .bench p{font-size:.97rem; margin:0 0 14px}
+  .note{font-family:var(--mono); font-size:.78rem; color:var(--muted); margin:12px 4px 0}
+
+  /* demo widget */
+  .demo{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; margin:22px 0}
+  .stage{display:grid; grid-template-columns:1.15fr .85fr; gap:14px}
+  @media (max-width:620px){ .stage{grid-template-columns:1fr} }
+  .stage canvas{background:var(--panel); border-radius:10px; width:100%; height:auto; display:block}
+  .controls{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px 20px; margin:16px 4px 4px}
+  @media (max-width:620px){ .controls{grid-template-columns:1fr} }
+  .ctrl{display:flex; flex-direction:column; gap:5px}
+  .ctrl .row{display:flex; justify-content:space-between; align-items:baseline; font-family:var(--mono); font-size:.86rem}
+  .ctrl .name{color:var(--ink)} .ctrl .val{color:var(--accent-ink); font-weight:600}
+  input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:5px; background:var(--line);
+    border-radius:5px; outline:none; margin:6px 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none; width:18px; height:18px;
+    border-radius:50%; background:var(--accent); border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,.25); cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--accent);
+    border:2px solid #fff; cursor:pointer}
+  input[type=range]:focus-visible{box-shadow:0 0 0 3px rgba(34,195,174,.35)}
+  .btnrow{display:flex; flex-wrap:wrap; gap:8px; margin:14px 4px 2px; align-items:center}
+  .btn{font-family:var(--mono); font-size:.78rem; color:var(--accent-ink); background:none;
+    border:1px solid var(--line); border-radius:8px; padding:6px 12px; cursor:pointer}
+  .btn:hover{background:#F0F5F8}
+  .btn.primary{background:var(--accent); color:#04312c; border-color:var(--accent); font-weight:600}
+  .counter{font-family:var(--mono); font-size:.8rem; color:var(--accent-ink); margin-left:2px}
+  .readouts{display:flex; flex-wrap:wrap; gap:8px 10px; margin:14px 4px 2px; font-family:var(--mono); font-size:.82rem}
+  .ro{background:#F0F5F8; border:1px solid var(--line); border-radius:8px; padding:6px 10px; color:#3a4d57}
+  .ro b{color:var(--accent-ink)}
+
+  .takeaways{background:var(--panel); color:#DCE7EC; border-radius:16px; padding:26px 28px; margin:40px 0}
+  .takeaways h3{color:#fff} .takeaways li{margin:9px 0} .takeaways b{color:var(--out)}
+
+  details{background:var(--card); border:1px solid var(--line); border-radius:11px; padding:2px 16px; margin:10px 0}
+  details[open]{padding-bottom:12px}
+  summary{cursor:pointer; font-weight:600; padding:12px 0; list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"▸ "; color:var(--accent-ink)}
+  details[open] summary::before{content:"▾ "}
+  .qa{font-size:.97rem} .qa p{margin:8px 0}
+  ol.ex{padding-left:1.3em} ol.ex li{margin:8px 0}
+
+  footer{margin-top:60px; padding-top:20px; border-top:1px solid var(--line);
+    font-family:var(--mono); font-size:.8rem; color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <p class="eyebrow">Foundations of Dynamic Systems · Lesson 2</p>
+  <h1>Modeling with Newton's Laws</h1>
+  <p class="lede">The last lesson showed that a second-order system overshoots and rings. But
+  where does its equation actually come from? Here we build it from scratch with the one law
+  you already trust — <em>F = ma</em> — and watch three physical parts (a mass, a spring, a
+  damper) each contribute one term. By the end you can look at a real machine and write its
+  equation of motion.</p>
+</header>
+
+<h2>The one idea to hold onto</h2>
+<h3>Newton's second law is just force bookkeeping</h3>
+<p>Modeling a mechanical system is nothing more than this: draw the moving part, add up every
+force acting on it, and set the total equal to mass times acceleration. Each physical component
+you attach contributes one, predictable force — so each contributes one term to the equation.</p>
+
+<div class="idea">
+  <div class="three">
+    <div><b>The mass</b> resists <em>acceleration</em>. Its force is m·ẍ — this is the inertia
+      term, and it's why nothing responds instantly.</div>
+    <div><b>The spring</b> resists <em>displacement</em>. It pulls back proportional to how far
+      you've stretched it: F = −k·x (Hooke's law). This is what stores potential energy.</div>
+    <div><b>The damper</b> resists <em>velocity</em>. It pushes back proportional to how fast
+      you're moving: F = −c·ẋ. This is what bleeds energy away and settles the motion.</div>
+  </div>
+</div>
+
+<p>A mass, a spring, and a damper together are the <em>mass–spring–damper</em> — the single most
+important model in mechanical engineering. A car's suspension corner, a building swaying, a
+sensor's diaphragm, even a robot joint: all of them are, at heart, this.</p>
+
+<h2>The free-body diagram</h2>
+<h3>Every force on the moving mass</h3>
+<p>The trick is to <em>isolate the mass</em>. On the left is the physical system — wall, spring,
+damper, sliding block. On the right we cut the mass free and replace each attachment with the
+single force it exerts. That second picture, forces only, is the free-body diagram, and it's what
+we turn into an equation. Displacement x is measured from the resting position; motion is
+horizontal, so gravity plays no part.</p>
+
+<svg class="fbd" viewBox="0 0 680 220" role="img" aria-label="Left: physical mass-spring-damper system. Right: free-body diagram of the isolated mass with spring, damper, and applied forces.">
+  <text x="30" y="26" font-size="13" font-weight="700" fill="#17252E" font-family="ui-monospace,monospace">1 · Physical system</text>
+  <text x="390" y="26" font-size="13" font-weight="700" fill="#17252E" font-family="ui-monospace,monospace">2 · Free-body diagram</text>
+
+  <!-- ========== PANEL 1: physical system ========== -->
+  <!-- wall -->
+  <line x1="44" y1="52" x2="44" y2="176" stroke="#5E7686" stroke-width="3"/>
+  <g stroke="#5E7686" stroke-width="1.4">
+    <line x1="44" y1="58" x2="34" y2="68"/><line x1="44" y1="78" x2="34" y2="88"/>
+    <line x1="44" y1="98" x2="34" y2="108"/><line x1="44" y1="118" x2="34" y2="128"/>
+    <line x1="44" y1="138" x2="34" y2="148"/><line x1="44" y1="158" x2="34" y2="168"/>
+  </g>
+  <!-- spring (upper) -->
+  <polyline points="44,92 60,92 66,84 79,100 85,92 92,84 104,100 111,92 117,84 130,100 136,92 142,84 155,100 161,92 168,84 180,100 187,92 193,84 206,100 212,92 228,92"
+    fill="none" stroke="#22C3AE" stroke-width="2.4"/>
+  <text x="132" y="76" text-anchor="middle" class="fout" font-size="12">spring · k</text>
+  <!-- damper (lower) -->
+  <line x1="44" y1="136" x2="150" y2="136" stroke="#E8A33D" stroke-width="2.4"/>
+  <rect x="150" y="125" width="36" height="22" fill="none" stroke="#E8A33D" stroke-width="2.4"/>
+  <line x1="169" y1="127" x2="169" y2="145" stroke="#E8A33D" stroke-width="4"/>
+  <line x1="186" y1="136" x2="228" y2="136" stroke="#E8A33D" stroke-width="2.4"/>
+  <text x="150" y="164" text-anchor="middle" class="fin" font-size="12">damper · c</text>
+  <!-- mass block spanning both attachments -->
+  <rect x="228" y="72" width="66" height="92" rx="7" fill="#0E1B24" stroke="#22C3AE" stroke-width="2"/>
+  <text x="261" y="124" text-anchor="middle" fill="#DCE7EC" font-size="20" font-family="ui-monospace,monospace">m</text>
+  <!-- rollers + ground -->
+  <circle cx="244" cy="172" r="6" fill="none" stroke="#5E7686" stroke-width="1.6"/>
+  <circle cx="278" cy="172" r="6" fill="none" stroke="#5E7686" stroke-width="1.6"/>
+  <line x1="214" y1="178" x2="308" y2="178" stroke="#5E7686" stroke-width="1.6"/>
+  <!-- +x reference -->
+  <line x1="238" y1="200" x2="298" y2="200" stroke="#5E7686" stroke-width="1.5" marker-end="url(#am1)"/>
+  <text x="306" y="204" fill="#5E7686" font-size="12" font-family="ui-monospace,monospace">+x</text>
+
+  <!-- divider -->
+  <line x1="350" y1="44" x2="350" y2="204" stroke="#D3DDE4" stroke-width="1"/>
+
+  <!-- ========== PANEL 2: free body ========== -->
+  <!-- isolated mass -->
+  <rect x="470" y="80" width="70" height="70" rx="7" fill="#0E1B24" stroke="#22C3AE" stroke-width="2"/>
+  <text x="505" y="120" text-anchor="middle" fill="#DCE7EC" font-size="20" font-family="ui-monospace,monospace">m</text>
+  <!-- spring force (points back toward rest, i.e. left when stretched) -->
+  <line x1="466" y1="98" x2="392" y2="98" stroke="#22C3AE" stroke-width="2.6" marker-end="url(#am2)"/>
+  <text x="428" y="90" text-anchor="middle" class="fout" font-size="12.5">k·x</text>
+  <!-- damper force -->
+  <line x1="466" y1="132" x2="402" y2="132" stroke="#E8A33D" stroke-width="2.6" marker-end="url(#am3)"/>
+  <text x="432" y="150" text-anchor="middle" class="fin" font-size="12.5">c·ẋ</text>
+  <!-- applied force -->
+  <line x1="544" y1="115" x2="626" y2="115" stroke="#22C3AE" stroke-width="2.6" marker-end="url(#am4)"/>
+  <text x="586" y="107" text-anchor="middle" class="fout" font-size="12.5">F(t)</text>
+  <!-- resultant note -->
+  <text x="505" y="176" text-anchor="middle" fill="#5E7686" font-size="12" font-family="ui-monospace,monospace">net force = m·ẍ</text>
+  <!-- +x reference -->
+  <line x1="470" y1="200" x2="530" y2="200" stroke="#5E7686" stroke-width="1.5" marker-end="url(#am5)"/>
+  <text x="538" y="204" fill="#5E7686" font-size="12" font-family="ui-monospace,monospace">+x</text>
+
+  <defs>
+    <marker id="am1" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#5E7686"/></marker>
+    <marker id="am2" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#22C3AE"/></marker>
+    <marker id="am3" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#E8A33D"/></marker>
+    <marker id="am4" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#22C3AE"/></marker>
+    <marker id="am5" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#5E7686"/></marker>
+  </defs>
+</svg>
+<p style="font-family:var(--mono); font-size:.82rem; color:var(--muted); margin-top:4px">Isolate
+the mass, then replace each attachment with the force it exerts. The spring and damper forces
+always point back toward rest; F(t) is what you apply.</p>
+
+<h2>Building the equation</h2>
+<h3>Add the forces, set equal to m·ẍ</h3>
+<p>Newton says the sum of forces equals mass times acceleration. Reading the arrows above:</p>
+<div class="eq">
+  <span class="hl-k">m</span> <span class="hl-out">ẍ</span>
+  = <span class="hl-in">F(t)</span> − <span class="hl-k">k</span> <span class="hl-out">x</span>
+  − <span class="hl-k">c</span> <span class="hl-out">ẋ</span>
+  &nbsp;&nbsp;<span class="cmt">// inertia = applied − spring − damper</span>
+</div>
+<p>Move the spring and damper terms to the left, and the model appears in its standard form —
+the same second-order equation from Lesson 1, now with physical meaning bolted onto every term:</p>
+<div class="eq">
+  <span class="hl-k">m</span> <span class="hl-out">ẍ</span>
+  + <span class="hl-k">c</span> <span class="hl-out">ẋ</span>
+  + <span class="hl-k">k</span> <span class="hl-out">x</span>
+  = <span class="hl-in">F(t)</span>
+</div>
+<p>Every symbol, in plain English:
+<span class="plain-eq"><b>m</b> = mass (kg) — the inertia</span>
+<span class="plain-eq"><b>c</b> = damping (N·s/m) — the resistance to speed</span>
+<span class="plain-eq"><b>k</b> = stiffness (N/m) — the springiness</span>
+<span class="plain-eq"><b>x</b> = displacement from rest</span>. Increase <b>m</b> and the system gets
+sluggish; increase <b>k</b> and it snaps back harder and faster; increase <b>c</b> and the
+ringing dies away sooner.</p>
+
+<h3>The bridge back to ωₙ and ζ</h3>
+<p>Divide through by <b>m</b> and compare with the standard second-order shape. Two physical
+groupings pop out — the same natural frequency and damping ratio you met last lesson:</p>
+<div class="eq">
+  ω<sub>n</sub> = <span class="frac"><span class="num">√k</span><span class="den">√m</span></span>
+  <span class="cmt">// stiffer or lighter → faster natural frequency</span>
+  <br>
+  ζ = <span class="frac"><span class="num">c</span><span class="den">2√(k m)</span></span>
+  <span class="cmt">// damping, scaled by how much there is to damp</span>
+</div>
+<p>This is the punchline of the lesson: <em>ωₙ and ζ are not abstract knobs — they are built out
+of the mass, spring, and damper you can hold in your hand.</em> Change a physical part and you
+change the response, predictably. The demo below lets you feel exactly that.</p>
+
+<h2>Interactive · the mass–spring–damper</h2>
+<h3>Tune the parts, watch the physics</h3>
+<p>Pull the mass and release it (that's the "release" button, and it auto-repeats). The block
+bobs on a real spring with a real damper; the arrows on the mass are the live free-body diagram —
+teal is the spring force −k·x, amber is the damper force −c·ẋ. The right panel traces the
+displacement x(t). Drive <b>m</b>, <b>k</b>, and <b>c</b>, or hit a preset, and watch ωₙ and ζ
+update from the parts.</p>
+
+<div class="demo" data-demo="msd">
+  <div class="stage">
+    <canvas class="pic"></canvas>
+    <canvas class="plot"></canvas>
+  </div>
+  <div class="controls"></div>
+  <div class="btnrow">
+    <button class="btn primary" data-act="release">▷ pull &amp; release</button>
+    <button class="btn" data-preset="undamped">c = 0 (rings)</button>
+    <button class="btn" data-preset="critical">critical damping</button>
+    <button class="btn" data-preset="heavy">over-damped</button>
+  </div>
+  <div class="readouts"></div>
+</div>
+
+<div class="chips">
+  <span class="chip">Quarter-car suspension</span>
+  <span class="chip">Building sway damper</span>
+  <span class="chip">Accelerometer diaphragm</span>
+  <span class="chip">Robot joint + belt</span>
+  <span class="chip">RLC circuit (electrical twin)</span>
+</div>
+
+<h2>Bench experiment · the hanging bottle</h2>
+<h3>Pull it, count the bobs, then dunk it</h3>
+<p>This is the classic experiment, made live. A water bottle hangs from a soft band; pull it
+down and release, and it bobs at its natural frequency. Count the bobs in ten seconds and you've
+measured ωₙ/2π. Now drag the <em>dunk depth</em> to lower the bottle into the bucket: the bobbing
+dies away far quicker — yet the <em>pitch stays exactly the same</em>. That's the whole point.
+Dunking adds drag, which raises <b>c</b> and <b>ζ</b>, but it doesn't touch <b>m</b> or <b>k</b>,
+so ωₙ = √(k/m) is unchanged. Damping and frequency are independent knobs.</p>
+
+<div class="demo" data-demo="hang">
+  <div class="stage">
+    <canvas class="pic"></canvas>
+    <canvas class="plot"></canvas>
+  </div>
+  <div class="controls"></div>
+  <div class="btnrow">
+    <button class="btn primary" data-act="release">▷ pull &amp; release</button>
+    <button class="btn" data-preset="air">lift into air</button>
+    <button class="btn" data-preset="dunk">dunk it</button>
+    <span class="counter"></span>
+  </div>
+  <div class="readouts"></div>
+</div>
+
+<div class="bench" data-demo="bobtwin">
+  <span class="lab">Bench experiment · the bobbing bottle (interactive twin)</span>
+  <p>Hang a full water bottle from a rubber band, pull it down, and let go: it bobs at ωₙ/2π.
+  Count the bobs in ten seconds to estimate the frequency. Now <em>dunk</em> the bottle into a
+  bucket of water and the bobbing dies away far quicker — you've raised the damping <b>c</b>
+  without touching the mass <b>m</b> or the band stiffness <b>k</b>. Drive all three and watch
+  ωₙ hold steady while ζ and the ten-second bob count change.</p>
+  <div class="stage">
+    <canvas class="pic"></canvas>
+    <canvas class="plot"></canvas>
+  </div>
+  <div class="controls"></div>
+  <div class="btnrow">
+    <button class="btn primary" data-act="release">▷ pull &amp; release</button>
+    <button class="btn" data-dunk="0">in air</button>
+    <button class="btn" data-dunk="3">half-dunk</button>
+    <button class="btn" data-dunk="7">deep dunk</button>
+  </div>
+  <div class="readouts"></div>
+  <p class="note">Modeled as a linear damper (drag ∝ speed), so the decay stays a clean
+  exponential. Notice ωₙ and f don't move when you dunk — only ζ does. For real numbers, lay a
+  phone on the bottle and log its accelerometer; the bob frequency and decay rate read straight
+  off the trace.</p>
+</div>
+
+<div class="takeaways">
+  <h3>Key takeaways</h3>
+  <ul>
+    <li><b>Modeling = force bookkeeping.</b> Isolate the moving mass, sum every force, set it
+      equal to m·ẍ. That's the whole method.</li>
+    <li><b>Each part adds one term:</b> mass → m·ẍ (resists acceleration), spring → k·x (resists
+      displacement), damper → c·ẋ (resists velocity).</li>
+    <li>The result, <b>m·ẍ + c·ẋ + k·x = F(t)</b>, is the second-order system from Lesson 1 with
+      physical meaning on every coefficient.</li>
+    <li><b>ωₙ = √(k/m)</b> and <b>ζ = c/(2√(km))</b> — the response's personality is built
+      directly from the hardware.</li>
+    <li>The same three-term bookkeeping, with different parts, gives the equations for circuits
+      and hydraulic actuators — which is why one toolkit covers them all.</li>
+  </ul>
+</div>
+
+<h2>Quick check</h2>
+<details><summary>Which physical part is responsible for a system being able to overshoot?</summary>
+  <div class="qa"><p>The <b>spring</b> — together with the mass. Overshoot needs two energy stores
+  that trade energy back and forth (spring's potential ↔ mass's kinetic). A mass with only a
+  damper (no spring) can't overshoot; it just coasts to a stop.</p></div>
+</details>
+<details><summary>You double the mass and leave k and c alone. What happens to ωₙ and ζ?</summary>
+  <div class="qa"><p>ωₙ = √(k/m) drops by a factor of √2 (slower). ζ = c/(2√(km)) also drops by
+  √2 (less damped, more ringing). So a heavier mass is both slower <em>and</em> bouncier — which
+  is exactly why a loaded truck rides differently from an empty one.</p></div>
+</details>
+<details><summary>Why does the spring force arrow always point back toward the dashed line?</summary>
+  <div class="qa"><p>Because the spring force is −k·x: the minus sign means it always opposes the
+  displacement. Stretch right (x&gt;0) and it pulls left; compress left (x&lt;0) and it pushes
+  right. It's a restoring force, always aimed at the equilibrium position.</p></div>
+</details>
+
+<h2>Exercises</h2>
+<ol class="ex">
+  <li><b>Calculation.</b> A mass–spring–damper has m = 2 kg, k = 50 N/m, c = 4 N·s/m. Find ωₙ
+    and ζ, and classify the response.</li>
+  <li><b>Calculation.</b> For that same system, what value of c would make it critically damped?</li>
+  <li><b>Calculation.</b> Write the equation of motion for m = 0.5 kg, k = 8 N/m, c = 0, with an
+    applied force F(t). What kind of motion results after a pull-and-release?</li>
+  <li><b>Design.</b> A camera on a drone jiggles after each gust, taking too long to steady. You
+    can change the mount's stiffness and add damping material. Using ωₙ and ζ, explain a
+    strategy to make it settle quickly <em>without</em> making it feel harsh, and name the
+    trade-off you're managing.</li>
+</ol>
+
+<details><summary>Show worked solutions</summary>
+  <div class="qa">
+    <p><b>1.</b> ωₙ = √(k/m) = √(50/2) = √25 = <b>5 rad/s</b> (≈ 0.80 Hz). ζ = c/(2√(km)) =
+    4/(2√(100)) = 4/20 = <b>0.2</b>. Since 0 &lt; ζ &lt; 1, it's <b>underdamped</b> — it overshoots
+    and rings a few times before settling.</p>
+    <p><b>2.</b> Critical damping is ζ = 1, i.e. c = 2√(km) = 2√(2·50) = 2√100 = <b>20 N·s/m</b>.
+    That's the least damping that produces no overshoot — the fastest non-bouncy settle.</p>
+    <p><b>3.</b> 0.5·ẍ + 8·x = F(t), or ẍ + 16·x = 2·F(t). With c = 0 there is nothing to remove
+    energy, so after a pull-and-release the mass oscillates <b>forever</b> at ωₙ = √(k/m) = √16 =
+    4 rad/s — pure, undying sinusoidal motion. (Real systems always have a little damping, so it
+    eventually stops.)</p>
+    <p><b>4.</b> "Settles quickly without feeling harsh" is a request to raise ζ toward about
+    <b>0.6–0.7</b> — high enough to kill the ringing fast, low enough to avoid the stiff, abrupt
+    feel of critical/over-damping. Add damping material to raise c (raises ζ directly). If you
+    instead stiffen the mount you raise k, which speeds ωₙ <em>but lowers ζ</em> (ζ = c/(2√(km))),
+    making it ring more — so stiffness alone backfires. The trade-off you're managing: <b>speed of
+    response (ωₙ) versus smoothness of settling (ζ)</b>, and c is your cleanest lever on the
+    latter. This is exactly how a real shock absorber is tuned.</p>
+  </div>
+</details>
+
+<footer>
+  Lesson 2 · self-contained, no external libraries or network · the mass–spring–damper is
+  integrated live with RK4 from m·ẍ + c·ẋ + k·x = F. Next: differential equations, read physically.
+</footer>
+
+</div><!-- /wrap -->
+
+<script>
+"use strict";
+(function(){
+  const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const COL={in:'#E8A33D',out:'#22C3AE',grid2:'#16262F',axis:'#3A5464',text:'#7FA0AE'};
+
+  function el(tag,cls){const e=document.createElement(tag); if(cls)e.className=cls; return e;}
+  function fitCanvas(cv,aspect){
+    const dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1));
+    const cssW=cv.clientWidth || cv.parentElement.clientWidth || 300;
+    const cssH=Math.round(cssW*aspect);
+    cv.style.height=cssH+'px'; cv.width=Math.round(cssW*dpr); cv.height=Math.round(cssH*dpr);
+    const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); return {ctx,W:cssW,H:cssH};
+  }
+  function addSliders(container,defs,params,onChange,handles){
+    defs.forEach(p=>{ params[p.key]=p.value;
+      const c=el('div','ctrl'), row=el('div','row');
+      const name=el('span','name'); name.innerHTML=p.label;
+      const val=el('span','val'); const fmt=p.fmt||(v=>v.toFixed(2)); val.textContent=fmt(p.value);
+      row.appendChild(name); row.appendChild(val);
+      const inp=document.createElement('input'); inp.type='range';
+      inp.min=p.min; inp.max=p.max; inp.step=p.step; inp.value=p.value;
+      inp.setAttribute('aria-label',(p.aria||p.label).replace(/<[^>]+>/g,''));
+      inp.addEventListener('input',()=>{ params[p.key]=parseFloat(inp.value);
+        val.textContent=fmt(params[p.key]); onChange(); });
+      c.appendChild(row); c.appendChild(inp); container.appendChild(c);
+      if(handles) handles[p.key]={inp,val,fmt};
+    });
+  }
+  function setReadouts(container,items){ container.innerHTML='';
+    items.forEach(r=>{ const s=el('span','ro'); s.innerHTML=r.label+' <b>'+r.value+'</b>';
+      container.appendChild(s); }); }
+
+  function rk4(f,s,dt){const k1=f(s),k2=f(s.map((x,i)=>x+dt/2*k1[i])),
+    k3=f(s.map((x,i)=>x+dt/2*k2[i])),k4=f(s.map((x,i)=>x+dt*k3[i]));
+    return s.map((x,i)=>x+dt/6*(k1[i]+2*k2[i]+2*k3[i]+k4[i]));}
+
+  function drawSpring(ctx,x1,x2,y,coils,amp){
+    ctx.beginPath(); ctx.moveTo(x1,y);
+    const span=x2-x1, lead=Math.min(14,Math.abs(span)*0.15);
+    ctx.lineTo(x1+lead,y);
+    const n=coils, seg=(span-2*lead)/n;
+    for(let i=0;i<n;i++){ const bx=x1+lead+seg*i;
+      ctx.lineTo(bx+seg*0.25, y-amp); ctx.lineTo(bx+seg*0.75, y+amp); ctx.lineTo(bx+seg, y); }
+    ctx.lineTo(x2,y); ctx.stroke();
+  }
+  function drawDamper(ctx,x1,x2,y,blockX){
+    // cylinder fixed near wall, piston rod to the mass
+    const cylL=32, cylH=17;
+    ctx.beginPath(); ctx.moveTo(x1,y); ctx.lineTo(blockX,y); ctx.stroke();          // rod from wall
+    ctx.strokeRect(blockX,y-cylH/2,cylL,cylH);                                       // cylinder
+    ctx.beginPath(); ctx.moveTo(blockX+cylL,y); ctx.lineTo(x2,y); ctx.stroke();      // rod to mass
+    const px=Math.max(blockX+5,Math.min(blockX+cylL-5, x2-40));                       // piston plate
+    ctx.beginPath(); ctx.moveTo(px,y-cylH/2+2); ctx.lineTo(px,y+cylH/2-2); ctx.lineWidth+=2; ctx.stroke(); ctx.lineWidth-=2;
+  }
+  function drawForceArrow(ctx,blockCx,bw,y,force,scale,maxLen,color,label){
+    let mag=force*scale; if(!isFinite(mag)) return;
+    const s=Math.sign(mag)||1; mag=s*Math.min(Math.abs(mag),maxLen);
+    const ox=blockCx+(mag>=0? bw/2 : -bw/2), tip=ox+mag;
+    if(Math.abs(mag)<3){ ctx.fillStyle=color; ctx.beginPath(); ctx.arc(ox,y,2,0,7); ctx.fill(); return; }
+    ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.moveTo(ox,y); ctx.lineTo(tip,y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(tip,y); ctx.lineTo(tip-9*s,y-5); ctx.lineTo(tip-9*s,y+5); ctx.closePath(); ctx.fill();
+    ctx.font='10px ui-monospace, monospace'; ctx.textAlign='center'; ctx.fillText(label, tip, y-8);
+  }
+  function drawSpringV(ctx,x,y1,y2,coils,amp){
+    ctx.beginPath(); ctx.moveTo(x,y1);
+    const span=y2-y1, lead=Math.min(14,Math.abs(span)*0.12);
+    ctx.lineTo(x,y1+lead);
+    const n=coils, seg=(span-2*lead)/n;
+    for(let i=0;i<n;i++){ const by=y1+lead+seg*i;
+      ctx.lineTo(x-amp, by+seg*0.25); ctx.lineTo(x+amp, by+seg*0.75); ctx.lineTo(x, by+seg); }
+    ctx.lineTo(x,y2); ctx.stroke();
+  }
+  function rrect(ctx,x,y,w,h,r){ ctx.beginPath();
+    ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+  function sampleArr(arr,tt,dt){ const i=Math.min(arr.length-1,Math.max(0,Math.round(tt/dt))); return arr[i]; }
+
+  (function buildMSD(){
+    const root=document.querySelector('[data-demo=msd]'); if(!root) return;
+    const pic=root.querySelector('.pic'), plot=root.querySelector('.plot');
+    const controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+    const params={}; const handles={};
+    addSliders(controls,[
+      {key:'m',label:'mass m (kg)',min:0.2,max:3,step:0.1,value:1.0,fmt:v=>v.toFixed(1)},
+      {key:'k',label:'stiffness k (N/m)',min:2,max:40,step:1,value:12,fmt:v=>v.toFixed(0)},
+      {key:'c',label:'damping c (N·s/m)',min:0,max:12,step:0.1,value:1.5,fmt:v=>v.toFixed(1)}
+    ],params,onChange,handles);
+
+    const T=12, DT=0.004; let data=null, startT=0, raf=null;
+    function recompute(){
+      // simulate release from x0 = 1, v0 = 0
+      let s=[1,0]; const t=[],x=[],v=[];
+      for(let tt=0; tt<=T+1e-9; tt+=DT){ t.push(tt); x.push(s[0]); v.push(s[1]);
+        s=rk4(st=>[st[1], (-params.k*st[0]-params.c*st[1])/params.m], s, DT); }
+      data={t,x,v};
+      const wn=Math.sqrt(params.k/params.m), z=params.c/(2*Math.sqrt(params.k*params.m));
+      const regime = z<1e-6?'undamped': z<1?'underdamped': Math.abs(z-1)<0.03?'critically damped':'overdamped';
+      const ts = z>1e-6 ? (4/(z*wn)) : Infinity;
+      setReadouts(ro,[
+        {label:'ωₙ = √(k/m)', value:wn.toFixed(2)+' rad/s ('+(wn/2/Math.PI).toFixed(2)+' Hz)'},
+        {label:'ζ = c/2√(km)', value:z.toFixed(3)},
+        {label:'regime', value:regime},
+        {label:'settling', value: isFinite(ts)? ts.toFixed(1)+' s' : '∞'}
+      ]);
+      startT=performance.now();
+      if(REDUCED){ drawAt(0.14*T); }
+    }
+    function sample(arr,tt){ const i=Math.min(arr.length-1, Math.max(0, Math.round(tt/DT))); return arr[i]; }
+
+    function drawPic(xval,vval){
+      const {ctx,W,H}=fitCanvas(pic,0.62); ctx.clearRect(0,0,W,H);
+      const wallX=W*0.10, eqX=W*0.60, midY=H*0.44;
+      const bw=W*0.15, bh=H*0.40, scale=W*0.20;
+      const bx=eqX + xval*scale;                    // block center
+      // wall
+      ctx.strokeStyle='#5E7686'; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.moveTo(wallX,midY-H*0.34); ctx.lineTo(wallX,midY+H*0.30); ctx.stroke();
+      // equilibrium line
+      ctx.strokeStyle='#3A5464'; ctx.setLineDash([4,5]); ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(eqX,midY-H*0.36); ctx.lineTo(eqX,midY+H*0.34); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle=COL.text; ctx.font='10px ui-monospace, monospace'; ctx.textAlign='center';
+      ctx.fillText('rest', eqX, midY-H*0.38);
+      // spring (upper) and damper (lower) from wall to block-left
+      const blockLeft=bx-bw/2;
+      ctx.strokeStyle=COL.out; ctx.lineWidth=2.4;
+      drawSpring(ctx,wallX,blockLeft,midY-H*0.155,6,6);
+      ctx.strokeStyle=COL.in; ctx.lineWidth=2.4;
+      drawDamper(ctx,wallX,blockLeft,midY+H*0.155,wallX+16);
+      // block
+      ctx.fillStyle='#0E1B24'; ctx.strokeStyle=COL.out; ctx.lineWidth=2;
+      roundRect(ctx,bx-bw/2,midY-bh/2,bw,bh,8); ctx.fill(); ctx.stroke();
+      ctx.fillStyle='#DCE7EC'; ctx.font='15px ui-monospace, monospace';
+      ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('m', bx, midY);
+      ctx.textBaseline='alphabetic';
+      // live free-body force arrows — kept in a clear central lane, clamped to fit
+      const maxLen=Math.min(blockLeft-wallX-20, W-(bx+bw/2)-16, 150);
+      drawForceArrow(ctx, bx, bw, midY-9, -params.k*xval, 5.5, maxLen, COL.out, '−k·x');
+      drawForceArrow(ctx, bx, bw, midY+9, -params.c*vval, 5.5, maxLen, COL.in, '−c·ẋ');
+    }
+    function drawPlot(tt){
+      const {ctx,W,H}=fitCanvas(plot,0.62); const pad={l:30,r:12,t:14,b:24};
+      ctx.clearRect(0,0,W,H);
+      const gx=t=>pad.l+(t/T)*(W-pad.l-pad.r);
+      const top=pad.t, bot=H-pad.b, gy=v=>top+(1-(v+1.1)/2.2)*(bot-top);
+      ctx.strokeStyle=COL.axis; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(pad.l,gy(0)); ctx.lineTo(W-pad.r,gy(0)); ctx.stroke();
+      // envelope (underdamped only)
+      const wn=Math.sqrt(params.k/params.m), z=params.c/(2*Math.sqrt(params.k*params.m));
+      if(z<1){ ctx.strokeStyle='rgba(232,163,61,0.45)'; ctx.setLineDash([3,3]);
+        for(const sg of [1,-1]){ ctx.beginPath();
+          for(let i=0;i<=120;i++){ const t=T*i/120; const e=sg*Math.exp(-z*wn*t);
+            i?ctx.lineTo(gx(t),gy(e)):ctx.moveTo(gx(t),gy(e)); } ctx.stroke(); }
+        ctx.setLineDash([]); }
+      // x(t)
+      ctx.strokeStyle=COL.out; ctx.lineWidth=2.4; ctx.beginPath();
+      for(let i=0;i<data.x.length;i++){ const X=gx(data.t[i]), Y=gy(data.x[i]);
+        i?ctx.lineTo(X,Y):ctx.moveTo(X,Y); } ctx.stroke();
+      // playhead
+      const xv=sample(data.x,tt); ctx.fillStyle=COL.in;
+      ctx.beginPath(); ctx.arc(gx(tt),gy(xv),4,0,7); ctx.fill();
+      ctx.fillStyle=COL.text; ctx.font='10px ui-monospace, monospace'; ctx.textAlign='right';
+      ctx.fillText('x(t)', pad.l-3, gy(1)+2);
+    }
+    function drawAt(tt){ drawPic(sample(data.x,tt), sample(data.v,tt)); drawPlot(tt); }
+    function frame(now){ let tt=(now-startT)/1000; if(tt>T){ startT=now; tt=0; }
+      drawAt(tt); raf=requestAnimationFrame(frame); }
+
+    function onChange(){ recompute(); }
+    function release(){ startT=performance.now(); }
+    root.querySelector('[data-act=release]').addEventListener('click',release);
+    root.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{
+      const km=Math.sqrt(params.k*params.m);
+      let c = b.dataset.preset==='undamped'?0 : b.dataset.preset==='critical'?2*km : 3*km;
+      c=Math.max(0,Math.min(12,c)); params.c=c;
+      handles.c.inp.value=c; handles.c.val.textContent=handles.c.fmt(c);
+      recompute();
+    }));
+    window.addEventListener('resize',()=>{ if(data) drawAt(REDUCED?0.14*T:Math.min(T,(performance.now()-startT)/1000)); });
+
+    recompute();
+    if(!REDUCED) raf=requestAnimationFrame(frame);
+
+    function roundRect(ctx,x,y,w,h,r){ ctx.beginPath();
+      ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+      ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+  })();
+
+  // ---------- Bench twin: hanging bottle you can dunk ----------
+  (function buildHang(){
+    const root=document.querySelector('[data-demo=hang]'); if(!root) return;
+    const pic=root.querySelector('.pic'), plot=root.querySelector('.plot');
+    const controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+    const counterEl=root.querySelector('.counter');
+    const params={}; const handles={};
+    const K=20, C0=0.2, CDUNK=4.5, A=1, T=16, DT=0.004;
+    addSliders(controls,[
+      {key:'m',label:'bottle mass m (kg)',min:0.3,max:1.5,step:0.05,value:1.0,fmt:v=>v.toFixed(2)},
+      {key:'dunk',label:'dunk depth (%)',min:0,max:100,step:1,value:0,fmt:v=>v.toFixed(0)+'%'}
+    ],params,onChange,handles);
+
+    let data=null, startT=0, raf=null, bobCount=0, prevY=A;
+    function cval(){ return C0 + CDUNK*(params.dunk/100); }
+    function recompute(){
+      const c=cval(), wn=Math.sqrt(K/params.m), z=c/(2*Math.sqrt(K*params.m));
+      let s=[A,0]; const t=[],y=[];
+      for(let tt=0; tt<=T+1e-9; tt+=DT){ t.push(tt); y.push(s[0]);
+        s=rk4(st=>[st[1], (-K*st[0]-c*st[1])/params.m], s, DT); }
+      data={t,y};
+      const regime = z<1?'underdamped': Math.abs(z-1)<0.03?'critically damped':'overdamped';
+      setReadouts(ro,[
+        {label:'ωₙ = √(k/m) (pitch)', value:(wn/2/Math.PI).toFixed(2)+' Hz'},
+        {label:'ζ', value:z.toFixed(3)+' · '+regime},
+        {label:'damping c', value:c.toFixed(2)+' N·s/m'},
+        {label:'k · m held', value:K+' N/m · '+params.m.toFixed(2)+' kg'}
+      ]);
+      bobCount=0; prevY=A; startT=performance.now();
+      if(REDUCED){ drawPic(A); drawPlot(0); counterEl.textContent='bobs: 0'; }
+    }
+    function drawPic(yval){
+      const {ctx,W,H}=fitCanvas(pic,1.0); ctx.clearRect(0,0,W,H);
+      const cx=W*0.42, ceilY=H*0.055;
+      const bottleW=W*0.20, bottleH=H*0.19;
+      const dunkFrac=params.dunk/100;
+      const eqY=H*0.38 + dunkFrac*(H*0.17), scale=H*0.11;
+      const bottleCy=eqY + yval*scale, bottleTop=bottleCy-bottleH/2, bottleBot=bottleTop+bottleH;
+      const waterTop=H*0.58, bucketBot=H*0.94, bucketW=W*0.54, bucketX=cx-bucketW/2;
+      ctx.strokeStyle='#5E7686'; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.moveTo(cx-42,ceilY); ctx.lineTo(cx+42,ceilY); ctx.stroke();
+      ctx.lineWidth=1.2;
+      for(let i=-3;i<=3;i++){ ctx.beginPath(); ctx.moveTo(cx+i*12,ceilY); ctx.lineTo(cx+i*12-8,ceilY-8); ctx.stroke(); }
+      ctx.fillStyle='rgba(34,195,174,0.16)'; ctx.fillRect(bucketX,waterTop,bucketW,bucketBot-waterTop);
+      ctx.strokeStyle=COL.out; ctx.lineWidth=2.2; drawSpringV(ctx,cx,ceilY,bottleTop,9,8);
+      ctx.fillStyle='#0E1B24'; ctx.strokeStyle=COL.out; ctx.lineWidth=2;
+      rrect(ctx,cx-bottleW/2,bottleTop,bottleW,bottleH,8); ctx.fill(); ctx.stroke();
+      ctx.fillStyle=COL.out; ctx.fillRect(cx-bottleW*0.13,bottleTop-6,bottleW*0.26,6);
+      ctx.fillStyle='#DCE7EC'; ctx.font='11px ui-monospace, monospace';
+      ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('m',cx,bottleCy); ctx.textBaseline='alphabetic';
+      if(bottleBot>waterTop){
+        const subTop=Math.max(bottleTop,waterTop);
+        ctx.save(); rrect(ctx,cx-bottleW/2,bottleTop,bottleW,bottleH,8); ctx.clip();
+        ctx.fillStyle='rgba(34,195,174,0.40)'; ctx.fillRect(cx-bottleW/2,subTop,bottleW,bottleBot-subTop);
+        ctx.restore();
+        ctx.strokeStyle='rgba(34,195,174,0.7)'; ctx.lineWidth=1.5;
+        ctx.beginPath(); ctx.moveTo(bucketX,waterTop); ctx.lineTo(cx-bottleW/2,waterTop);
+        ctx.moveTo(cx+bottleW/2,waterTop); ctx.lineTo(bucketX+bucketW,waterTop); ctx.stroke();
+      } else {
+        ctx.strokeStyle='rgba(34,195,174,0.7)'; ctx.lineWidth=1.5;
+        ctx.beginPath(); ctx.moveTo(bucketX,waterTop); ctx.lineTo(bucketX+bucketW,waterTop); ctx.stroke();
+      }
+      ctx.strokeStyle='#5E7686'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(bucketX,waterTop-3); ctx.lineTo(bucketX,bucketBot);
+      ctx.lineTo(bucketX+bucketW,bucketBot); ctx.lineTo(bucketX+bucketW,waterTop-3); ctx.stroke();
+      ctx.strokeStyle='#3A5464'; ctx.setLineDash([3,4]); ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(cx+bottleW/2+8,eqY); ctx.lineTo(cx+bottleW/2+28,eqY); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle=COL.text; ctx.font='9px ui-monospace, monospace'; ctx.textAlign='left';
+      ctx.fillText('rest',cx+bottleW/2+9,eqY-4);
+    }
+    function drawPlot(tt){
+      const {ctx,W,H}=fitCanvas(plot,0.78); const pad={l:30,r:12,t:14,b:24};
+      ctx.clearRect(0,0,W,H);
+      const gx=t=>pad.l+(t/T)*(W-pad.l-pad.r);
+      const top=pad.t, bot=H-pad.b, gy=v=>top+(1-(v+1.15)/2.3)*(bot-top);
+      ctx.strokeStyle=COL.axis; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(pad.l,gy(0)); ctx.lineTo(W-pad.r,gy(0)); ctx.stroke();
+      const c=cval(), wn=Math.sqrt(K/params.m), z=c/(2*Math.sqrt(K*params.m));
+      if(z<1){ ctx.strokeStyle='rgba(232,163,61,0.45)'; ctx.setLineDash([3,3]);
+        for(const sg of [1,-1]){ ctx.beginPath();
+          for(let i=0;i<=120;i++){ const t=T*i/120, e=sg*Math.exp(-z*wn*t);
+            i?ctx.lineTo(gx(t),gy(e)):ctx.moveTo(gx(t),gy(e)); } ctx.stroke(); }
+        ctx.setLineDash([]); }
+      ctx.strokeStyle=COL.out; ctx.lineWidth=2.3; ctx.beginPath();
+      for(let i=0;i<data.y.length;i++){ const X=gx(data.t[i]), Y=gy(data.y[i]);
+        i?ctx.lineTo(X,Y):ctx.moveTo(X,Y); } ctx.stroke();
+      const yv=sampleArr(data.y,tt,DT); ctx.fillStyle=COL.in;
+      ctx.beginPath(); ctx.arc(gx(Math.min(tt,T)),gy(yv),4,0,7); ctx.fill();
+      ctx.fillStyle=COL.text; ctx.font='10px ui-monospace, monospace'; ctx.textAlign='right';
+      ctx.fillText('pull ▼', pad.l-3, gy(1)); ctx.fillText('▲ up', pad.l-3, gy(-1)+3);
+    }
+    function frame(now){
+      let tt=(now-startT)/1000;
+      if(tt>T){ startT=now; tt=0; bobCount=0; prevY=A; }
+      const yv=sampleArr(data.y,tt,DT);
+      if(prevY<0 && yv>=0) bobCount++;
+      prevY=yv;
+      drawPic(yv); drawPlot(tt);
+      const fmeas = tt>2.5 ? (bobCount/tt).toFixed(2)+' Hz' : '…';
+      counterEl.textContent='bobs: '+bobCount+'  ·  '+tt.toFixed(1)+' s  ·  measured ≈ '+fmeas;
+      raf=requestAnimationFrame(frame);
+    }
+    function onChange(){ recompute(); }
+    function release(){ startT=performance.now(); bobCount=0; prevY=A; }
+    root.querySelector('[data-act=release]').addEventListener('click',release);
+    root.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{
+      const v = b.dataset.preset==='air'?0:70; params.dunk=v;
+      handles.dunk.inp.value=v; handles.dunk.val.textContent=handles.dunk.fmt(v);
+      recompute();
+    }));
+    window.addEventListener('resize',()=>{ if(data) drawPic(sampleArr(data.y,REDUCED?0:Math.min(T,(performance.now()-startT)/1000),DT)); });
+    recompute();
+    if(!REDUCED) raf=requestAnimationFrame(frame);
+  })();
+
+  // ---------- Bench twin: bobbing bottle on a rubber band, dunked in water ----------
+  (function buildBobTwin(){
+    const root=document.querySelector('[data-demo=bobtwin]'); if(!root) return;
+    const pic=root.querySelector('.pic'), plot=root.querySelector('.plot');
+    const controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+    const params={}; const handles={};
+    addSliders(controls,[
+      {key:'m',label:'bottle fill m (kg)',min:0.3,max:1.5,step:0.05,value:1.0,fmt:v=>v.toFixed(2)},
+      {key:'k',label:'band stiffness k (N/m)',min:5,max:35,step:1,value:14,fmt:v=>v.toFixed(0)},
+      {key:'dunk',label:'dunk depth (cm)',min:0,max:8,step:0.5,value:0,fmt:v=>v.toFixed(1)}
+    ],params,onChange,handles);
+
+    const T=12, DT=0.004; let data=null, startT=0, raf=null;
+    const cOf=()=> 0.3 + 1.4*params.dunk;   // air baseline + drag rising with submersion
+
+    function recompute(){
+      const c=cOf(); let s=[1,0]; const t=[],y=[],v=[];
+      for(let tt=0; tt<=T+1e-9; tt+=DT){ t.push(tt); y.push(s[0]); v.push(s[1]);
+        s=rk4(st=>[st[1],(-params.k*st[0]-c*st[1])/params.m], s, DT); }
+      data={t,y,v};
+      const wn=Math.sqrt(params.k/params.m), z=c/(2*Math.sqrt(params.k*params.m)), f=wn/2/Math.PI;
+      const regime=z<1e-2?'≈undamped':z<1?'underdamped':Math.abs(z-1)<0.03?'critical':'overdamped';
+      setReadouts(ro,[
+        {label:'ωₙ', value:wn.toFixed(2)+' rad/s'},
+        {label:'f = ωₙ/2π', value:f.toFixed(2)+' Hz'},
+        {label:'bobs / 10 s', value:(f*10).toFixed(0)},
+        {label:'ζ', value:z.toFixed(3)+' ('+regime+')'},
+        {label:'damping c', value:c.toFixed(1)+' N·s/m'}
+      ]);
+      startT=performance.now(); if(REDUCED) drawAt(0.1*T);
+    }
+    function sample(a,tt){ const i=Math.min(a.length-1,Math.max(0,Math.round(tt/DT))); return a[i]; }
+    function springV(ctx,x,y1,y2,coils,amp){
+      ctx.beginPath(); ctx.moveTo(x,y1);
+      const span=y2-y1, lead=Math.min(12,Math.abs(span)*0.12); ctx.lineTo(x,y1+lead);
+      const seg=(span-2*lead)/coils;
+      for(let i=0;i<coils;i++){ const yy=y1+lead+seg*i;
+        ctx.lineTo(x-amp,yy+seg*0.25); ctx.lineTo(x+amp,yy+seg*0.75); ctx.lineTo(x,yy+seg); }
+      ctx.lineTo(x,y2); ctx.stroke();
+    }
+    function rrect(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y);
+      ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+      ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+
+    function drawPic(yval){
+      const {ctx,W,H}=fitCanvas(pic,0.92); ctx.clearRect(0,0,W,H);
+      const cx=W*0.5, anchorY=H*0.09, yEq=H*0.50, disp=H*0.15;
+      const by=yEq+yval*disp, bw=W*0.17, bh=H*0.22, bTop=by-bh/2, bBot=by+bh/2;
+      const rimY=H*0.40, bucketL=W*0.22, bucketR=W*0.78, bucketBot=H*0.96;
+      const restBot=yEq+bh/2, cmScale=H*0.016, gap=H*0.02;
+      let waterY=restBot+gap-params.dunk*cmScale; waterY=Math.max(rimY+8,waterY);
+      ctx.fillStyle='#16262F'; ctx.fillRect(W*0.24,anchorY-10,W*0.52,10);
+      ctx.strokeStyle='#2b4653'; ctx.lineWidth=1; ctx.strokeRect(W*0.24,anchorY-10,W*0.52,10);
+      // water clipped inside bucket
+      ctx.save(); ctx.beginPath(); ctx.rect(bucketL+3,rimY,bucketR-bucketL-6,bucketBot-rimY); ctx.clip();
+      ctx.fillStyle='rgba(34,195,174,0.20)'; ctx.fillRect(bucketL,waterY,bucketR-bucketL,bucketBot-waterY);
+      ctx.strokeStyle='rgba(34,195,174,0.6)'; ctx.lineWidth=1.4; ctx.beginPath();
+      for(let x=bucketL;x<=bucketR;x+=6){ const yy=waterY+Math.sin(x*0.15+performance.now()*0.003)*1.6;
+        x===bucketL?ctx.moveTo(x,yy):ctx.lineTo(x,yy);} ctx.stroke(); ctx.restore();
+      // rubber band / spring
+      ctx.strokeStyle=COL.out; ctx.lineWidth=2.3; springV(ctx,cx,anchorY,bTop-4,9,W*0.045);
+      // bottle: cap, body, water fill ∝ m
+      ctx.fillStyle='#0E1B24'; ctx.strokeStyle=COL.out; ctx.lineWidth=2;
+      ctx.fillRect(cx-bw*0.14,bTop-8,bw*0.28,8); ctx.strokeRect(cx-bw*0.14,bTop-8,bw*0.28,8);
+      rrect(ctx,cx-bw/2,bTop,bw,bh,8); ctx.fill(); ctx.stroke();
+      const fillFrac=(params.m-0.3)/1.2*0.7+0.18;
+      ctx.save(); rrect(ctx,cx-bw/2,bTop,bw,bh,8); ctx.clip();
+      ctx.fillStyle='rgba(155,208,255,0.5)'; ctx.fillRect(cx-bw/2,bBot-bh*fillFrac,bw,bh*fillFrac); ctx.restore();
+      ctx.fillStyle='#DCE7EC'; ctx.font='10px ui-monospace, monospace'; ctx.textAlign='center'; ctx.fillText('m',cx,by+3);
+      // bucket walls over water edges
+      ctx.strokeStyle='#5E7686'; ctx.lineWidth=2.5; ctx.beginPath();
+      ctx.moveTo(bucketL,rimY); ctx.lineTo(bucketL,bucketBot); ctx.lineTo(bucketR,bucketBot); ctx.lineTo(bucketR,rimY); ctx.stroke();
+      // submersion callout
+      if(bBot>waterY+1){ ctx.strokeStyle='rgba(34,195,174,0.9)'; ctx.lineWidth=1.4;
+        ctx.beginPath(); ctx.moveTo(cx-bw/2-4,waterY); ctx.lineTo(cx+bw/2+4,waterY); ctx.stroke();
+        ctx.fillStyle=COL.out; ctx.font='9px ui-monospace, monospace'; ctx.textAlign='center';
+        ctx.fillText('submerged → drag', cx, rimY-4); }
+      // rest tick
+      ctx.strokeStyle='#3A5464'; ctx.setLineDash([3,4]); ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(cx+bw/2+8,yEq); ctx.lineTo(cx+bw/2+22,yEq); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle=COL.text; ctx.font='9px ui-monospace, monospace'; ctx.textAlign='left'; ctx.fillText('rest',cx+bw/2+10,yEq-3);
+    }
+    function drawPlot(tt){
+      const {ctx,W,H}=fitCanvas(plot,1.15); const pad={l:28,r:12,t:14,b:22};
+      ctx.clearRect(0,0,W,H);
+      const gx=t=>pad.l+(t/T)*(W-pad.l-pad.r);
+      const top=pad.t,bot=H-pad.b,gy=v=>top+(1-(v+1.1)/2.2)*(bot-top);
+      ctx.strokeStyle=COL.axis; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(pad.l,gy(0)); ctx.lineTo(W-pad.r,gy(0)); ctx.stroke();
+      const wn=Math.sqrt(params.k/params.m), c=cOf(), z=c/(2*Math.sqrt(params.k*params.m));
+      if(z<1){ ctx.strokeStyle='rgba(232,163,61,0.4)'; ctx.setLineDash([3,3]);
+        for(const sg of [1,-1]){ ctx.beginPath();
+          for(let i=0;i<=120;i++){const t=T*i/120,e=sg*Math.exp(-z*wn*t); i?ctx.lineTo(gx(t),gy(e)):ctx.moveTo(gx(t),gy(e));} ctx.stroke(); }
+        ctx.setLineDash([]); }
+      ctx.strokeStyle=COL.out; ctx.lineWidth=2.3; ctx.beginPath();
+      for(let i=0;i<data.y.length;i++){const X=gx(data.t[i]),Y=gy(data.y[i]); i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);} ctx.stroke();
+      const yv=sample(data.y,tt); ctx.fillStyle=COL.in; ctx.beginPath(); ctx.arc(gx(tt),gy(yv),4,0,7); ctx.fill();
+      ctx.fillStyle=COL.text; ctx.font='9px ui-monospace, monospace'; ctx.textAlign='right'; ctx.fillText('y(t)',pad.l-3,gy(1)+2);
+    }
+    function drawAt(tt){ drawPic(sample(data.y,tt)); drawPlot(tt); }
+    function frame(now){ let tt=(now-startT)/1000; if(tt>T){ startT=now; tt=0; } drawAt(tt); raf=requestAnimationFrame(frame); }
+    function onChange(){ recompute(); }
+    root.querySelector('[data-act=release]').addEventListener('click',()=>{ startT=performance.now(); });
+    root.querySelectorAll('[data-dunk]').forEach(b=>b.addEventListener('click',()=>{
+      const d=parseFloat(b.dataset.dunk); params.dunk=d;
+      handles.dunk.inp.value=d; handles.dunk.val.textContent=handles.dunk.fmt(d); recompute();
+    }));
+    window.addEventListener('resize',()=>{ if(data) drawAt(REDUCED?0.1*T:Math.min(T,(performance.now()-startT)/1000)); });
+    recompute(); if(!REDUCED) raf=requestAnimationFrame(frame);
+  })();
+})();
+</script>
+</body>
+</html>

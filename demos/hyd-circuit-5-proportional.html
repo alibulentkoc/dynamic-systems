@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hydraulic Circuits · 5 · Proportional Control</title>
+<style>
+  :root{
+    --paper:#EEF2F5; --card:#FFFFFF; --ink:#17252E; --muted:#5E7686; --line:#D3DDE4; --line2:#E3EAEF;
+    --panel:#0E1B24; --grid2:#16262F; --axis:#3A5464;
+    --in:#E8A33D; --out:#22C3AE; --accent:#22C3AE; --accent-ink:#0A5B52; --blue:#9BD0FF; --red:#FF8FA3;
+    --mono: ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    --sans: system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box} html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.6;font-size:17px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:940px;margin:0 auto;padding:0 20px 120px}
+  header.hero{padding:64px 0 34px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono);font-size:.78rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+  h1{font-size:clamp(2rem,5vw,3.1rem);line-height:1.06;margin:0 0 18px;letter-spacing:-.02em;font-weight:750}
+  .lede{font-size:1.12rem;color:#33454f;max-width:62ch;margin:0}
+  h2{font-size:1.02rem;font-family:var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:52px 0 14px;font-weight:600}
+  h3{font-size:1.5rem;letter-spacing:-.01em;margin:6px 0 10px;font-weight:700}
+  p{margin:0 0 16px} em{font-style:normal;color:var(--accent-ink);font-weight:600}
+  .goal{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:0 14px 14px 0;padding:18px 22px;margin:20px 0}
+  .goal .lab{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-ink);display:block;margin-bottom:6px}
+  .eq{font-family:var(--mono);background:var(--panel);color:#DCE7EC;border-radius:12px;padding:18px 20px;margin:16px 0;overflow-x:auto;font-size:.98rem;line-height:2}
+  .eq .cmt{color:#6E8794} .eq .hl-in{color:var(--in)} .eq .hl-out{color:var(--out)} .eq .hl-k{color:#9BD0FF}
+  .frac{display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;margin:0 .28em;line-height:1.05}
+  .frac .num2{border-bottom:1.5px solid currentColor;padding:0 .4em} .frac .den{padding:2px .4em 0}
+  .plain-eq{font-family:var(--mono);font-size:1rem;color:var(--ink);background:#F6F9FB;border:1px solid var(--line2);border-radius:9px;padding:10px 14px;display:inline-block;margin:4px 0}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px}
+  .chip{font-family:var(--mono);font-size:.82rem;padding:6px 11px;border-radius:999px;background:#F0F5F8;border:1px solid var(--line);color:#3a4d57}
+  .demo{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:22px 0}
+  .demo>canvas{background:var(--panel);border-radius:10px;width:100%;height:auto;display:block}
+  .btnrow{display:flex;flex-wrap:wrap;gap:8px;margin:14px 4px 2px;align-items:center}
+  .btn{font-family:var(--mono);font-size:.78rem;color:var(--accent-ink);background:none;border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}
+  .btn:hover{background:#F0F5F8} .btn.on{background:var(--accent);color:#04302b;border-color:var(--accent)}
+  .controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px 20px;margin:16px 4px 4px}
+  @media (max-width:640px){.controls{grid-template-columns:1fr}}
+  .ctrl{display:flex;flex-direction:column;gap:5px}
+  .ctrl .row{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:.86rem}
+  .ctrl .name{color:var(--ink)} .ctrl .val{color:var(--accent-ink);font-weight:600}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:5px;background:var(--line);border-radius:5px;outline:none;margin:6px 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.25);cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--accent);border:2px solid #fff;cursor:pointer}
+  .readouts{display:flex;flex-wrap:wrap;gap:8px 10px;margin:14px 4px 2px;font-family:var(--mono);font-size:.82rem}
+  .ro{background:#F0F5F8;border:1px solid var(--line);border-radius:8px;padding:6px 10px;color:#3a4d57} .ro b{color:var(--accent-ink)}
+  .ro.good{background:#eafaf6;border-color:var(--accent)} .ro.good b{color:var(--accent-ink)}
+  .ro.warn{background:#fff2e0;border-color:var(--in)} .ro.warn b{color:#8a5a12}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:.78rem;color:var(--muted);margin:6px 4px}
+  .legend span::before{content:"■ ";}
+  .takeaways{background:var(--panel);color:#DCE7EC;border-radius:16px;padding:26px 28px;margin:40px 0}
+  .takeaways h3{color:#fff} .takeaways li{margin:9px 0} .takeaways b{color:var(--out)}
+  details{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:2px 16px;margin:10px 0}
+  details[open]{padding-bottom:12px}
+  summary{cursor:pointer;font-weight:600;padding:12px 0;list-style:none}
+  summary::-webkit-details-marker{display:none} summary::before{content:"▸ ";color:var(--accent-ink)} details[open] summary::before{content:"▾ "}
+  .qa{font-size:.97rem} .qa p{margin:8px 0}
+  ol.ex{padding-left:1.3em} ol.ex li{margin:8px 0}
+  footer{margin-top:60px;padding-top:20px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.8rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+  <p class="eyebrow">Foundations of Dynamic Systems · Hydraulic Circuits · 5</p>
+  <h1>Proportional Control</h1>
+  <p class="lede">Swap the on/off solenoid for a <em>proportional</em> valve — one that opens in proportion to a command
+  — and everything changes. Now the controller can command <em>a little</em> flow when the error is small, so the piston
+  eases smoothly onto the target and stops. This is the leap from a machine that hunts to one that positions, and it's
+  the foundation of every servo-hydraulic axis in robotics and automation.</p>
+</header>
+
+<div class="goal"><span class="lab">The mission</span>
+  Replace bang-bang with a proportional valve driven by u = K<sub>p</sub>·(error). Discover that flow-in-proportion-to-error
+  makes the closed loop a first-order system with a smooth, chatter-free exponential approach — then see how the gain
+  K<sub>p</sub> sets the speed, and how it compares directly against the on/off hunting of the previous project.
+</div>
+
+<h2>Step 1 · Meter the flow to the error</h2>
+<h3>A little error → a little flow</h3>
+<p>A proportional valve delivers flow proportional to its command (up to a saturation limit). Drive that command from
+the position error, and the cylinder speed becomes proportional to how far it still has to go:</p>
+<div class="eq">
+  <span class="hl-in">Q</span> = K<sub>p</sub>·(x* − x)
+  &nbsp;&nbsp;&nbsp; v = Q / A
+  &nbsp;⟹&nbsp; <span class="hl-out">ẋ = −(K<sub>p</sub>/A)·(x − x*)</span>
+  &nbsp;&nbsp;<span class="cmt">// a first-order system → smooth exponential approach</span>
+</div>
+<p>That equation is the first-order "chase" from Lesson 1: the piston approaches the target exponentially with time
+constant <span class="plain-eq">τ = A / K<sub>p</sub></span>, slowing as it arrives and settling exactly on x* with no
+chatter. Far from the target the commanded flow exceeds what the valve can pass, so it <em>saturates</em> at full speed
+(behaving like on/off) — then tapers smoothly once inside the linear range.</p>
+
+<h2>Step 2 · Smooth in, and compare to on/off</h2>
+<h3>One knob: the gain K<sub>p</sub></h3>
+<p>Command a step and watch the proportional response ease onto the target. Raise K<sub>p</sub> for a faster approach
+(shorter τ); lower it and it crawls in. Toggle the on/off trace to see the same move done bang-bang — it slams to the
+setpoint and buzzes forever, while proportional settles clean.</p>
+
+<div class="demo" data-demo="prop">
+  <canvas class="pic"></canvas>
+  <div class="btnrow">
+    <button class="btn on" data-cmp="off">proportional only</button>
+    <button class="btn" data-cmp="on">compare vs on/off</button>
+    <button class="btn" data-reset>re-step</button>
+  </div>
+  <div class="legend"><span style="color:#22C3AE">proportional</span><span style="color:#E8A33D">on/off (bang-bang)</span><span style="color:#9BD0FF">target</span></div>
+  <div class="controls"></div>
+  <div class="readouts"></div>
+</div>
+
+<p>Proportional control buys smoothness and precision at the price of a valve that costs more and a loop you must
+<em>tune</em>. Crank the gain too high on a real actuator and the smoothness is spoiled by the hydraulic resonance you
+met in Project 2 — the compressible oil turns a too-aggressive loop into an oscillator. The art is a gain fast enough to
+be crisp yet below the resonance limit.</p>
+
+<h2>Step 3 · The control ladder</h2>
+<div class="chips">
+  <span class="chip">on/off: full-speed or stop → hunts</span>
+  <span class="chip">proportional: flow ∝ error → smooth settle</span>
+  <span class="chip">τ = A / K<sub>p</sub> (raise K<sub>p</sub> → faster)</span>
+  <span class="chip">saturates far out, tapers near target</span>
+  <span class="chip">gain limited by hydraulic resonance</span>
+</div>
+
+<div class="takeaways">
+  <h3>Key takeaways</h3>
+  <ul>
+    <li><b>A proportional valve meters flow to the command,</b> so commanding Q = K<sub>p</sub>·error makes cylinder speed
+      proportional to error.</li>
+    <li><b>The closed loop is first-order:</b> ẋ = −(K<sub>p</sub>/A)(x − x*), a smooth exponential approach with time
+      constant τ = A/K<sub>p</sub> and no chatter.</li>
+    <li><b>Gain K<sub>p</sub> is the tuning knob:</b> higher → faster (shorter τ); the command saturates far from target
+      and tapers within the linear band.</li>
+    <li><b>Versus on/off:</b> proportional settles cleanly on any target where bang-bang hunts in a limit cycle.</li>
+    <li><b>Too much gain</b> excites the compressible-oil resonance (Project 2) and the loop oscillates — tune below the
+      hydraulic natural frequency.</li>
+    <li>This is the basis of servo-hydraulic position control for robotics, machine tools, and physical-AI actuators.</li>
+  </ul>
+</div>
+
+<h2>Investigate further</h2>
+<ol class="ex">
+  <li><b>Time constant.</b> With cap area A = 19.6 cm² and gain K<sub>p</sub> = 8×10⁻⁴ (m³/s)/m, find τ and estimate the
+    settling time (~4τ).</li>
+  <li><b>Faster.</b> How does doubling K<sub>p</sub> change τ and the settling time?</li>
+  <li><b>Saturation.</b> Why does a large step initially look like on/off, then become smooth near the target?</li>
+  <li><b>Limit.</b> Explain why you can't just keep raising K<sub>p</sub> to get an arbitrarily fast response on a real
+    hydraulic actuator. (Hint: recall Project 2.)</li>
+</ol>
+<details><summary>Show discussion &amp; answers</summary>
+  <div class="qa">
+    <p><b>1.</b> τ = A/K<sub>p</sub> = 19.6×10⁻⁴ / 8×10⁻⁴ ≈ <b>2.45 s</b>. Settling (to ~2%) takes about 4τ ≈ <b>10 s</b>.
+    (Real servo valves use much higher gains for sub-second response.)</p>
+    <p><b>2.</b> τ = A/K<sub>p</sub>, so doubling K<sub>p</sub> <b>halves</b> τ and roughly halves the settling time — twice
+    as fast.</p>
+    <p><b>3.</b> Far from target the commanded flow K<sub>p</sub>·error exceeds the valve's maximum, so it saturates and the
+    cylinder runs at full speed (just like on/off). Once the error is small enough that K<sub>p</sub>·error drops below the
+    valve's capacity, the valve meters proportionally and the motion tapers smoothly — the exponential tail.</p>
+    <p><b>4.</b> Raising K<sub>p</sub> pushes the closed-loop bandwidth up toward the hydraulic natural frequency ωₙ =
+    √(k<sub>h</sub>/m) set by the oil's bulk modulus (Project 2). Past a limit the loop excites that resonance and the
+    compressible oil makes the actuator ring and go unstable. Usable gain is capped below the hydraulic resonance — and
+    air entrainment, which lowers ωₙ, lowers that ceiling further.</p>
+  </div>
+</details>
+
+<footer>Hydraulic Circuits 5 · self-contained, no external libraries or network · both responses integrated live.
+This completes the hydraulic-circuit series.</footer>
+</div>
+
+<script>
+"use strict";
+(function(){
+  const REDUCED=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const COL={in:'#E8A33D',out:'#22C3AE',grid2:'#16262F',axis:'#3A5464',text:'#7FA0AE',blue:'#9BD0FF',red:'#FF8FA3',steel:'#5E7686'};
+  const BORE=0.050, STROKE=0.30, Ac=Math.PI/4*BORE*BORE, Qmax=(24/60000), Vmax=Qmax/Ac;
+  function el(t,c){const e=document.createElement(t);if(c)e.className=c;return e;}
+  function fit(cv,a){const dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1));const w=cv.clientWidth||cv.parentElement.clientWidth||300;const h=Math.round(w*a);cv.style.height=h+'px';cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);return{ctx:x,W:w,H:h};}
+  function sliders(cont,defs,p,cb){defs.forEach(d=>{p[d.key]=d.value;const c=el('div','ctrl'),r=el('div','row');const n=el('span','name');n.innerHTML=d.label;const v=el('span','val');const f=d.fmt||(x=>x.toFixed(2));v.textContent=f(d.value);r.appendChild(n);r.appendChild(v);const i=document.createElement('input');i.type='range';i.min=d.min;i.max=d.max;i.step=d.step;i.value=d.value;i.setAttribute('aria-label',d.label.replace(/<[^>]+>/g,''));i.addEventListener('input',()=>{p[d.key]=parseFloat(i.value);v.textContent=f(p[d.key]);cb&&cb();});c.appendChild(r);c.appendChild(i);cont.appendChild(c);});}
+  function reads(cont,items){cont.innerHTML='';items.forEach(r=>{const s=el('span','ro'+(r.cls?' '+r.cls:''));s.innerHTML=r.label+' <b>'+r.value+'</b>';cont.appendChild(s);});}
+
+  const root=document.querySelector('[data-demo=prop]'); if(!root) return;
+  const pic=root.querySelector('.pic'), controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+  const p={}; let compare=false, xp=0.02, xo=0.02, cmdO=0,pendO=0,pendT=0, last=null, tsim=0, histP=[],histO=[];
+  let raf=null;
+  sliders(controls,[
+    {key:'tgt',label:'target (mm)',min:80,max:260,step:5,value:200,fmt:v=>v.toFixed(0)},
+    {key:'KpG',label:'gain K<sub>p</sub> (×10⁻³)',min:0.4,max:8,step:0.1,value:2.0,fmt:v=>v.toFixed(1)},
+    {key:'db',label:'on/off deadband (mm)',min:1,max:12,step:0.5,value:3,fmt:v=>v.toFixed(1)}
+  ],p,null);
+  root.querySelector('[data-cmp=off]').classList.add('on');
+  root.querySelector('[data-cmp=off]').addEventListener('click',e=>{compare=false;e.target.classList.add('on');root.querySelector('[data-cmp=on]').classList.remove('on');});
+  root.querySelector('[data-cmp=on]').addEventListener('click',e=>{compare=true;e.target.classList.add('on');root.querySelector('[data-cmp=off]').classList.remove('on');});
+  root.querySelector('[data-reset]').addEventListener('click',()=>{xp=0.02;xo=0.02;tsim=0;histP=[];histO=[];cmdO=0;pendO=0;});
+  function draw(now){
+    let dt=last?Math.min(0.04,(now-last)/1000):0.016; last=now; tsim+=dt;
+    const tgt=p.tgt/1000, Kp=p.KpG*1e-3;
+    // proportional: Q=Kp*err saturated, v=Q/A, first-order
+    const errP=tgt-xp; let Q=Kp*errP; Q=Math.max(-Qmax,Math.min(Qmax,Q)); xp+=Q/Ac*dt;
+    xp=Math.max(0,Math.min(STROKE,xp));
+    // on/off with 60ms delay
+    const db=p.db/1000; let want = (xo<tgt-db)?1:(xo>tgt+db)?-1:0;
+    if(want!==pendO){pendO=want;pendT=tsim;}
+    if(tsim-pendT>=0.06 && cmdO!==pendO) cmdO=pendO;
+    xo=Math.max(0,Math.min(STROKE,xo+cmdO*Vmax*dt));
+    histP.push({t:tsim,x:xp}); histO.push({t:tsim,x:xo}); if(histP.length>1200){histP.shift();histO.shift();}
+    // draw single canvas: schematic strip on top, trace below
+    const {ctx,W,H}=fit(pic,0.62); ctx.clearRect(0,0,W,H);
+    // top: cylinder showing proportional piston
+    const cylL=W*0.08,cylR=W*0.72,cy=H*0.20,ct=cy-H*0.09,cb=cy+H*0.09;
+    ctx.strokeStyle=COL.steel;ctx.lineWidth=2.2;ctx.strokeRect(cylL,ct,cylR-cylL,cb-ct);
+    const px=cylL+6+(cylR-cylL-12)*(xp/STROKE);
+    ctx.fillStyle='rgba(34,195,174,0.22)';ctx.fillRect(cylL+1,ct+1,px-cylL-1,cb-ct-2);
+    ctx.fillStyle=COL.steel;ctx.fillRect(px-3,ct+2,6,cb-ct-4);ctx.fillRect(px,cy-5,(cylR-px)+W*0.03,10);
+    const tgtPx=cylL+6+(cylR-cylL-12)*(tgt/STROKE);
+    ctx.strokeStyle=COL.blue;ctx.setLineDash([4,3]);ctx.beginPath();ctx.moveTo(tgtPx,ct-5);ctx.lineTo(tgtPx,cb+5);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=COL.blue;ctx.font='9px ui-monospace,monospace';ctx.textAlign='center';ctx.fillText('target',tgtPx,ct-9);
+    ctx.fillStyle=COL.out;ctx.textAlign='left';ctx.fillText('proportional valve: flow ∝ error',cylL,cb+16);
+    // bottom: traces
+    const pad={l:32,r:12,t:H*0.44,b:24};
+    const t0=Math.max(0,tsim-8);
+    const gx=t=>pad.l+((t-t0)/8)*(W-pad.l-pad.r);
+    const gy=xx=>pad.t+(1-(xx/STROKE))*(H-pad.t-pad.b);
+    ctx.strokeStyle=COL.grid2;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pad.l,gy(0));ctx.lineTo(W-pad.r,gy(0));ctx.stroke();
+    ctx.strokeStyle=COL.blue;ctx.setLineDash([4,3]);ctx.beginPath();ctx.moveTo(pad.l,gy(tgt));ctx.lineTo(W-pad.r,gy(tgt));ctx.stroke();ctx.setLineDash([]);
+    function trace(hist,color,w){ctx.strokeStyle=color;ctx.lineWidth=w;ctx.beginPath();let st=false;for(const h of hist){if(h.t<t0)continue;const X=gx(h.t),Y=gy(h.x);st?ctx.lineTo(X,Y):(ctx.moveTo(X,Y),st=true);}ctx.stroke();}
+    if(compare) trace(histO,COL.in,1.8);
+    trace(histP,COL.out,2.4);
+    ctx.fillStyle=COL.text;ctx.font='9px ui-monospace,monospace';ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText('position vs time →',(pad.l+W-pad.r)/2,H-18);
+    // readouts
+    const tau=Ac/Kp; const errNow=(tgt-xp)*1000;
+    reads(ro,[
+      {label:'τ = A/K_p', value:tau.toFixed(2)+' s'},
+      {label:'settling ~4τ', value:(4*tau).toFixed(1)+' s'},
+      {label:'prop error', value:errNow.toFixed(1)+' mm', cls: Math.abs(errNow)<1?'good':''},
+      {label:'valve', value: Math.abs(Kp*(tgt-xp))>=Qmax?'saturated':'metering', cls: Math.abs(Kp*(tgt-xp))>=Qmax?'warn':'good'},
+      {label:'on/off', value: compare?'hunting (amber)':'hidden'}
+    ]);
+    raf=requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',()=>{if(REDUCED)fit(pic,0.62);});
+  if(REDUCED){last=performance.now();draw(performance.now());cancelAnimationFrame(raf);} else raf=requestAnimationFrame(draw);
+})();
+</script>
+</body>
+</html>

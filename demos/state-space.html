@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>State-Space Modeling</title>
+<style>
+  :root{
+    --paper:#EEF2F5; --card:#FFFFFF; --ink:#17252E; --muted:#5E7686;
+    --line:#D3DDE4; --line2:#E3EAEF;
+    --panel:#0E1B24; --grid2:#16262F; --axis:#3A5464;
+    --in:#E8A33D; --out:#22C3AE; --accent:#22C3AE; --accent-ink:#0A5B52; --blue:#9BD0FF;
+    --mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); line-height:1.6; font-size:17px; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:940px; margin:0 auto; padding:0 20px 120px}
+  header.hero{padding:64px 0 34px; border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono); font-size:.78rem; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); margin:0 0 14px}
+  h1{font-size:clamp(2.1rem,5.4vw,3.3rem); line-height:1.05; margin:0 0 18px; letter-spacing:-.02em; font-weight:750}
+  .lede{font-size:1.12rem; color:#33454f; max-width:60ch; margin:0}
+  h2{font-size:1.02rem; font-family:var(--mono); letter-spacing:.04em; text-transform:uppercase; color:var(--muted); margin:52px 0 14px; font-weight:600}
+  h3{font-size:1.5rem; letter-spacing:-.01em; margin:6px 0 10px; font-weight:700}
+  p{margin:0 0 16px}
+  em{font-style:normal; color:var(--accent-ink); font-weight:600}
+  .idea{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px 24px; margin:18px 0}
+  .eq{font-family:var(--mono); background:var(--panel); color:#DCE7EC; border-radius:12px; padding:18px 20px; margin:16px 0; overflow-x:auto; font-size:1.02rem; line-height:2}
+  .eq .cmt{color:#6E8794} .eq .hl-in{color:var(--in)} .eq .hl-out{color:var(--out)} .eq .hl-k{color:#9BD0FF}
+  .plain-eq{font-family:var(--mono); font-size:1rem; color:var(--ink); background:#F6F9FB; border:1px solid var(--line2); border-radius:9px; padding:10px 14px; display:inline-block; margin:4px 0}
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 4px}
+  .chip{font-family:var(--mono); font-size:.82rem; padding:6px 11px; border-radius:999px; background:#F0F5F8; border:1px solid var(--line); color:#3a4d57}
+
+  .mateq{display:flex; flex-wrap:wrap; gap:8px 16px; align-items:center; font-family:var(--mono); background:var(--panel); color:#DCE7EC; border-radius:12px; padding:16px 18px; margin:8px 0 4px; font-size:.95rem}
+  .matname{color:#9BD0FF; margin-right:2px}
+  .mat{display:inline-grid; gap:3px 16px; padding:4px 8px; position:relative}
+  .mat::before,.mat::after{content:""; position:absolute; top:2px; bottom:2px; width:6px; border:1.6px solid #5E7686;}
+  .mat::before{left:0; border-right:none} .mat::after{right:0; border-left:none}
+  .mat span{text-align:center; min-width:34px; color:#DCE7EC}
+  .mat .hot{color:var(--in)}
+
+  .demo{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; margin:22px 0}
+  .demo > canvas{background:var(--panel); border-radius:10px; width:100%; height:auto; display:block}
+  .stage{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  @media (max-width:620px){ .stage{grid-template-columns:1fr} }
+  .stage canvas{background:var(--panel); border-radius:10px; width:100%; height:auto; display:block}
+  .controls{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px 20px; margin:16px 4px 4px}
+  @media (max-width:620px){ .controls{grid-template-columns:1fr} }
+  .ctrl{display:flex; flex-direction:column; gap:5px}
+  .ctrl .row{display:flex; justify-content:space-between; align-items:baseline; font-family:var(--mono); font-size:.86rem}
+  .ctrl .name{color:var(--ink)} .ctrl .val{color:var(--accent-ink); font-weight:600}
+  input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:5px; background:var(--line); border-radius:5px; outline:none; margin:6px 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none; width:18px; height:18px; border-radius:50%; background:var(--accent); border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,.25); cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--accent); border:2px solid #fff; cursor:pointer}
+  input[type=range]:focus-visible{box-shadow:0 0 0 3px rgba(34,195,174,.35)}
+  .readouts{display:flex; flex-wrap:wrap; gap:8px 10px; margin:14px 4px 2px; font-family:var(--mono); font-size:.82rem}
+  .ro{background:#F0F5F8; border:1px solid var(--line); border-radius:8px; padding:6px 10px; color:#3a4d57}
+  .ro b{color:var(--accent-ink)}
+
+  .takeaways{background:var(--panel); color:#DCE7EC; border-radius:16px; padding:26px 28px; margin:40px 0}
+  .takeaways h3{color:#fff} .takeaways li{margin:9px 0} .takeaways b{color:var(--out)}
+  details{background:var(--card); border:1px solid var(--line); border-radius:11px; padding:2px 16px; margin:10px 0}
+  details[open]{padding-bottom:12px}
+  summary{cursor:pointer; font-weight:600; padding:12px 0; list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"▸ "; color:var(--accent-ink)} details[open] summary::before{content:"▾ "}
+  .qa{font-size:.97rem} .qa p{margin:8px 0}
+  ol.ex{padding-left:1.3em} ol.ex li{margin:8px 0}
+  footer{margin-top:60px; padding-top:20px; border-top:1px solid var(--line); font-family:var(--mono); font-size:.8rem; color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <p class="eyebrow">Foundations of Dynamic Systems · Lesson 7</p>
+  <h1>State-Space Modeling</h1>
+  <p class="lede">Back in Lesson 3 we said a system's <em>state</em> is the minimum you must know now to
+  predict its future — position and velocity for a spring. State-space modeling turns that idea into the
+  language of modern control: instead of one high-order equation, a tidy set of first-order ones, written
+  as matrices. It's how robots, spacecraft, and self-driving cars are actually controlled.</p>
+</header>
+
+<h2>The one idea to hold onto</h2>
+<h3>Track the state, one first-order equation each</h3>
+<p>A transfer function hides the system's insides and only relates input to output. State-space does the
+opposite: it names every internal <em>state variable</em> (one per energy store) and writes a simple
+first-order equation for how each one changes. Stack them into a vector <b>x</b> and the whole system —
+however big — becomes two matrix equations:</p>
+<div class="eq">
+  <span class="hl-out">ẋ</span> = <span class="hl-k">A</span> <span class="hl-out">x</span> + <span class="hl-k">B</span> <span class="hl-in">u</span>
+  &nbsp;&nbsp;<span class="cmt">// how the state evolves</span>
+  <br>
+  <span class="hl-out">y</span> = <span class="hl-k">C</span> <span class="hl-out">x</span> + <span class="hl-k">D</span> <span class="hl-in">u</span>
+  &nbsp;&nbsp;<span class="cmt">// what we measure</span>
+</div>
+<p>Each matrix has a plain-English job:
+<span class="plain-eq"><b>A</b> — internal dynamics: how the state pushes itself</span>
+<span class="plain-eq"><b>B</b> — how the input u drives the state</span>
+<span class="plain-eq"><b>C</b> — how outputs are read off the state</span>
+<span class="plain-eq"><b>D</b> — any direct input-to-output path</span>. The star is <b>A</b>: it holds all the
+system's natural behavior.</p>
+
+<h3>The mass–spring–damper, in state-space</h3>
+<p>Pick the two states everyone already knows: position x₁ and velocity x₂. The first equation is just the
+definition of velocity; the second is Newton's law rearranged (from Lesson 2):</p>
+<div class="eq">
+  <span class="hl-out">ẋ₁</span> = x₂
+  &nbsp;&nbsp;<span class="cmt">// velocity is the rate of position</span>
+  <br>
+  <span class="hl-out">ẋ₂</span> = −(k/m)·x₁ − (c/m)·x₂ + (1/m)·<span class="hl-in">F</span>
+  &nbsp;&nbsp;<span class="cmt">// Newton, solved for acceleration</span>
+</div>
+<p>Written as matrices, that's A = [[0, 1], [−k/m, −c/m]], B = [[0], [1/m]], C = [1, 0] (we measure
+position), D = 0. Two first-order equations replace one second-order one — and that trade scales to any
+size.</p>
+
+<h2>Interactive · the anatomy of A</h2>
+<h3>Its eigenvalues are the poles</h3>
+<p>Here's the unification that ties this whole course together. The <em>eigenvalues</em> of the matrix A —
+the special numbers λ for which A·v = λ·v — are exactly the <em>poles</em> of the transfer function, which
+are exactly the roots λ you found by guessing e<sup>λt</sup> in Lesson 3. Change m, c, k and watch A's
+entries update, its eigenvalues move in the s-plane, and the impulse response change with them.</p>
+
+<div class="demo" data-demo="anatomy">
+  <div class="mateq" id="matbox"></div>
+  <div class="stage">
+    <canvas class="pic"></canvas>
+    <canvas class="plot"></canvas>
+  </div>
+  <div class="controls"></div>
+  <div class="readouts"></div>
+</div>
+
+<p>So state-space, transfer functions, and the raw differential equation are three views of one thing. The
+denominator's roots, the poles, the λ's, and the eigenvalues of A are all the same numbers — the system's
+natural frequencies. State-space just stores them inside a matrix instead of a polynomial.</p>
+
+<h2>Interactive · the state as a flow</h2>
+<h3>A defines a field; eigenvectors are its natural directions</h3>
+<p>The equation ẋ = Ax says: at every point in state space, the matrix A tells the state which way to move.
+That's a <em>flow field</em> — the same phase portrait from Lesson 3, now revealed as the action of A. When
+A's eigenvalues are real (over-damped), there are special straight-line directions — the <em>eigenvectors</em>
+— along which the state simply decays without curving. When the eigenvalues are complex (under-damped), no
+such lines exist and the state spirals.</p>
+
+<div class="demo" data-demo="flow">
+  <div class="stage">
+    <canvas class="pic"></canvas>
+    <canvas class="plot"></canvas>
+  </div>
+  <div class="controls"></div>
+  <div class="readouts"></div>
+</div>
+
+<h2>Why engineers reach for state-space</h2>
+<div class="chips">
+  <span class="chip">Many inputs &amp; outputs (MIMO) — trivial</span>
+  <span class="chip">Nonlinear &amp; time-varying systems</span>
+  <span class="chip">Kalman filters &amp; state estimation</span>
+  <span class="chip">Optimal &amp; model-predictive control</span>
+  <span class="chip">Robotics, aerospace, autonomy</span>
+  <span class="chip">Clean for computers (first-order ODEs)</span>
+</div>
+<p>A transfer function is one-input, one-output; the moment a system has several actuators and sensors — a
+drone with four rotors, a robot arm with six joints — state-space handles it in the same tidy form, just with
+bigger matrices. It also opens the door to <em>estimating</em> hidden states you can't measure directly (the
+Kalman filter) and to <em>optimal</em> controllers that weigh performance against effort. Nearly all modern,
+computer-based control lives here.</p>
+
+<div class="takeaways">
+  <h3>Key takeaways</h3>
+  <ul>
+    <li><b>State-space describes a system by its state</b> — one first-order equation per energy store —
+      written compactly as ẋ = Ax + Bu, y = Cx + Du.</li>
+    <li><b>The matrices have plain jobs:</b> A = internal dynamics, B = input coupling, C = output map,
+      D = feedthrough.</li>
+    <li><b>The mass–spring–damper</b> becomes a 2×2 system with states (position, velocity) — two first-order
+      equations replacing one second-order one.</li>
+    <li><b>Eigenvalues of A = poles = the λ roots.</b> The same natural frequencies, stored in a matrix
+      instead of a polynomial.</li>
+    <li><b>A defines a flow on state space;</b> real eigenvalues give straight-line eigenvector directions,
+      complex ones give spirals.</li>
+    <li><b>State-space scales</b> to many inputs and outputs and underpins Kalman filtering, optimal control,
+      robotics, and autonomy.</li>
+  </ul>
+</div>
+
+<h2>Quick check</h2>
+<details><summary>How many state variables does a mass–spring–damper need, and what are they?</summary>
+  <div class="qa"><p>Two: position and velocity. That's one per energy store (spring's potential, mass's
+  kinetic), which is also the system order and the number of initial conditions — all the same count.</p></div>
+</details>
+<details><summary>What is the relationship between the eigenvalues of A and the system's poles?</summary>
+  <div class="qa"><p>They are identical. The eigenvalues of A are the roots of its characteristic equation,
+  which is the same polynomial whose roots are the transfer function's poles. State-space and transfer-function
+  views agree exactly on the natural frequencies.</p></div>
+</details>
+<details><summary>Why prefer state-space for a drone with four rotors and many sensors?</summary>
+  <div class="qa"><p>Because it's naturally multi-input, multi-output. A transfer function relates one input to
+  one output; state-space packs all the actuators into B, all the sensors into C, and keeps the same tidy form
+  — plus it supports state estimation and optimal control that MIMO systems need.</p></div>
+</details>
+
+<h2>Exercises</h2>
+<ol class="ex">
+  <li><b>Calculation.</b> Write the state-space matrices A and B for a mass–spring–damper with m = 2, k = 8,
+    c = 4, using states (position, velocity).</li>
+  <li><b>Calculation.</b> For that A, the eigenvalues satisfy λ² − (trace)λ + det = 0. Compute the trace and
+    determinant of A and find the eigenvalues. Do they oscillate?</li>
+  <li><b>Calculation.</b> A first-order system τẋ + x = u has a single state. Write it as ẋ = Ax + Bu (find the
+    scalars A and B) and give its one eigenvalue.</li>
+  <li><b>Design.</b> You have a system whose A eigenvalues sit too close to the imaginary axis (slow, ringing).
+    In state-feedback control you replace u with u = −K·x, which changes A into A − BK and thus moves the
+    eigenvalues. Explain in words what you're trying to achieve by choosing K, and how it connects to everything
+    you learned about pole locations.</li>
+</ol>
+
+<details><summary>Show worked solutions</summary>
+  <div class="qa">
+    <p><b>1.</b> A = [[0, 1], [−k/m, −c/m]] = [[0, 1], [−4, −2]] (since k/m = 4, c/m = 2). B = [[0], [1/m]] =
+    <b>[[0], [0.5]]</b>. C = [1, 0], D = 0.</p>
+    <p><b>2.</b> trace(A) = 0 + (−c/m) = <b>−2</b>; det(A) = (0)(−c/m) − (1)(−k/m) = k/m = <b>4</b>. The
+    eigenvalue equation is λ² + 2λ + 4 = 0 → λ = (−2 ± √(4−16))/2 = <b>−1 ± j√3</b>. Complex with negative real
+    part → <b>stable and oscillates</b> (it's underdamped; ζ = c/(2√(km)) = 4/(2√16) = 0.5).</p>
+    <p><b>3.</b> Rearrange: ẋ = −(1/τ)x + (1/τ)u, so <b>A = −1/τ, B = 1/τ</b> (scalars, a 1×1 system). Its single
+    eigenvalue is <b>λ = −1/τ</b> — the familiar first-order pole on the negative real axis.</p>
+    <p><b>4.</b> Choosing K is choosing <em>where to place the closed-loop eigenvalues</em>. Since the eigenvalues
+    of A − BK are the new poles, and pole location sets speed, damping, and stability (Lessons 4–6), you pick K to
+    move them <b>further left</b> (faster settling) and <b>toward the real axis / better angle</b> (more damping,
+    less ringing) — without pushing so hard that control effort or noise sensitivity explode. This is
+    "pole placement," and it's the same design goal from the s-plane, now achieved by reshaping A directly. The
+    entire course converges here: to control a system is to move its eigenvalues to where you want them.</p>
+  </div>
+</details>
+
+<footer>
+  Lesson 7 · self-contained, no external libraries or network · the matrix A, its eigenvalues, the flow field,
+  and every trajectory are computed live. Next: one language for mechanical, electrical, and hydraulic systems.
+</footer>
+
+</div><!-- /wrap -->
+
+<script>
+"use strict";
+(function(){
+  const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const COL={in:'#E8A33D',out:'#22C3AE',grid2:'#16262F',axis:'#3A5464',text:'#7FA0AE',blue:'#9BD0FF',field:'#3f5a68',
+             lhp:'rgba(34,195,174,0.07)', rhp:'rgba(232,163,61,0.09)'};
+
+  function el(tag,cls){const e=document.createElement(tag); if(cls)e.className=cls; return e;}
+  function fitCanvas(cv,aspect){
+    const dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1));
+    const cssW=cv.clientWidth || cv.parentElement.clientWidth || 300;
+    const cssH=Math.round(cssW*aspect);
+    cv.style.height=cssH+'px'; cv.width=Math.round(cssW*dpr); cv.height=Math.round(cssH*dpr);
+    const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); return {ctx,W:cssW,H:cssH};
+  }
+  function addSliders(container,defs,params,onChange,handles){
+    defs.forEach(p=>{ params[p.key]=p.value;
+      const c=el('div','ctrl'), row=el('div','row');
+      const name=el('span','name'); name.innerHTML=p.label;
+      const val=el('span','val'); const fmt=p.fmt||(v=>v.toFixed(2)); val.textContent=fmt(p.value);
+      row.appendChild(name); row.appendChild(val);
+      const inp=document.createElement('input'); inp.type='range';
+      inp.min=p.min; inp.max=p.max; inp.step=p.step; inp.value=p.value;
+      inp.setAttribute('aria-label',(p.aria||p.label).replace(/<[^>]+>/g,''));
+      inp.addEventListener('input',()=>{ params[p.key]=parseFloat(inp.value); val.textContent=fmt(params[p.key]); onChange&&onChange(); });
+      c.appendChild(row); c.appendChild(inp); container.appendChild(c);
+      if(handles) handles[p.key]={inp,val,fmt};
+    });
+  }
+  function setReadouts(container,items){ container.innerHTML='';
+    items.forEach(r=>{ const s=el('span','ro'); s.innerHTML=r.label+' <b>'+r.value+'</b>'; container.appendChild(s); }); }
+  function rk4(f,s,dt){const k1=f(s),k2=f(s.map((x,i)=>x+dt/2*k1[i])),k3=f(s.map((x,i)=>x+dt/2*k2[i])),k4=f(s.map((x,i)=>x+dt*k3[i]));
+    return s.map((x,i)=>x+dt/6*(k1[i]+2*k2[i]+2*k3[i]+k4[i]));}
+  function eig2(m,c,k){ const tr=-c/m, det=k/m, disc=tr*tr-4*det;
+    if(disc>=0){ const s=Math.sqrt(disc); return [{re:(tr+s)/2,im:0},{re:(tr-s)/2,im:0}]; }
+    const s=Math.sqrt(-disc); return [{re:tr/2,im:s/2},{re:tr/2,im:-s/2}]; }
+
+  // ---------------- Demo 1: anatomy of A ----------------
+  (function buildAnatomy(){
+    const root=document.querySelector('[data-demo=anatomy]'); if(!root) return;
+    const box=root.querySelector('#matbox');
+    const pic=root.querySelector('.pic'), plot=root.querySelector('.plot');
+    const controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+    const params={};
+    addSliders(controls,[
+      {key:'m',label:'mass m',min:0.2,max:3,step:0.1,value:1.0,fmt:v=>v.toFixed(1)},
+      {key:'c',label:'damping c',min:0,max:12,step:0.1,value:1.5,fmt:v=>v.toFixed(1)},
+      {key:'k',label:'stiffness k',min:1,max:30,step:0.5,value:12,fmt:v=>v.toFixed(1)}
+    ],params,onChange);
+    const T=14, DT=0.004, LIM=6;
+    function matbox(){
+      const km=(-params.k/params.m).toFixed(1), cm=(-params.c/params.m).toFixed(1), im=(1/params.m).toFixed(2);
+      box.innerHTML =
+        '<span class="matname">A =</span><span class="mat" style="grid-template-columns:repeat(2,auto)">'
+        +'<span>0</span><span>1</span><span class="hot">'+km+'</span><span class="hot">'+cm+'</span></span>'
+        +'<span class="matname">B =</span><span class="mat" style="grid-template-columns:auto">'
+        +'<span>0</span><span class="hot">'+im+'</span></span>'
+        +'<span class="matname">C =</span><span class="mat" style="grid-template-columns:repeat(2,auto)"><span>1</span><span>0</span></span>'
+        +'<span class="matname">D =</span><span class="mat"><span>0</span></span>';
+    }
+    function drawPlane(){
+      const {ctx,W,H}=fitCanvas(pic,0.98); ctx.clearRect(0,0,W,H);
+      const pad=22, cx=pad+(W-2*pad)*(LIM/(LIM+1.0)), cy=H/2, sx=(W-2*pad)/(LIM+1.0), sy=(cy-pad)/LIM;
+      const gx=re=>cx+re*sx, gy=im=>cy-im*sy;
+      ctx.fillStyle=COL.lhp; ctx.fillRect(pad,pad,cx-pad,H-2*pad);
+      ctx.fillStyle=COL.rhp; ctx.fillRect(cx,pad,(W-pad)-cx,H-2*pad);
+      ctx.strokeStyle=COL.axis; ctx.lineWidth=1.4; ctx.beginPath(); ctx.moveTo(cx,pad); ctx.lineTo(cx,H-pad); ctx.stroke();
+      ctx.strokeStyle=COL.grid2; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(pad,cy); ctx.lineTo(W-pad,cy); ctx.stroke();
+      const E=eig2(params.m,params.c,params.k);
+      ctx.strokeStyle=COL.out; ctx.lineWidth=2.4;
+      E.forEach(e=>{ const X=gx(e.re),Y=gy(e.im);
+        ctx.beginPath(); ctx.moveTo(X-6,Y-6); ctx.lineTo(X+6,Y+6); ctx.moveTo(X+6,Y-6); ctx.lineTo(X-6,Y+6); ctx.stroke(); });
+      ctx.fillStyle=COL.text; ctx.font='10px ui-monospace, monospace'; ctx.textAlign='right'; ctx.textBaseline='bottom';
+      ctx.fillText('eigenvalues of A (= poles)', W-pad, H-pad-4);
+      ctx.textBaseline='top'; ctx.fillText('jω', cx+4, pad+2);
+    }
+    function drawImpulse(){
+      const {ctx,W,H}=fitCanvas(plot,0.98); const pad={l:28,r:12,t:14,b:24}; ctx.clearRect(0,0,W,H);
+      let s=[0,1/params.m]; const xs=[]; let mx=1e-6;
+      for(let t=0;t<=T+1e-9;t+=DT){ xs.push(s[0]); mx=Math.max(mx,Math.abs(s[0]));
+        s=rk4(st=>[st[1], -params.k/params.m*st[0]-params.c/params.m*st[1]], s, DT); }
+      const gx=i=>pad.l+(i/(xs.length-1))*(W-pad.l-pad.r);
+      const gy=v=>pad.t+(1-(v/mx+1)/2)*(H-pad.t-pad.b);
+      ctx.strokeStyle=COL.axis; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(pad.l,gy(0)); ctx.lineTo(W-pad.r,gy(0)); ctx.stroke();
+      ctx.strokeStyle=COL.out; ctx.lineWidth=2.4; ctx.beginPath();
+      for(let i=0;i<xs.length;i++){ const X=gx(i),Y=gy(xs[i]); i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);} ctx.stroke();
+      ctx.fillStyle=COL.text; ctx.font='10px ui-monospace, monospace'; ctx.textAlign='right'; ctx.textBaseline='alphabetic';
+      ctx.fillText('impulse response', W-pad.r, pad.t+10);
+      ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillText('time →',(pad.l+W-pad.r)/2,H-pad.b+6);
+    }
+    function onChange(){ matbox(); drawPlane(); drawImpulse();
+      const E=eig2(params.m,params.c,params.k);
+      const loc = E[0].im? (E[0].re.toFixed(2)+' ± j'+Math.abs(E[0].im).toFixed(2)) : (E[0].re.toFixed(2)+', '+E[1].re.toFixed(2));
+      setReadouts(ro,[
+        {label:'eig(A) = poles', value:loc},
+        {label:'trace A', value:(-params.c/params.m).toFixed(2)},
+        {label:'det A', value:(params.k/params.m).toFixed(2)},
+        {label:'type', value: E[0].im?'complex (rings)':'real (no ring)'}
+      ]);
+    }
+    window.addEventListener('resize',onChange);
+    onChange();
+  })();
+
+  // ---------------- Demo 2: state flow field + eigenvectors ----------------
+  (function buildFlow(){
+    const root=document.querySelector('[data-demo=flow]'); if(!root) return;
+    const pic=root.querySelector('.pic'), plot=root.querySelector('.plot');
+    const controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+    const params={}; let startT=0, raf=null, data=null;
+    addSliders(controls,[
+      {key:'wn',label:'ωₙ (√(k/m))',min:0.6,max:4,step:0.1,value:2.0,fmt:v=>v.toFixed(1)},
+      {key:'zeta',label:'ζ damping',min:0,max:1.6,step:0.02,value:0.5,fmt:v=>v.toFixed(2)}
+    ],params,onChange);
+    const T=14, DT=0.004, LIM=1.35;
+    function eig(){ const z=params.zeta,wn=params.wn, disc=z*z-1;
+      if(disc>=0){ const s=wn*Math.sqrt(disc); return {real:true, l1:-z*wn+s, l2:-z*wn-s}; }
+      return {real:false}; }
+    function recompute(){
+      let s=[1,0]; const x1=[],x2=[];
+      for(let tt=0;tt<=T+1e-9;tt+=DT){ x1.push(s[0]); x2.push(s[1]);
+        s=rk4(st=>[st[1], -params.wn*params.wn*st[0]-2*params.zeta*params.wn*st[1]], s, DT); }
+      data={x1,x2}; startT=performance.now(); if(REDUCED) drawAll(data.x1.length-1);
+    }
+    function drawField(cut){
+      const {ctx,W,H}=fitCanvas(pic,0.98); ctx.clearRect(0,0,W,H);
+      const pad=22, cxp=W/2, cyp=H/2, R=Math.min(W,H)/2-pad;
+      const gx=x=>cxp+(x/LIM)*R, gy=u=>cyp-(u/LIM)*R;   // u = x2/wn
+      ctx.strokeStyle=COL.grid2; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(gx(-LIM),cyp); ctx.lineTo(gx(LIM),cyp); ctx.moveTo(cxp,gy(-LIM)); ctx.lineTo(cxp,gy(LIM)); ctx.stroke();
+      ctx.fillStyle=COL.text; ctx.font='10px ui-monospace, monospace'; ctx.textAlign='right'; ctx.textBaseline='top';
+      ctx.fillText('x₁ position →', gx(LIM)-2, cyp+4); ctx.textAlign='left'; ctx.fillText('x₂ velocity ↑', cxp+4, gy(LIM)+2);
+      // flow field: (dx,du) ∝ (u, -(x + 2ζu))
+      const N=11;
+      for(let i=0;i<=N;i++)for(let j=0;j<=N;j++){ const x=-LIM+2*LIM*i/N, u=-LIM+2*LIM*j/N;
+        let dx=u, du=-(x+2*params.zeta*u); const n=Math.hypot(dx,du)||1; dx/=n; du/=n;
+        const L=11, X=gx(x),Y=gy(u), x2p=X+dx*L/2, y2p=Y-du*L/2, x1p=X-dx*L/2, y1p=Y+du*L/2;
+        ctx.strokeStyle=COL.field; ctx.lineWidth=1.1; ctx.beginPath(); ctx.moveTo(x1p,y1p); ctx.lineTo(x2p,y2p); ctx.stroke();
+        ctx.fillStyle=COL.field; ctx.beginPath(); ctx.moveTo(x2p,y2p); ctx.lineTo(x2p-dx*4+du*2.4,y2p+du*4+dx*2.4); ctx.lineTo(x2p-dx*4-du*2.4,y2p+du*4-dx*2.4); ctx.closePath(); ctx.fill(); }
+      // eigenvector lines (real eigenvalues): slope in (x1,u) plane = lambda/wn
+      const E=eig();
+      if(E.real){ ctx.strokeStyle=COL.blue; ctx.lineWidth=1.6; ctx.setLineDash([6,4]);
+        [E.l1,E.l2].forEach(l=>{ const sl=l/params.wn; ctx.beginPath();
+          ctx.moveTo(gx(-LIM),gy(-LIM*sl)); ctx.lineTo(gx(LIM),gy(LIM*sl)); ctx.stroke(); });
+        ctx.setLineDash([]); ctx.fillStyle=COL.blue; ctx.textAlign='left'; ctx.textBaseline='bottom';
+        ctx.fillText('eigenvectors', gx(0.1), gy(-LIM)+14); }
+      // trajectory
+      ctx.strokeStyle=COL.out; ctx.lineWidth=2.4; ctx.beginPath(); let first=true;
+      for(let i=0;i<data.x1.length && i<=cut;i++){ const X=gx(data.x1[i]),Y=gy(data.x2[i]/params.wn); first?(ctx.moveTo(X,Y),first=false):ctx.lineTo(X,Y);} ctx.stroke();
+      const ix=Math.min(data.x1.length-1,cut); ctx.fillStyle=COL.in; ctx.beginPath(); ctx.arc(gx(data.x1[ix]),gy(data.x2[ix]/params.wn),4,0,7); ctx.fill();
+    }
+    function drawTrace(cut){
+      const {ctx,W,H}=fitCanvas(plot,0.98); const pad={l:26,r:12,t:14,b:22}; ctx.clearRect(0,0,W,H);
+      const gx=i=>pad.l+(i/(data.x1.length-1))*(W-pad.l-pad.r);
+      const top=pad.t,bot=H-pad.b,gy=v=>top+(1-(v+1.1)/2.2)*(bot-top);
+      ctx.strokeStyle=COL.axis; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(pad.l,gy(0)); ctx.lineTo(W-pad.r,gy(0)); ctx.stroke();
+      ctx.strokeStyle=COL.out; ctx.lineWidth=2.3; ctx.beginPath(); let first=true;
+      for(let i=0;i<data.x1.length && i<=cut;i++){ const X=gx(i),Y=gy(data.x1[i]); first?(ctx.moveTo(X,Y),first=false):ctx.lineTo(X,Y);} ctx.stroke();
+      const ix=Math.min(data.x1.length-1,cut); ctx.fillStyle=COL.in; ctx.beginPath(); ctx.arc(gx(ix),gy(data.x1[ix]),3.5,0,7); ctx.fill();
+      ctx.fillStyle=COL.text; ctx.font='9px ui-monospace, monospace'; ctx.textAlign='right'; ctx.fillText('x₁(t)',pad.l-2,gy(1)+2);
+      ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillText('time →',(pad.l+W-pad.r)/2,H-pad.b+6);
+    }
+    function drawAll(cut){ drawField(cut); drawTrace(cut); }
+    function frame(now){ let cut=Math.floor((now-startT)/1000*1.4/DT); if(cut>data.x1.length-1){ startT=now; cut=0; } drawAll(cut); raf=requestAnimationFrame(frame); }
+    function onChange(){ recompute();
+      const E=eig();
+      setReadouts(ro,[
+        {label:'eigenvalues', value: E.real? (E.l1.toFixed(2)+', '+E.l2.toFixed(2)) : ((-params.zeta*params.wn).toFixed(2)+' ± j'+(params.wn*Math.sqrt(1-params.zeta*params.zeta)).toFixed(2))},
+        {label:'real eigenvectors?', value: E.real?'yes (2 directions)':'no (spiral)'},
+        {label:'flow', value: params.zeta<1e-6?'closed loop':params.zeta<1?'inward spiral':'straight-in'}
+      ]);
+    }
+    window.addEventListener('resize',()=>{ if(data) drawAll(REDUCED?data.x1.length-1:Math.min(data.x1.length-1,Math.floor((performance.now()-startT)/1000*1.4/DT))); });
+    onChange(); if(!REDUCED) raf=requestAnimationFrame(frame);
+  })();
+})();
+</script>
+</body>
+</html>

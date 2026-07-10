@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project 1 · Model &amp; Simulate a Car Suspension</title>
+<style>
+  :root{
+    --paper:#EEF2F5; --card:#FFFFFF; --ink:#17252E; --muted:#5E7686;
+    --line:#D3DDE4; --line2:#E3EAEF;
+    --panel:#0E1B24; --grid2:#16262F; --axis:#3A5464;
+    --in:#E8A33D; --out:#22C3AE; --accent:#22C3AE; --accent-ink:#0A5B52; --blue:#9BD0FF; --red:#FF8FA3; --road:#2A3D48;
+    --mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); line-height:1.6; font-size:17px; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:940px; margin:0 auto; padding:0 20px 120px}
+  header.hero{padding:64px 0 34px; border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono); font-size:.78rem; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); margin:0 0 14px}
+  h1{font-size:clamp(2rem,5vw,3.1rem); line-height:1.06; margin:0 0 18px; letter-spacing:-.02em; font-weight:750}
+  .lede{font-size:1.12rem; color:#33454f; max-width:62ch; margin:0}
+  h2{font-size:1.02rem; font-family:var(--mono); letter-spacing:.04em; text-transform:uppercase; color:var(--muted); margin:52px 0 14px; font-weight:600}
+  h3{font-size:1.5rem; letter-spacing:-.01em; margin:6px 0 10px; font-weight:700}
+  p{margin:0 0 16px}
+  em{font-style:normal; color:var(--accent-ink); font-weight:600}
+  .goal{background:var(--card); border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:0 14px 14px 0; padding:18px 22px; margin:20px 0}
+  .goal .lab{font-family:var(--mono); font-size:.72rem; letter-spacing:.16em; text-transform:uppercase; color:var(--accent-ink); display:block; margin-bottom:6px}
+  .eq{font-family:var(--mono); background:var(--panel); color:#DCE7EC; border-radius:12px; padding:18px 20px; margin:16px 0; overflow-x:auto; font-size:.98rem; line-height:2}
+  .eq .cmt{color:#6E8794} .eq .hl-in{color:var(--in)} .eq .hl-out{color:var(--out)} .eq .hl-k{color:#9BD0FF}
+  .plain-eq{font-family:var(--mono); font-size:1rem; color:var(--ink); background:#F6F9FB; border:1px solid var(--line2); border-radius:9px; padding:10px 14px; display:inline-block; margin:4px 0}
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 4px}
+  .chip{font-family:var(--mono); font-size:.82rem; padding:6px 11px; border-radius:999px; background:#F0F5F8; border:1px solid var(--line); color:#3a4d57}
+
+  .demo{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; margin:22px 0}
+  .demo > canvas{background:var(--panel); border-radius:10px; width:100%; height:auto; display:block}
+  .stage{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  @media (max-width:640px){ .stage{grid-template-columns:1fr} }
+  .stage canvas{background:var(--panel); border-radius:10px; width:100%; height:auto; display:block}
+  .controls{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px 20px; margin:16px 4px 4px}
+  @media (max-width:640px){ .controls{grid-template-columns:1fr} }
+  .ctrl{display:flex; flex-direction:column; gap:5px}
+  .ctrl .row{display:flex; justify-content:space-between; align-items:baseline; font-family:var(--mono); font-size:.86rem}
+  .ctrl .name{color:var(--ink)} .ctrl .val{color:var(--accent-ink); font-weight:600}
+  input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:5px; background:var(--line); border-radius:5px; outline:none; margin:6px 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none; width:18px; height:18px; border-radius:50%; background:var(--accent); border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,.25); cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--accent); border:2px solid #fff; cursor:pointer}
+  input[type=range]:focus-visible{box-shadow:0 0 0 3px rgba(34,195,174,.35)}
+  .btnrow{display:flex; flex-wrap:wrap; gap:8px; margin:14px 4px 2px; align-items:center}
+  .btn{font-family:var(--mono); font-size:.78rem; color:var(--accent-ink); background:none; border:1px solid var(--line); border-radius:8px; padding:6px 12px; cursor:pointer}
+  .btn:hover{background:#F0F5F8} .btn.on{background:var(--accent); color:#04302b; border-color:var(--accent)}
+  .readouts{display:flex; flex-wrap:wrap; gap:8px 10px; margin:14px 4px 2px; font-family:var(--mono); font-size:.82rem}
+  .ro{background:#F0F5F8; border:1px solid var(--line); border-radius:8px; padding:6px 10px; color:#3a4d57}
+  .ro b{color:var(--accent-ink)}
+  .ro.good{background:#eafaf6; border-color:var(--accent)} .ro.good b{color:var(--accent-ink)}
+  .ro.warn{background:#fff2e0; border-color:var(--in)} .ro.warn b{color:#8a5a12}
+
+  .takeaways{background:var(--panel); color:#DCE7EC; border-radius:16px; padding:26px 28px; margin:40px 0}
+  .takeaways h3{color:#fff} .takeaways li{margin:9px 0} .takeaways b{color:var(--out)}
+  details{background:var(--card); border:1px solid var(--line); border-radius:11px; padding:2px 16px; margin:10px 0}
+  details[open]{padding-bottom:12px}
+  summary{cursor:pointer; font-weight:600; padding:12px 0; list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"▸ "; color:var(--accent-ink)} details[open] summary::before{content:"▾ "}
+  .qa{font-size:.97rem} .qa p{margin:8px 0}
+  ol.ex{padding-left:1.3em} ol.ex li{margin:8px 0}
+  footer{margin-top:60px; padding-top:20px; border-top:1px solid var(--line); font-family:var(--mono); font-size:.8rem; color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <p class="eyebrow">Foundations of Dynamic Systems · Project 1</p>
+  <h1>Model &amp; Simulate a Car Suspension</h1>
+  <p class="lede">Time to put the whole course to work on one real machine. A car suspension is a second-order
+  system you can feel every day — and tuning it is a genuine engineering trade-off between a comfortable ride
+  and a car that grips the road. You'll build the model, drive it over bumps, and discover why there's no single
+  "best" shock absorber.</p>
+</header>
+
+<div class="goal"><span class="lab">The mission</span>
+  Model a quarter of a car as a two-mass system, simulate it driving over a bumpy road, and use the simulation
+  to find a shock-absorber setting that balances <em>ride comfort</em> against <em>road holding</em>. Along the
+  way you'll see resonance, damping, and state-space all show up in one place.
+</div>
+
+<h2>Step 1 · Build the model</h2>
+<h3>The quarter-car: two masses, three springs of behavior</h3>
+<p>We model one corner of the car. The <em>sprung mass</em> m<sub>s</sub> is the body resting on the suspension;
+the <em>unsprung mass</em> m<sub>u</sub> is the wheel, tire, and hub. Between body and wheel sits the suspension —
+a spring k<sub>s</sub> and the shock absorber (damper) c<sub>s</sub>. Between wheel and road sits the tire, which
+is itself a stiff spring k<sub>t</sub>. The road height z<sub>r</sub> is the input that shakes everything.</p>
+
+<p>Writing Newton's law (Lesson 2) for each mass gives two coupled equations:</p>
+<div class="eq">
+  <span class="hl-k">m<sub>s</sub></span> z̈<sub>s</sub> = −k<sub>s</sub>(z<sub>s</sub>−z<sub>u</sub>) − c<sub>s</sub>(ż<sub>s</sub>−ż<sub>u</sub>)
+  &nbsp;&nbsp;<span class="cmt">// body: pushed only by the suspension</span>
+  <br>
+  <span class="hl-k">m<sub>u</sub></span> z̈<sub>u</sub> = k<sub>s</sub>(z<sub>s</sub>−z<sub>u</sub>) + c<sub>s</sub>(ż<sub>s</sub>−ż<sub>u</sub>) − k<sub>t</sub>(z<sub>u</sub>−<span class="hl-in">z<sub>r</sub></span>)
+  &nbsp;&nbsp;<span class="cmt">// wheel: suspension above, tire below</span>
+</div>
+<p>Four states capture everything: body position and velocity, wheel position and velocity —
+<span class="plain-eq">x = [ z<sub>s</sub>, ż<sub>s</sub>, z<sub>u</sub>, ż<sub>u</sub> ]</span>. That's a
+4th-order, state-space system exactly like Lesson 7, and it has <em>two</em> natural modes: a slow
+<em>body bounce</em> near 1.3 Hz and a fast <em>wheel hop</em> near 11 Hz.</p>
+
+<h2>Step 2 · Drive it over bumps</h2>
+<h3>Feel what the shock absorber does</h3>
+<p>Here is the corner of the car, driving over a bumpy road. Tune the shock damping, the speed, and the body
+mass, and watch the body ride. With <em>too little</em> damping the body floats and wallows long after each bump;
+with <em>too much</em> it slams stiffly over every ripple. Try matching your speed so bumps arrive near the body's
+1.3 Hz bounce — with low damping it'll resonate and heave.</p>
+
+<div class="demo" data-demo="ride">
+  <canvas class="pic"></canvas>
+  <div class="btnrow">
+    <span style="font-family:var(--mono);font-size:.78rem;color:var(--muted)">shock preset:</span>
+    <button class="btn" data-preset="soft">soft (float)</button>
+    <button class="btn on" data-preset="bal">balanced</button>
+    <button class="btn" data-preset="firm">firm (harsh)</button>
+    <button class="btn" data-reset>reset ride</button>
+  </div>
+  <div class="controls"></div>
+  <div class="readouts"></div>
+</div>
+
+<p>The two readouts are your engineering scorecard. <em>Comfort</em> is the RMS vertical acceleration of the body
+— what your stomach feels; lower is smoother. <em>Road holding</em> is how much the tire's grip force fluctuates —
+lower means the tire stays pressed to the road and steers and brakes reliably. Watch how no single damping wins
+both at once.</p>
+
+<h2>Step 3 · Find the trade-off</h2>
+<h3>Comfort and handling want different shocks</h3>
+<p>Now sweep the damping across its whole range and plot both scores at once (computed from the model's frequency
+response to a standard rough road). Comfort bottoms out at fairly <em>soft</em> damping; road holding wants it
+<em>firmer</em>. The honest answer is a compromise band in the middle — which is exactly where real passenger cars
+are tuned.</p>
+
+<div class="demo" data-demo="tradeoff">
+  <canvas class="plot"></canvas>
+  <div class="controls"></div>
+  <div class="readouts"></div>
+</div>
+
+<p>This is the heart of the project: there is no single optimum, only a defensible compromise. Sports cars slide
+the marker right (firmer — grip and control over comfort); luxury cars slide it left (softer — comfort over ultimate
+grip). Adaptive dampers cheat by moving the marker in real time. The engineering isn't finding "the answer" — it's
+choosing where on this curve your machine should live.</p>
+
+<h2>What you built</h2>
+<div class="chips">
+  <span class="chip">A 4-state quarter-car model</span>
+  <span class="chip">Two resonances: body bounce &amp; wheel hop</span>
+  <span class="chip">A live time-domain simulation</span>
+  <span class="chip">A frequency-response trade study</span>
+  <span class="chip">A real comfort-vs-handling decision</span>
+</div>
+<p>Every concept from the course showed up: Newton's laws to build it (L2), a differential-equation state model
+(L3, L7), natural frequencies and resonance from the road excitation (L6), and damping ratio as the master tuning
+knob (L2, L6). That's the whole point of foundations — one small set of ideas, reused on every machine you'll meet.</p>
+
+<div class="takeaways">
+  <h3>Key takeaways</h3>
+  <ul>
+    <li><b>A car corner is a two-mass, 4th-order system</b> with a slow body-bounce mode and a fast wheel-hop mode.</li>
+    <li><b>The shock absorber sets the damping ratio</b> — the single most important ride-tuning parameter.</li>
+    <li><b>Comfort (RMS body acceleration) is minimized at soft damping;</b> too little <em>or</em> too much both hurt.</li>
+    <li><b>Road holding (tire-force variation) wants firmer damping</b> to kill wheel hop.</li>
+    <li><b>There is no single best setting</b> — real design picks a compromise on the trade-off curve.</li>
+    <li>The same model, in state-space form, is what a real active-suspension controller runs on.</li>
+  </ul>
+</div>
+
+<h2>Investigate further</h2>
+<ol class="ex">
+  <li><b>Resonance hunt.</b> In the ride simulator, set damping soft and find the speed where the body heaves the
+    most. Explain, using the body's ~1.3 Hz bounce frequency and the bump spacing, why that speed is special.</li>
+  <li><b>Mass effect.</b> Increase the body mass. What happens to the body-bounce frequency and to comfort? Relate
+    it to ωₙ = √(k<sub>s</sub>/m<sub>s</sub>).</li>
+  <li><b>Two optima.</b> From the trade-off curve, read off roughly where comfort is best and where handling is best.
+    Why do they fall at different damping values? (Hint: which resonance does each metric care about?)</li>
+  <li><b>Design call.</b> You're tuning a family SUV and a track car with the same hardware. Where on the trade-off
+    curve do you place each, and what real-world consequence justifies your choice?</li>
+</ol>
+
+<details><summary>Show discussion &amp; answers</summary>
+  <div class="qa">
+    <p><b>1.</b> The body resonates when bumps arrive at its natural bounce frequency, ~1.3 Hz. If bumps are spaced a
+    distance d apart, they arrive at frequency (speed ÷ d). Setting speed ÷ d ≈ 1.3 Hz makes each bump's push land in
+    step with the body's rise-and-fall, so the motion accumulates — pure resonance (Lesson 6). With soft damping there's
+    little to bleed the energy away, so the heave grows large.</p>
+    <p><b>2.</b> Heavier body → lower bounce frequency (ωₙ = √(k<sub>s</sub>/m<sub>s</sub>) falls). A heavier body is
+    harder to accelerate, so on a given road the RMS body acceleration usually drops (a smoother-feeling ride) — but the
+    car sits and reacts more slowly, and the same softer, lower-frequency motion can feel wallowy. It also shifts which
+    road speeds excite resonance.</p>
+    <p><b>3.</b> Comfort is best at soft damping (ζ ≈ 0.15–0.2); road holding is best firmer (ζ ≈ 0.4–0.5). They differ
+    because each metric is dominated by a different mode: comfort is about isolating the body from the road (soft
+    suspension isolates better, up to the point where the body-bounce mode itself starts ringing), while road holding is
+    about controlling wheel hop (the fast mode), which needs more damping to suppress. Different resonances, different
+    optimal damping.</p>
+    <p><b>4.</b> The SUV goes toward the <b>soft</b> end — passengers value a smooth, quiet ride, and modest grip loss is
+    acceptable at family-driving limits. The track car goes toward the <b>firm</b> end — a race driver needs the tire
+    planted for maximum cornering and braking grip and will accept a harsh ride to get it. The consequence is concrete:
+    soften the track car and it'll float and lose grip over mid-corner bumps; stiffen the SUV and every expansion joint
+    jars the passengers. Same curve, opposite priorities.</p>
+  </div>
+</details>
+
+<footer>
+  Project 1 · self-contained, no external libraries or network · the ride is integrated live with RK4; the trade-off
+  curves are computed from the model's frequency response on load. Next: a hydraulic cylinder and bulk modulus.
+</footer>
+
+</div><!-- /wrap -->
+
+<script>
+"use strict";
+(function(){
+  const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const COL={in:'#E8A33D',out:'#22C3AE',grid2:'#16262F',axis:'#3A5464',text:'#7FA0AE',blue:'#9BD0FF',red:'#FF8FA3',road:'#3a5260'};
+  // fixed quarter-car params
+  const MS0=300, MU=40, KS=20000, KT=180000;
+
+  function el(tag,cls){const e=document.createElement(tag); if(cls)e.className=cls; return e;}
+  function fitCanvas(cv,aspect){
+    const dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1));
+    const cssW=cv.clientWidth || cv.parentElement.clientWidth || 300;
+    const cssH=Math.round(cssW*aspect);
+    cv.style.height=cssH+'px'; cv.width=Math.round(cssW*dpr); cv.height=Math.round(cssH*dpr);
+    const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); return {ctx,W:cssW,H:cssH};
+  }
+  function addSliders(container,defs,params,onChange,handles){
+    defs.forEach(p=>{ params[p.key]=p.value;
+      const c=el('div','ctrl'), row=el('div','row');
+      const name=el('span','name'); name.innerHTML=p.label;
+      const val=el('span','val'); const fmt=p.fmt||(v=>v.toFixed(2)); val.textContent=fmt(p.value);
+      row.appendChild(name); row.appendChild(val);
+      const inp=document.createElement('input'); inp.type='range';
+      inp.min=p.min; inp.max=p.max; inp.step=p.step; inp.value=p.value;
+      inp.setAttribute('aria-label',(p.aria||p.label).replace(/<[^>]+>/g,''));
+      inp.addEventListener('input',()=>{ params[p.key]=parseFloat(inp.value); val.textContent=fmt(params[p.key]); onChange&&onChange(); });
+      c.appendChild(row); c.appendChild(inp); container.appendChild(c);
+      if(handles) handles[p.key]={inp,val,fmt};
+    });
+  }
+  function setReadouts(container,items){ container.innerHTML='';
+    items.forEach(r=>{ const s=el('span','ro'+(r.cls?' '+r.cls:'')); s.innerHTML=r.label+' <b>'+r.value+'</b>'; container.appendChild(s); }); }
+  function roadZ(x){ let z=0.012*Math.sin(2*Math.PI*x/13)+0.008*Math.sin(2*Math.PI*x/5.7+1);
+    const P=9, xm=((x%P)+P)%P; z+=0.045*Math.exp(-Math.pow((xm-4.5)/0.35,2)); return z; }
+
+  // ---------------- Demo 1: ride simulator ----------------
+  (function buildRide(){
+    const root=document.querySelector('[data-demo=ride]'); if(!root) return;
+    const pic=root.querySelector('.pic');
+    const controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+    const params={}, H={};
+    addSliders(controls,[
+      {key:'cs',label:'shock damping c<sub>s</sub>',min:200,max:4500,step:50,value:1500,fmt:v=>v.toFixed(0)},
+      {key:'kmh',label:'speed (km/h)',min:10,max:110,step:1,value:45,fmt:v=>v.toFixed(0)},
+      {key:'ms',label:'body mass m<sub>s</sub> (kg)',min:200,max:500,step:10,value:300,fmt:v=>v.toFixed(0)}
+    ],params,null,H);
+    let s=[0,0,0,0], carX=0, last=null, cA=0, cF=0, raf=null;
+    function deriv(st,zr,cs,ms){ const [zs,vs,zu,vu]=st; const F=KS*(zs-zu)+cs*(vs-vu);
+      return [vs, -F/ms, vu, (F-KT*(zu-zr))/MU]; }
+    function reset(){ s=[0,0,0,0]; carX=0; cA=0; cF=0; }
+    function preset(p){ if(p==='soft'){H.cs.inp.value=350;} else if(p==='bal'){H.cs.inp.value=1500;} else {H.cs.inp.value=3800;}
+      params.cs=parseFloat(H.cs.inp.value); H.cs.val.textContent=H.cs.inp.value;
+      root.querySelectorAll('[data-preset]').forEach(b=>b.classList.toggle('on',b.dataset.preset===p)); }
+    root.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>preset(b.dataset.preset)));
+    root.querySelector('[data-reset]').addEventListener('click',reset);
+    function draw(now){
+      const {ctx,W,H:HH}=fitCanvas(pic,0.60); const v=params.kmh/3.6;
+      let dt=last?Math.min(0.05,(now-last)/1000):0.016; last=now;
+      // integrate sim (substeps)
+      const steps=Math.max(1,Math.ceil(dt/0.001)); const h=dt/steps;
+      for(let i=0;i<steps;i++){ const zr=roadZ(carX);
+        const k1=deriv(s,zr,params.cs,params.ms);
+        const a=k1[1]; const Ft=KT*(s[2]-zr);
+        cA=0.995*cA+0.005*a*a; cF=0.995*cF+0.005*Ft*Ft;
+        const k2=deriv(s.map((x,j)=>x+h/2*k1[j]),zr,params.cs,params.ms);
+        const k3=deriv(s.map((x,j)=>x+h/2*k2[j]),zr,params.cs,params.ms);
+        const k4=deriv(s.map((x,j)=>x+h*k3[j]),zr,params.cs,params.ms);
+        s=s.map((x,j)=>x+h/6*(k1[j]+2*k2[j]+2*k3[j]+k4[j])); carX+=v*h; }
+      // draw
+      ctx.clearRect(0,0,W,HH);
+      const groundY=HH*0.70, pxV=460, pxX=52, R=HH*0.11;
+      const carSX=W*0.44, bodyRestY=groundY-R-HH*0.24;
+      // road
+      ctx.strokeStyle=COL.road; ctx.lineWidth=2; ctx.beginPath();
+      for(let sx=0;sx<=W;sx+=4){ const wx=carX+(sx-carSX)/pxX; const y=groundY-roadZ(wx)*pxV; sx?ctx.lineTo(sx,y):ctx.moveTo(sx,y);} ctx.stroke();
+      ctx.strokeStyle='rgba(58,82,96,0.35)'; ctx.beginPath();
+      for(let sx=0;sx<=W;sx+=4){ const wx=carX+(sx-carSX)/pxX; const y=groundY-roadZ(wx)*pxV+3; sx?ctx.lineTo(sx,y):ctx.moveTo(sx,y);} ctx.stroke();
+      // ground fill
+      ctx.fillStyle='rgba(20,38,47,0.6)'; ctx.beginPath(); ctx.moveTo(0,HH); for(let sx=0;sx<=W;sx+=4){ const wx=carX+(sx-carSX)/pxX; ctx.lineTo(sx,groundY-roadZ(wx)*pxV);} ctx.lineTo(W,HH); ctx.closePath(); ctx.fill();
+      const zrCar=roadZ(carX);
+      const wheelY=groundY - zrCar*pxV - R - (s[2])*pxV;  // wheel rides road + unsprung motion
+      const bodyY=bodyRestY - (s[0])*pxV;
+      // suspension (spring + damper) between wheel and body
+      const susX1=carSX-14, susX2=carSX+14;
+      ctx.strokeStyle=COL.out; ctx.lineWidth=2; // spring
+      (function(){ const y1=bodyY+HH*0.10, y2=wheelY-R*0.2, n=6, dy=(y2-y1)/n; ctx.beginPath(); ctx.moveTo(susX1,y1);
+        for(let i=0;i<n;i++){ ctx.lineTo(susX1-6,y1+dy*(i+0.25)); ctx.lineTo(susX1+6,y1+dy*(i+0.75)); ctx.lineTo(susX1,y1+dy*(i+1)); } ctx.stroke(); })();
+      ctx.strokeStyle=COL.in; ctx.lineWidth=2; // damper
+      ctx.beginPath(); ctx.moveTo(susX2,bodyY+HH*0.10); ctx.lineTo(susX2,wheelY-R*0.2); ctx.stroke();
+      ctx.strokeRect(susX2-5,(bodyY+wheelY)/2-8,10,16);
+      // wheel
+      ctx.fillStyle='#1b2b34'; ctx.strokeStyle=COL.blue; ctx.lineWidth=2.4; ctx.beginPath(); ctx.arc(carSX,wheelY,R,0,7); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle='#39525f'; ctx.beginPath(); ctx.arc(carSX,wheelY,R*0.4,0,7); ctx.stroke();
+      // body
+      const bw=W*0.30, bh=HH*0.18; ctx.fillStyle='#0E1B24'; ctx.strokeStyle=COL.out; ctx.lineWidth=2.4;
+      const bx=carSX-bw*0.5;
+      ctx.beginPath(); const r=10;
+      ctx.moveTo(bx+r,bodyY); ctx.lineTo(bx+bw-r,bodyY); ctx.quadraticCurveTo(bx+bw,bodyY,bx+bw,bodyY+r);
+      ctx.lineTo(bx+bw,bodyY+bh-r); ctx.quadraticCurveTo(bx+bw,bodyY+bh,bx+bw-r,bodyY+bh);
+      ctx.lineTo(bx+r,bodyY+bh); ctx.quadraticCurveTo(bx,bodyY+bh,bx,bodyY+bh-r);
+      ctx.lineTo(bx,bodyY+r); ctx.quadraticCurveTo(bx,bodyY,bx+r,bodyY); ctx.closePath(); ctx.fill(); ctx.stroke();
+      // cabin hint
+      ctx.fillStyle='rgba(155,208,255,0.18)'; ctx.fillRect(bx+bw*0.30,bodyY+4,bw*0.42,bh*0.42);
+      ctx.fillStyle=COL.text; ctx.font='11px ui-monospace, monospace'; ctx.textAlign='center'; ctx.fillText('m_s (body)',carSX,bodyY-6);
+      ctx.textAlign='left'; ctx.fillText('m_u',carSX+R+4,wheelY+3);
+      // scorecard
+      const comfort=Math.sqrt(cA), hold=Math.sqrt(cF);
+      const zeta=params.cs/(2*Math.sqrt(KS*params.ms));
+      setReadouts(ro,[
+        {label:'ζ (body)', value:zeta.toFixed(2)},
+        {label:'comfort RMS accel', value:comfort.toFixed(2)+' m/s²', cls: comfort<2.2?'good':(comfort>3.5?'warn':'')},
+        {label:'road-holding ΔF', value:(hold/9.81).toFixed(0)+' N', cls: hold<7000?'good':(hold>11000?'warn':'')},
+        {label:'bounce', value:(Math.sqrt(KS/params.ms)/2/Math.PI).toFixed(2)+' Hz'}
+      ]);
+      raf=requestAnimationFrame(draw);
+    }
+    window.addEventListener('resize',()=>{ if(REDUCED){ fitCanvas(pic,0.60); } });
+    if(REDUCED){ // draw a static frame
+      last=performance.now(); draw(performance.now()); cancelAnimationFrame(raf);
+    } else raf=requestAnimationFrame(draw);
+  })();
+
+  // ---------------- Demo 2: comfort-handling tradeoff (frequency-domain) ----------------
+  (function buildTradeoff(){
+    const root=document.querySelector('[data-demo=tradeoff]'); if(!root) return;
+    const plot=root.querySelector('.plot');
+    const controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+    // complex helpers
+    const cx=(re,im)=>({re,im}), csub=(a,b)=>cx(a.re-b.re,a.im-b.im), cmul=(a,b)=>cx(a.re*b.re-a.im*b.im,a.re*b.im+a.im*b.re);
+    const cdiv=(a,b)=>{const d=b.re*b.re+b.im*b.im; return cx((a.re*b.re+a.im*b.im)/d,(a.im*b.re-a.re*b.im)/d);};
+    const cabs2=a=>a.re*a.re+a.im*a.im;
+    function solve(w,cs){
+      const A=[[0,1,0,0],[-KS/MS0,-cs/MS0,KS/MS0,cs/MS0],[0,0,0,1],[KS/MU,cs/MU,-(KS+KT)/MU,-cs/MU]];
+      const M=[],E=[cx(0,0),cx(0,0),cx(0,0),cx(KT/MU,0)];
+      for(let i=0;i<4;i++){ M.push([]); for(let j=0;j<4;j++) M[i].push(cx(-A[i][j], i===j?w:0)); }
+      for(let col=0;col<4;col++){ let p=col; for(let r=col+1;r<4;r++) if(cabs2(M[r][col])>cabs2(M[p][col])) p=r;
+        [M[col],M[p]]=[M[p],M[col]]; [E[col],E[p]]=[E[p],E[col]]; const piv=M[col][col];
+        for(let j=col;j<4;j++) M[col][j]=cdiv(M[col][j],piv); E[col]=cdiv(E[col],piv);
+        for(let r=0;r<4;r++){ if(r===col) continue; const f=M[r][col]; for(let j=col;j<4;j++) M[r][j]=csub(M[r][j],cmul(f,M[col][j])); E[r]=csub(E[r],cmul(f,E[col])); } }
+      return E;
+    }
+    function metrics(cs){ let comfort=0,holding=0; const N=200,wlo=0.4,whi=200; let wp=wlo;
+      for(let i=0;i<=N;i++){ const w=wlo*Math.pow(whi/wlo,i/N); const X=solve(w,cs);
+        comfort += w*w*cabs2(X[0])*(w-wp);
+        holding += KT*KT*cabs2(csub(X[2],cx(1,0)))/(w*w)*(w-wp); wp=w; }
+      return {comfort:Math.sqrt(comfort), holding:Math.sqrt(holding)}; }
+    // precompute curve on load
+    const csGrid=[]; for(let cs=200;cs<=4500;cs+=100) csGrid.push(cs);
+    const comf=csGrid.map(cs=>metrics(cs).comfort), hold=csGrid.map(cs=>metrics(cs).holding);
+    const cMin=Math.min(...comf), hMin=Math.min(...hold);
+    const cNorm=comf.map(v=>v/cMin), hNorm=hold.map(v=>v/hMin);
+    const cAtCs=csGrid[comf.indexOf(cMin)], hAtCs=csGrid[hold.indexOf(hMin)];
+    const params={};
+    addSliders(controls,[
+      {key:'cs',label:'shock damping c<sub>s</sub>',min:200,max:4500,step:50,value:1500,fmt:v=>v.toFixed(0)}
+    ],params,onChange);
+    function interp(grid,arr,cs){ let i=0; while(i<grid.length-1 && grid[i+1]<cs) i++;
+      const t=(cs-grid[i])/(grid[i+1]-grid[i]); return arr[i]+(arr[i+1]-arr[i])*t; }
+    function draw(){
+      const {ctx,W,H}=fitCanvas(plot,0.52); const pad={l:44,r:14,t:16,b:34}; ctx.clearRect(0,0,W,H);
+      const x0=csGrid[0], x1=csGrid[csGrid.length-1];
+      const gx=cs=>pad.l+((cs-x0)/(x1-x0))*(W-pad.l-pad.r);
+      const ymax=2.6, gy=v=>(H-pad.b)-(Math.min(v,ymax)-0.9)/(ymax-0.9)*(H-pad.t-pad.b);
+      // compromise band (zeta 0.25-0.35)
+      const cLo=0.25*2*Math.sqrt(KS*MS0), cHi=0.35*2*Math.sqrt(KS*MS0);
+      ctx.fillStyle='rgba(155,208,255,0.10)'; ctx.fillRect(gx(cLo),pad.t,gx(cHi)-gx(cLo),H-pad.t-pad.b);
+      ctx.fillStyle=COL.blue; ctx.font='9px ui-monospace, monospace'; ctx.textAlign='center'; ctx.textBaseline='top';
+      ctx.fillText('compromise', (gx(cLo)+gx(cHi))/2, pad.t+2);
+      // axes
+      ctx.strokeStyle=COL.grid2; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(pad.l,pad.t); ctx.lineTo(pad.l,H-pad.b); ctx.lineTo(W-pad.r,H-pad.b); ctx.stroke();
+      ctx.fillStyle=COL.text; ctx.textAlign='center'; ctx.textBaseline='top';
+      for(const z of [0.1,0.2,0.3,0.5,0.7,1.0]){ const cs=z*2*Math.sqrt(KS*MS0); if(cs<x0||cs>x1) continue;
+        ctx.fillText('ζ='+z, gx(cs), H-pad.b+6); }
+      ctx.save(); ctx.translate(12,H/2); ctx.rotate(-Math.PI/2); ctx.textAlign='center'; ctx.fillText('relative (1 = best)',0,0); ctx.restore();
+      // curves
+      function curve(arr,color){ ctx.strokeStyle=color; ctx.lineWidth=2.6; ctx.beginPath();
+        for(let i=0;i<csGrid.length;i++){ const X=gx(csGrid[i]),Y=gy(arr[i]); i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);} ctx.stroke(); }
+      curve(cNorm,COL.out); curve(hNorm,COL.in);
+      // minima dots
+      ctx.fillStyle=COL.out; ctx.beginPath(); ctx.arc(gx(cAtCs),gy(1),4,0,7); ctx.fill();
+      ctx.fillStyle=COL.in; ctx.beginPath(); ctx.arc(gx(hAtCs),gy(1),4,0,7); ctx.fill();
+      // legend
+      ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+      ctx.fillStyle=COL.out; ctx.fillText('■ comfort (body accel)', pad.l+8, pad.t+12);
+      ctx.fillStyle=COL.in; ctx.fillText('■ road holding (tire force)', pad.l+8, pad.t+26);
+      // current marker
+      const cs=params.cs; ctx.strokeStyle=COL.blue; ctx.lineWidth=1.6; ctx.setLineDash([4,3]);
+      ctx.beginPath(); ctx.moveTo(gx(cs),pad.t); ctx.lineTo(gx(cs),H-pad.b); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle=COL.blue; ctx.beginPath(); ctx.arc(gx(cs),gy(interp(csGrid,cNorm,cs)),4.5,0,7); ctx.fill();
+      ctx.beginPath(); ctx.arc(gx(cs),gy(interp(csGrid,hNorm,cs)),4.5,0,7); ctx.fill();
+    }
+    function onChange(){ draw();
+      const cs=params.cs, zeta=cs/(2*Math.sqrt(KS*MS0));
+      const cv=interp(csGrid,cNorm,cs), hv=interp(csGrid,hNorm,cs);
+      let verdict = zeta<0.2?'soft: comfy, floaty grip' : zeta>0.45?'firm: planted, harsh' : 'balanced compromise';
+      setReadouts(ro,[
+        {label:'ζ', value:zeta.toFixed(2)},
+        {label:'comfort', value:cv.toFixed(2)+'× best', cls: cv<1.1?'good':(cv>1.4?'warn':'')},
+        {label:'road-holding', value:hv.toFixed(2)+'× best', cls: hv<1.1?'good':(hv>1.4?'warn':'')},
+        {label:'verdict', value:verdict}
+      ]);
+    }
+    window.addEventListener('resize',draw);
+    onChange();
+  })();
+})();
+</script>
+</body>
+</html>

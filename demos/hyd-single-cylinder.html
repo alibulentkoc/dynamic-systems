@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project 3 · The Single Cylinder Circuit</title>
+<style>
+  :root{
+    --paper:#EEF2F5; --card:#FFFFFF; --ink:#17252E; --muted:#5E7686;
+    --line:#D3DDE4; --line2:#E3EAEF;
+    --panel:#0E1B24; --grid2:#16262F; --axis:#3A5464;
+    --in:#E8A33D; --out:#22C3AE; --accent:#22C3AE; --accent-ink:#0A5B52; --blue:#9BD0FF; --red:#FF8FA3; --oil:#22C3AE;
+    --mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); line-height:1.6; font-size:17px; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:940px; margin:0 auto; padding:0 20px 120px}
+  header.hero{padding:64px 0 34px; border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono); font-size:.78rem; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); margin:0 0 14px}
+  h1{font-size:clamp(2rem,5vw,3.1rem); line-height:1.06; margin:0 0 18px; letter-spacing:-.02em; font-weight:750}
+  .lede{font-size:1.12rem; color:#33454f; max-width:62ch; margin:0}
+  h2{font-size:1.02rem; font-family:var(--mono); letter-spacing:.04em; text-transform:uppercase; color:var(--muted); margin:52px 0 14px; font-weight:600}
+  h3{font-size:1.5rem; letter-spacing:-.01em; margin:6px 0 10px; font-weight:700}
+  p{margin:0 0 16px}
+  em{font-style:normal; color:var(--accent-ink); font-weight:600}
+  .goal{background:var(--card); border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:0 14px 14px 0; padding:18px 22px; margin:20px 0}
+  .goal .lab{font-family:var(--mono); font-size:.72rem; letter-spacing:.16em; text-transform:uppercase; color:var(--accent-ink); display:block; margin-bottom:6px}
+  .eq{font-family:var(--mono); background:var(--panel); color:#DCE7EC; border-radius:12px; padding:18px 20px; margin:16px 0; overflow-x:auto; font-size:.98rem; line-height:2}
+  .eq .cmt{color:#6E8794} .eq .hl-in{color:var(--in)} .eq .hl-out{color:var(--out)} .eq .hl-k{color:#9BD0FF}
+  .plain-eq{font-family:var(--mono); font-size:1rem; color:var(--ink); background:#F6F9FB; border:1px solid var(--line2); border-radius:9px; padding:10px 14px; display:inline-block; margin:4px 0}
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 4px}
+  .chip{font-family:var(--mono); font-size:.82rem; padding:6px 11px; border-radius:999px; background:#F0F5F8; border:1px solid var(--line); color:#3a4d57}
+
+  .demo{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; margin:22px 0}
+  .demo > canvas{background:var(--panel); border-radius:10px; width:100%; height:auto; display:block}
+  .stage{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  @media (max-width:640px){ .stage{grid-template-columns:1fr} }
+  .stage canvas{background:var(--panel); border-radius:10px; width:100%; height:auto; display:block}
+  .controls{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px 20px; margin:16px 4px 4px}
+  @media (max-width:640px){ .controls{grid-template-columns:1fr} }
+  .ctrl{display:flex; flex-direction:column; gap:5px}
+  .ctrl .row{display:flex; justify-content:space-between; align-items:baseline; font-family:var(--mono); font-size:.86rem}
+  .ctrl .name{color:var(--ink)} .ctrl .val{color:var(--accent-ink); font-weight:600}
+  input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:5px; background:var(--line); border-radius:5px; outline:none; margin:6px 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none; width:18px; height:18px; border-radius:50%; background:var(--accent); border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,.25); cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--accent); border:2px solid #fff; cursor:pointer}
+  input[type=range]:focus-visible{box-shadow:0 0 0 3px rgba(34,195,174,.35)}
+  .btnrow{display:flex; flex-wrap:wrap; gap:8px; margin:14px 4px 2px; align-items:center}
+  .btn{font-family:var(--mono); font-size:.78rem; color:var(--accent-ink); background:none; border:1px solid var(--line); border-radius:8px; padding:6px 12px; cursor:pointer}
+  .btn:hover{background:#F0F5F8} .btn.on{background:var(--accent); color:#04302b; border-color:var(--accent)}
+  .readouts{display:flex; flex-wrap:wrap; gap:8px 10px; margin:14px 4px 2px; font-family:var(--mono); font-size:.82rem}
+  .ro{background:#F0F5F8; border:1px solid var(--line); border-radius:8px; padding:6px 10px; color:#3a4d57}
+  .ro b{color:var(--accent-ink)}
+  .ro.good{background:#eafaf6; border-color:var(--accent)} .ro.good b{color:var(--accent-ink)}
+  .ro.warn{background:#3a1c22; border-color:var(--red)} .ro.warn b{color:var(--red)}
+
+  .takeaways{background:var(--panel); color:#DCE7EC; border-radius:16px; padding:26px 28px; margin:40px 0}
+  .takeaways h3{color:#fff} .takeaways li{margin:9px 0} .takeaways b{color:var(--out)}
+  details{background:var(--card); border:1px solid var(--line); border-radius:11px; padding:2px 16px; margin:10px 0}
+  details[open]{padding-bottom:12px}
+  summary{cursor:pointer; font-weight:600; padding:12px 0; list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"▸ "; color:var(--accent-ink)} details[open] summary::before{content:"▾ "}
+  .qa{font-size:.97rem} .qa p{margin:8px 0}
+  ol.ex{padding-left:1.3em} ol.ex li{margin:8px 0}
+  footer{margin-top:60px; padding-top:20px; border-top:1px solid var(--line); font-family:var(--mono); font-size:.8rem; color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <p class="eyebrow">Foundations of Dynamic Systems · Project 3 · Fluid Power</p>
+  <h1>The Single Cylinder Circuit</h1>
+  <p class="lede">This begins a five-part fluid-power sequence. We start at the atom of hydraulics: one pump, one
+  valve, one cylinder, one load. Two simple laws — flow sets speed, pressure sets force — explain everything a
+  cylinder does, including the surprising fact that a single-rod cylinder extends and retracts at different speeds
+  and different maximum forces.</p>
+</header>
+
+<div class="goal"><span class="lab">The mission</span>
+  Build the basic power-and-actuator circuit, drive the cylinder against a load, and discover the two governing
+  relationships (Q = A·v and F = P·A) — then see why the rod makes extend and retract fundamentally asymmetric,
+  and what the relief valve does when a load is too heavy.
+</div>
+
+<h2>Step 1 · The two laws</h2>
+<h3>Flow makes speed; pressure makes force</h3>
+<p>A hydraulic cylinder is astonishingly simple to reason about. Oil is nearly incompressible, so whatever volume
+flow Q the pump pushes into a chamber must show up as the piston sweeping out that same volume. With piston area A,
+that fixes the speed. And pressure P acting on that same area produces force. Two equations run the whole show:</p>
+<div class="eq">
+  <span class="hl-out">v</span> = <span class="hl-in">Q</span> / A
+  &nbsp;&nbsp;<span class="cmt">// piston speed = flow ÷ area</span>
+  <br>
+  <span class="hl-out">F</span> = <span class="hl-k">P</span> · A
+  &nbsp;&nbsp;<span class="cmt">// piston force = pressure × area</span>
+</div>
+<p>The pump is a <em>flow</em> source (it delivers roughly constant Q); pressure is whatever it takes to move the
+load, and rises until the job is done — or until the <em>relief valve</em> caps it and dumps the extra oil back to
+tank. So a cylinder's speed is set by the pump, but its pressure is set by the load.</p>
+
+<h2>Step 2 · The rod breaks the symmetry</h2>
+<h3>One side has a rod; the areas differ</h3>
+<p>Here is the twist that trips up newcomers. The cap side is a full circle of area A<sub>cap</sub>, but the rod side
+is a circle with the rod bored out — an annulus of area A<sub>ann</sub> = A<sub>cap</sub> − A<sub>rod</sub>, which is
+<em>smaller</em>. Same pump flow into a smaller area means a <em>faster</em> stroke; the same relief pressure on a
+smaller area means <em>less</em> force. So:</p>
+<div class="plain-eq">extend: v = Q/A<sub>cap</sub> (slow), F<sub>max</sub> = P·A<sub>cap</sub> (strong)</div>
+<div class="plain-eq">retract: v = Q/A<sub>ann</sub> (fast), F<sub>max</sub> = P·A<sub>ann</sub> (weak)</div>
+<p>Drive the circuit below. Push it to extend and retract, load it up until it stalls on the relief valve, and try the
+<em>regeneration</em> trick — porting the rod oil back to the cap side for a very fast (but weak) extend.</p>
+
+<div class="demo" data-demo="circuit">
+  <canvas class="pic"></canvas>
+  <div class="btnrow">
+    <span style="font-family:var(--mono);font-size:.78rem;color:var(--muted)">valve:</span>
+    <button class="btn" data-mode="ext">extend →</button>
+    <button class="btn on" data-mode="hold">hold</button>
+    <button class="btn" data-mode="ret">← retract</button>
+    <button class="btn" data-regen>regen: off</button>
+  </div>
+  <div class="controls"></div>
+  <div class="readouts"></div>
+</div>
+
+<p>Notice what the gauges tell you: pressure only climbs as high as the load demands. A light load barely raises the
+gauge; a heavy load drives it up to the relief setting, at which point the cylinder <em>stalls</em> and the pump's
+flow spills over the relief valve as wasted heat. And because the annulus area is smaller, retract always stalls at a
+lower load than extend — the cylinder is genuinely weaker pulling in than pushing out.</p>
+
+<h2>Step 3 · See the asymmetry</h2>
+<h3>Speed and force, side by side</h3>
+<p>The bars below compute extend, retract, and regeneration speed and force from your current pump flow and cylinder
+sizes. Change the rod diameter and watch the trade move: a fat rod makes retract much faster but much weaker; a thin
+rod makes the two strokes nearly symmetric.</p>
+
+<div class="demo" data-demo="bars">
+  <canvas class="plot"></canvas>
+  <div class="controls"></div>
+  <div class="readouts"></div>
+</div>
+
+<h2>Where this is going</h2>
+<div class="chips">
+  <span class="chip">Q = A·v, F = P·A</span>
+  <span class="chip">pump = flow source; load = pressure</span>
+  <span class="chip">relief valve caps pressure</span>
+  <span class="chip">rod ⇒ extend/retract asymmetry</span>
+  <span class="chip">regeneration = fast, weak extend</span>
+</div>
+<p>The rod-side outflow you see during extend — A<sub>ann</sub>·v of oil leaving the cylinder — is the seed of the next
+project. In <b>Project 4</b> we'll route that outflow straight into a second cylinder to make them move in step. Then we'll
+put cylinders in <b>parallel</b> (Project 5), and finally add <b>on/off</b> (Project 6) and <b>proportional</b>
+(Project 7) control to command position.</p>
+
+<div class="takeaways">
+  <h3>Key takeaways</h3>
+  <ul>
+    <li><b>Two laws run a cylinder:</b> speed v = Q/A (flow ÷ area) and force F = P·A (pressure × area).</li>
+    <li><b>The pump sets speed; the load sets pressure.</b> Pressure rises only as far as needed, up to the relief limit.</li>
+    <li><b>The relief valve caps pressure</b> and dumps excess flow as heat when a load is too heavy — the cylinder stalls.</li>
+    <li><b>A single-rod cylinder is asymmetric:</b> extend is slow and strong (A<sub>cap</sub>); retract is fast and weak (A<sub>ann</sub>).</li>
+    <li><b>Regeneration</b> ports rod oil back to the cap side for a very fast but weak extend (effective area = A<sub>rod</sub>).</li>
+    <li>The area ratio A<sub>cap</sub>/A<sub>ann</sub> sets both the speed ratio and the force ratio between strokes.</li>
+  </ul>
+</div>
+
+<h2>Exercises</h2>
+<ol class="ex">
+  <li><b>Speeds.</b> A cylinder has a 63 mm bore and 36 mm rod, fed by 30 L/min. Find the extend and retract speeds.</li>
+  <li><b>Forces.</b> With a 210 bar relief setting, find the maximum extend and retract force for that cylinder.</li>
+  <li><b>Stall.</b> A load resists motion with 60 kN. Using your Exercise 2 numbers, will the cylinder extend? Will it
+    retract? Explain the difference.</li>
+  <li><b>Design.</b> A machine must extend slowly with high force to press a part, then retract quickly to save cycle
+    time. Explain why a single-rod cylinder is naturally suited to this, and when you might instead reach for
+    regeneration or a double-rod (symmetric) cylinder.</li>
+</ol>
+
+<details><summary>Show worked solutions</summary>
+  <div class="qa">
+    <p><b>1.</b> A<sub>cap</sub> = π/4·(0.063)² = 3.117×10⁻³ m²; A<sub>rod</sub> = π/4·(0.036)² = 1.018×10⁻³ m²;
+    A<sub>ann</sub> = 2.099×10⁻³ m². Q = 30 L/min = 5.0×10⁻⁴ m³/s. Extend v = Q/A<sub>cap</sub> = 0.160 m/s ≈
+    <b>160 mm/s</b>; retract v = Q/A<sub>ann</sub> = 0.238 m/s ≈ <b>238 mm/s</b> (about 1.49× faster).</p>
+    <p><b>2.</b> P = 210 bar = 2.1×10⁷ Pa. Extend F = P·A<sub>cap</sub> = 2.1×10⁷·3.117×10⁻³ ≈ <b>65.5 kN</b>; retract
+    F = P·A<sub>ann</sub> = 2.1×10⁷·2.099×10⁻³ ≈ <b>44.1 kN</b>.</p>
+    <p><b>3.</b> Extend: 60 kN &lt; 65.5 kN, so it <b>extends</b> (needs ~192 bar, under the relief). Retract: 60 kN &gt;
+    44.1 kN, so it <b>stalls</b> — the annulus area can't make 60 kN even at full relief pressure. Same cylinder, same
+    pressure limit, but the smaller retract area makes it weaker pulling in. This is the single-rod asymmetry in action.</p>
+    <p><b>4.</b> Extending on the large cap area gives the highest force for a given pressure and the slowest speed — exactly
+    what a pressing stroke wants. Retracting on the small annulus area is naturally faster (and it needn't be strong, since
+    it's just returning), which shortens the cycle. So the geometry hands you "slow-strong out, fast-return" for free.
+    Use <b>regeneration</b> when you want the <em>extend</em> itself to be fast and the load is light (e.g., rapid approach
+    before contact). Use a <b>double-rod</b> cylinder when you need <em>equal</em> speed and force both ways — for example a
+    machine axis that must behave identically in both directions.</p>
+  </div>
+</details>
+
+<footer>
+  Project 3 of the fluid-power sequence · self-contained, no external libraries or network · speeds, forces, pressures,
+  and the relief behavior are computed live from Q = A·v and F = P·A. Next: two cylinders in series.
+</footer>
+
+</div><!-- /wrap -->
+
+<script>
+"use strict";
+(function(){
+  const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const COL={in:'#E8A33D',out:'#22C3AE',grid2:'#16262F',axis:'#3A5464',text:'#7FA0AE',blue:'#9BD0FF',red:'#FF8FA3',steel:'#5E7686',oilfill:'rgba(34,195,174,0.28)'};
+  const BORE=0.050, STROKE=0.30, PRELIEF=200e5, PTANK=3e5;
+
+  function el(tag,cls){const e=document.createElement(tag); if(cls)e.className=cls; return e;}
+  function fitCanvas(cv,aspect){
+    const dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1));
+    const cssW=cv.clientWidth || cv.parentElement.clientWidth || 300;
+    const cssH=Math.round(cssW*aspect);
+    cv.style.height=cssH+'px'; cv.width=Math.round(cssW*dpr); cv.height=Math.round(cssH*dpr);
+    const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); return {ctx,W:cssW,H:cssH};
+  }
+  function addSliders(container,defs,params,onChange,handles){
+    defs.forEach(p=>{ params[p.key]=p.value;
+      const c=el('div','ctrl'), row=el('div','row');
+      const name=el('span','name'); name.innerHTML=p.label;
+      const val=el('span','val'); const fmt=p.fmt||(v=>v.toFixed(2)); val.textContent=fmt(p.value);
+      row.appendChild(name); row.appendChild(val);
+      const inp=document.createElement('input'); inp.type='range';
+      inp.min=p.min; inp.max=p.max; inp.step=p.step; inp.value=p.value;
+      inp.setAttribute('aria-label',(p.aria||p.label).replace(/<[^>]+>/g,''));
+      inp.addEventListener('input',()=>{ params[p.key]=parseFloat(inp.value); val.textContent=fmt(params[p.key]); onChange&&onChange(); });
+      c.appendChild(row); c.appendChild(inp); container.appendChild(c);
+      if(handles) handles[p.key]={inp,val,fmt};
+    });
+  }
+  function setReadouts(container,items){ container.innerHTML='';
+    items.forEach(r=>{ const s=el('span','ro'+(r.cls?' '+r.cls:'')); s.innerHTML=r.label+' <b>'+r.value+'</b>'; container.appendChild(s); }); }
+  const areaCap=()=>Math.PI*BORE*BORE/4;
+  const areaRod=(dmm)=>Math.PI*(dmm/1000)*(dmm/1000)/4;
+
+  // draw a hydraulic cylinder with oil fills; returns nothing. x in [0,1] extension frac.
+  function drawCylinder(ctx,X,Y,Wc,Hc,frac,pcapOn,prodOn){
+    const pl=X, pr=X+Wc, top=Y-Hc/2, bot=Y+Hc/2;
+    const px=pl+ (0.06+0.72*frac)*Wc;             // piston face
+    // cap chamber (left)
+    ctx.fillStyle= pcapOn?'rgba(232,163,61,0.28)':COL.oilfill; ctx.fillRect(pl+2,top+2,px-pl-2,Hc-4);
+    // rod chamber (right)
+    ctx.fillStyle= prodOn?'rgba(232,163,61,0.28)':COL.oilfill; ctx.fillRect(px+6,top+2,pr-(px+6)-2,Hc-4);
+    // body
+    ctx.strokeStyle=COL.steel; ctx.lineWidth=2.5; ctx.strokeRect(pl,top,Wc,Hc);
+    // piston
+    ctx.fillStyle=COL.steel; ctx.fillRect(px-3,top+2,8,Hc-4);
+    // rod + load
+    ctx.lineWidth=5; ctx.beginPath(); ctx.moveTo(px+5,Y); ctx.lineTo(pr+Wc*0.28,Y); ctx.stroke();
+    ctx.fillStyle='#0E1B24'; ctx.strokeStyle=COL.out; ctx.lineWidth=2;
+    ctx.fillRect(pr+Wc*0.20,Y-Hc*0.55,Wc*0.14,Hc*1.1); ctx.strokeRect(pr+Wc*0.20,Y-Hc*0.55,Wc*0.14,Hc*1.1);
+    ctx.fillStyle=COL.text; ctx.font='10px ui-monospace, monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('load',pr+Wc*0.27,Y); ctx.textBaseline='alphabetic';
+    ctx.textAlign='center'; ctx.fillStyle=COL.text; ctx.fillText('cap', pl+(px-pl)/2, bot+13); ctx.fillText('rod', px+(pr-px)/2, bot+13);
+    return {px,pl,pr,top,bot,Y};
+  }
+  function gauge(ctx,cx,cy,r,pbar,label){
+    ctx.strokeStyle=COL.steel; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(cx,cy,r,0,7); ctx.stroke();
+    const frac=Math.max(0,Math.min(1,pbar/220)); const a=Math.PI*0.75 + frac*Math.PI*1.5;
+    const hot=pbar>195; ctx.strokeStyle=hot?COL.red:COL.out; ctx.lineWidth=2.2;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+Math.cos(a)*r*0.8, cy+Math.sin(a)*r*0.8); ctx.stroke();
+    ctx.fillStyle=COL.text; ctx.font='9px ui-monospace, monospace'; ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.fillText(label, cx, cy+r+3); ctx.fillText(pbar.toFixed(0)+'bar', cx, cy+r+13);
+  }
+  function pump(ctx,cx,cy,r){ ctx.strokeStyle=COL.steel; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(cx,cy,r,0,7); ctx.stroke();
+    ctx.fillStyle=COL.out; ctx.beginPath(); ctx.moveTo(cx-r*0.4,cy-r*0.45); ctx.lineTo(cx+r*0.5,cy); ctx.lineTo(cx-r*0.4,cy+r*0.45); ctx.closePath(); ctx.fill();
+    ctx.fillStyle=COL.text; ctx.font='9px ui-monospace, monospace'; ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillText('pump',cx,cy+r+3); }
+  function flowLine(ctx,pts,active,dir,t){ ctx.strokeStyle=active?COL.out:'#2c3f49'; ctx.lineWidth=active?2.4:1.6;
+    ctx.beginPath(); pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.stroke();
+    if(active && !REDUCED){ ctx.setLineDash([5,9]); ctx.lineDashOffset=-(t*60*dir)%14; ctx.strokeStyle=COL.blue; ctx.lineWidth=1.6;
+      ctx.beginPath(); pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.stroke(); ctx.setLineDash([]); ctx.lineDashOffset=0; } }
+
+  // ---------------- Demo 1: the circuit ----------------
+  (function buildCircuit(){
+    const root=document.querySelector('[data-demo=circuit]'); if(!root) return;
+    const pic=root.querySelector('.pic');
+    const controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+    const params={}; let mode='hold', regen=false, x=0.12, raf=null, last=null;
+    addSliders(controls,[
+      {key:'Qp',label:'pump flow (L/min)',min:5,max:40,step:1,value:20,fmt:v=>v.toFixed(0)},
+      {key:'rodD',label:'rod diameter (mm)',min:16,max:40,step:1,value:28,fmt:v=>v.toFixed(0)},
+      {key:'load',label:'load (kN, resists motion)',min:0,max:60,step:1,value:15,fmt:v=>v.toFixed(0)}
+    ],params,null);
+    root.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>{ mode=b.dataset.mode;
+      root.querySelectorAll('[data-mode]').forEach(x=>x.classList.toggle('on',x.dataset.mode===mode)); }));
+    const regenBtn=root.querySelector('[data-regen]');
+    regenBtn.addEventListener('click',()=>{ regen=!regen; regenBtn.classList.toggle('on',regen); regenBtn.textContent='regen: '+(regen?'on':'off'); });
+    function physics(){
+      const Ac=areaCap(), Ar=areaRod(params.rodD), Aa=Ac-Ar, Q=params.Qp/60000, F=params.load*1000;
+      let v=0, pcap=PTANK/1e5, prod=PTANK/1e5, status='holding', stalled=false, flowRelief=0;
+      if(mode==='ext'){
+        if(regen){ const need=F/Ar; if(need>PRELIEF){ stalled=true; pcap=PRELIEF/1e5; prod=PRELIEF/1e5; status='stalled (relief)'; }
+          else { v=Q/Ar; pcap=need/1e5; prod=need/1e5; status='extending (regen)'; } }
+        else { const need=(F+PTANK*Aa)/Ac; if(need>PRELIEF){ stalled=true; pcap=PRELIEF/1e5; status='stalled (relief)'; }
+          else { v=Q/Ac; pcap=need/1e5; prod=PTANK/1e5; status='extending'; } }
+        if(x>=1){ v=0; status='fully extended'; pcap=Math.max(pcap, (F/Ac)/1e5); }
+      } else if(mode==='ret'){
+        const need=(F+PTANK*Ac)/Aa; if(need>PRELIEF){ stalled=true; prod=PRELIEF/1e5; status='stalled (relief)'; }
+        else { v=-Q/Aa; prod=need/1e5; pcap=PTANK/1e5; status='retracting'; }
+        if(x<=0){ v=0; status='fully retracted'; }
+      } else { // hold
+        // holding pressure supports load on cap side
+        pcap=Math.max(PTANK, F/Ac)/1e5; prod=PTANK/1e5;
+      }
+      return {v,pcap,prod,status,stalled,Ac,Ar,Aa,Q};
+    }
+    function draw(now){
+      const {ctx,W,H}=fitCanvas(pic,0.56); ctx.clearRect(0,0,W,H);
+      let dt=last?Math.min(0.05,(now-last)/1000):0.016; last=now;
+      const ph=physics(); x=Math.max(0,Math.min(1, x + (ph.v/STROKE)*dt)); const t=now/1000;
+      // power unit (left-bottom): pump + relief + tank
+      const puX=W*0.10, puY=H*0.72;
+      pump(ctx,puX,puY,15);
+      // relief valve indicator
+      ctx.strokeStyle=ph.stalled?COL.red:COL.steel; ctx.lineWidth=2; ctx.strokeRect(puX+30,puY-10,20,20);
+      ctx.fillStyle=ph.stalled?COL.red:COL.text; ctx.font='8px ui-monospace, monospace'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('PRV',puX+40,puY);
+      ctx.textBaseline='alphabetic';
+      // tank
+      ctx.strokeStyle=COL.steel; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(puX-12,puY+30); ctx.lineTo(puX-12,puY+42); ctx.lineTo(puX+12,puY+42); ctx.lineTo(puX+12,puY+30); ctx.stroke();
+      // cylinder
+      const cyl=drawCylinder(ctx, W*0.34, H*0.34, W*0.42, H*0.26, x, mode==='ext', mode==='ret');
+      // supply line pump -> cap or rod, depending on mode; and return line
+      const capPort=[cyl.pl+ (cyl.px-cyl.pl)*0.0+8, cyl.bot], rodPort=[cyl.pr-8, cyl.bot];
+      const junc=[puX+60, puY];
+      if(mode==='ext'){
+        flowLine(ctx,[[puX+15,puY],junc,[capPort[0],puY],[capPort[0],capPort[1]]], !ph.stalled,1,t);
+        if(!regen) flowLine(ctx,[[rodPort[0],rodPort[1]],[rodPort[0],puY+18],[puX,puY+18],[puX,puY+15]], !ph.stalled,1,t);
+        else flowLine(ctx,[[rodPort[0],rodPort[1]],[rodPort[0],cyl.bot+20],[capPort[0],cyl.bot+20]], !ph.stalled,1,t);
+      } else if(mode==='ret'){
+        flowLine(ctx,[[puX+15,puY],junc,[rodPort[0],puY],[rodPort[0],rodPort[1]]], !ph.stalled,1,t);
+        flowLine(ctx,[[capPort[0],capPort[1]],[capPort[0],puY+18],[puX,puY+18],[puX,puY+15]], !ph.stalled,1,t);
+      } else {
+        flowLine(ctx,[[puX+15,puY],junc], false,1,t);
+      }
+      // gauges
+      gauge(ctx, cyl.pl+18, cyl.top-4, 15, ph.pcap, 'Pcap');
+      gauge(ctx, cyl.pr-18, cyl.top-4, 15, ph.prod, 'Prod');
+      // readouts
+      const speed=Math.abs(ph.v)*1000;
+      setReadouts(ro,[
+        {label:'status', value:ph.status, cls: ph.stalled?'warn':(speed>1?'good':'')},
+        {label:'speed', value:speed.toFixed(0)+' mm/s'},
+        {label:'Pcap', value:ph.pcap.toFixed(0)+' bar', cls: ph.pcap>195?'warn':''},
+        {label:'flow', value:params.Qp.toFixed(0)+' L/min'},
+        {label:'area ratio', value:(ph.Ac/ph.Aa).toFixed(2)}
+      ]);
+      raf=requestAnimationFrame(draw);
+    }
+    window.addEventListener('resize',()=>{ if(REDUCED) fitCanvas(pic,0.56); });
+    if(REDUCED){ last=performance.now(); draw(performance.now()); cancelAnimationFrame(raf); }
+    else raf=requestAnimationFrame(draw);
+  })();
+
+  // ---------------- Demo 2: asymmetry bars ----------------
+  (function buildBars(){
+    const root=document.querySelector('[data-demo=bars]'); if(!root) return;
+    const plot=root.querySelector('.plot');
+    const controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+    const params={};
+    addSliders(controls,[
+      {key:'Qp',label:'pump flow (L/min)',min:5,max:40,step:1,value:20,fmt:v=>v.toFixed(0)},
+      {key:'rodD',label:'rod diameter (mm)',min:16,max:40,step:1,value:28,fmt:v=>v.toFixed(0)}
+    ],params,onChange);
+    function calc(){ const Ac=areaCap(), Ar=areaRod(params.rodD), Aa=Ac-Ar, Q=params.Qp/60000;
+      return {
+        ext:{v:Q/Ac*1000, F:PRELIEF*Ac/1000},
+        ret:{v:Q/Aa*1000, F:PRELIEF*Aa/1000},
+        reg:{v:Q/Ar*1000, F:PRELIEF*Ar/1000}
+      }; }
+    function draw(){
+      const {ctx,W,H}=fitCanvas(plot,0.5); const pad={l:44,r:14,t:20,b:40}; ctx.clearRect(0,0,W,H);
+      const d=calc(); const rows=[['extend',d.ext,COL.out],['retract',d.ret,COL.blue],['regen',d.reg,COL.in]];
+      const vmax=Math.max(d.ext.v,d.ret.v,d.reg.v)*1.1, fmax=Math.max(d.ext.F,d.ret.F,d.reg.F)*1.1;
+      const colW=(W-pad.l-pad.r)/3, half=colW*0.32;
+      ctx.fillStyle=COL.text; ctx.font='10px ui-monospace, monospace';
+      rows.forEach((r,i)=>{ const cx=pad.l+colW*(i+0.5);
+        const vh=(r[1].v/vmax)*(H-pad.t-pad.b), fh=(r[1].F/fmax)*(H-pad.t-pad.b);
+        ctx.fillStyle=r[2]; ctx.fillRect(cx-half-2, (H-pad.b)-vh, half, vh);
+        ctx.fillStyle='#3a5464'; ctx.fillRect(cx+2, (H-pad.b)-fh, half, fh);
+        ctx.fillStyle=COL.text; ctx.textAlign='center'; ctx.textBaseline='top';
+        ctx.fillText(r[0], cx, H-pad.b+4);
+        ctx.fillStyle=r[2]; ctx.textBaseline='bottom'; ctx.fillText(r[1].v.toFixed(0), cx-half/2-2, (H-pad.b)-vh-2);
+        ctx.fillStyle='#8aa1ae'; ctx.fillText((r[1].F).toFixed(0), cx+half/2+2, (H-pad.b)-fh-2);
+      });
+      ctx.strokeStyle=COL.grid2; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(pad.l,H-pad.b); ctx.lineTo(W-pad.r,H-pad.b); ctx.stroke();
+      ctx.fillStyle=COL.out; ctx.textAlign='left'; ctx.textBaseline='alphabetic'; ctx.fillText('■ speed (mm/s)', pad.l, pad.t+2);
+      ctx.fillStyle='#3a5464'; ctx.fillText('■ max force (kN)', pad.l+120, pad.t+2);
+    }
+    function onChange(){ draw(); const d=calc();
+      setReadouts(ro,[
+        {label:'extend', value:d.ext.v.toFixed(0)+' mm/s · '+d.ext.F.toFixed(0)+' kN'},
+        {label:'retract', value:d.ret.v.toFixed(0)+' mm/s · '+d.ret.F.toFixed(0)+' kN'},
+        {label:'speed ratio ret/ext', value:(d.ret.v/d.ext.v).toFixed(2)+'×'}
+      ]);
+    }
+    window.addEventListener('resize',draw);
+    onChange();
+  })();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hydraulic Circuits · 1 · The Single Cylinder</title>
+<style>
+  :root{
+    --paper:#EEF2F5; --card:#FFFFFF; --ink:#17252E; --muted:#5E7686;
+    --line:#D3DDE4; --line2:#E3EAEF;
+    --panel:#0E1B24; --grid2:#16262F; --axis:#3A5464;
+    --in:#E8A33D; --out:#22C3AE; --accent:#22C3AE; --accent-ink:#0A5B52; --blue:#9BD0FF; --red:#FF8FA3; --oil:#E8A33D;
+    --mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); line-height:1.6; font-size:17px; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:940px; margin:0 auto; padding:0 20px 120px}
+  header.hero{padding:64px 0 34px; border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono); font-size:.78rem; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); margin:0 0 14px}
+  h1{font-size:clamp(2rem,5vw,3.1rem); line-height:1.06; margin:0 0 18px; letter-spacing:-.02em; font-weight:750}
+  .lede{font-size:1.12rem; color:#33454f; max-width:62ch; margin:0}
+  h2{font-size:1.02rem; font-family:var(--mono); letter-spacing:.04em; text-transform:uppercase; color:var(--muted); margin:52px 0 14px; font-weight:600}
+  h3{font-size:1.5rem; letter-spacing:-.01em; margin:6px 0 10px; font-weight:700}
+  p{margin:0 0 16px}
+  em{font-style:normal; color:var(--accent-ink); font-weight:600}
+  .goal{background:var(--card); border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:0 14px 14px 0; padding:18px 22px; margin:20px 0}
+  .goal .lab{font-family:var(--mono); font-size:.72rem; letter-spacing:.16em; text-transform:uppercase; color:var(--accent-ink); display:block; margin-bottom:6px}
+  .eq{font-family:var(--mono); background:var(--panel); color:#DCE7EC; border-radius:12px; padding:18px 20px; margin:16px 0; overflow-x:auto; font-size:.98rem; line-height:2}
+  .eq .cmt{color:#6E8794} .eq .hl-in{color:var(--in)} .eq .hl-out{color:var(--out)} .eq .hl-k{color:#9BD0FF}
+  .plain-eq{font-family:var(--mono); font-size:1rem; color:var(--ink); background:#F6F9FB; border:1px solid var(--line2); border-radius:9px; padding:10px 14px; display:inline-block; margin:4px 0}
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 4px}
+  .chip{font-family:var(--mono); font-size:.82rem; padding:6px 11px; border-radius:999px; background:#F0F5F8; border:1px solid var(--line); color:#3a4d57}
+
+  .demo{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; margin:22px 0}
+  .demo > canvas{background:var(--panel); border-radius:10px; width:100%; height:auto; display:block}
+  .stage{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  @media (max-width:640px){ .stage{grid-template-columns:1fr} }
+  .stage canvas{background:var(--panel); border-radius:10px; width:100%; height:auto; display:block}
+  .controls{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px 20px; margin:16px 4px 4px}
+  @media (max-width:640px){ .controls{grid-template-columns:1fr} }
+  .ctrl{display:flex; flex-direction:column; gap:5px}
+  .ctrl .row{display:flex; justify-content:space-between; align-items:baseline; font-family:var(--mono); font-size:.86rem}
+  .ctrl .name{color:var(--ink)} .ctrl .val{color:var(--accent-ink); font-weight:600}
+  input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:5px; background:var(--line); border-radius:5px; outline:none; margin:6px 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none; width:18px; height:18px; border-radius:50%; background:var(--accent); border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,.25); cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--accent); border:2px solid #fff; cursor:pointer}
+  input[type=range]:focus-visible{box-shadow:0 0 0 3px rgba(34,195,174,.35)}
+  .btnrow{display:flex; flex-wrap:wrap; gap:8px; margin:14px 4px 2px; align-items:center}
+  .btn{font-family:var(--mono); font-size:.78rem; color:var(--accent-ink); background:none; border:1px solid var(--line); border-radius:8px; padding:6px 12px; cursor:pointer}
+  .btn:hover{background:#F0F5F8} .btn.on{background:var(--accent); color:#04302b; border-color:var(--accent)}
+  .readouts{display:flex; flex-wrap:wrap; gap:8px 10px; margin:14px 4px 2px; font-family:var(--mono); font-size:.82rem}
+  .ro{background:#F0F5F8; border:1px solid var(--line); border-radius:8px; padding:6px 10px; color:#3a4d57}
+  .ro b{color:var(--accent-ink)}
+  .ro.good{background:#eafaf6; border-color:var(--accent)} .ro.good b{color:var(--accent-ink)}
+  .ro.warn{background:#3a1c22; border-color:var(--red)} .ro.warn b{color:var(--red)}
+
+  .takeaways{background:var(--panel); color:#DCE7EC; border-radius:16px; padding:26px 28px; margin:40px 0}
+  .takeaways h3{color:#fff} .takeaways li{margin:9px 0} .takeaways b{color:var(--out)}
+  details{background:var(--card); border:1px solid var(--line); border-radius:11px; padding:2px 16px; margin:10px 0}
+  details[open]{padding-bottom:12px}
+  summary{cursor:pointer; font-weight:600; padding:12px 0; list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"▸ "; color:var(--accent-ink)} details[open] summary::before{content:"▾ "}
+  .qa{font-size:.97rem} .qa p{margin:8px 0}
+  ol.ex{padding-left:1.3em} ol.ex li{margin:8px 0}
+  footer{margin-top:60px; padding-top:20px; border-top:1px solid var(--line); font-family:var(--mono); font-size:.8rem; color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <p class="eyebrow">Foundations of Dynamic Systems · Hydraulic Circuits · 1</p>
+  <h1>The Single Cylinder</h1>
+  <p class="lede">Before circuits with many actuators, master the one at the heart of them all. A hydraulic
+  cylinder turns oil flow into motion and oil pressure into force — and because a rod sticks out of only one
+  end, it does those two jobs <em>differently</em> going out than coming back. Understanding that asymmetry is
+  the foundation of every circuit that follows.</p>
+</header>
+
+<div class="goal"><span class="lab">The mission</span>
+  Build a mental model of a single-cylinder circuit — pump, relief valve, directional valve, cylinder — and
+  learn the two master equations: <em>flow sets speed</em> and <em>pressure sets force</em>. Then discover why a
+  differential cylinder extends slow-and-strong but retracts fast-and-weak.
+</div>
+
+<h2>Step 1 · The two master equations</h2>
+<h3>Flow → speed, pressure → force</h3>
+<p>A cylinder is an area A the oil pushes on. Everything follows from two facts. The <em>flow</em> Q pouring in
+has to fill the volume the piston sweeps, so the piston speed is flow ÷ area. The <em>pressure</em> P acts over
+that same area to make force:</p>
+<div class="eq">
+  speed &nbsp; v = <span class="frac">Q / A</span>
+  &nbsp;&nbsp;<span class="cmt">// litres per second ÷ area = metres per second</span>
+  <br>
+  force &nbsp; F = P · A
+  &nbsp;&nbsp;<span class="cmt">// pressure × area = newtons</span>
+</div>
+<p>Now the twist: a differential cylinder has <em>two different areas</em>. The full bore (cap side) is area
+A<sub>c</sub>; the rod steals some area on the other side, leaving the smaller annulus A<sub>a</sub> = A<sub>c</sub>
+− A<sub>rod</sub>. Push oil into the cap to <em>extend</em>; push into the rod side to <em>retract</em>. Same pump,
+two different areas — so two different speeds and two different forces.</p>
+
+<h2>Step 2 · Run the circuit</h2>
+<h3>Extend, retract, and watch the pressure find the load</h3>
+<p>Here's the circuit: a fixed-flow pump, a relief valve that caps the pressure, a directional valve you switch,
+and the cylinder driving a load. Extend and retract it, change the pump flow and the load, and watch two things:
+the piston moves faster on the smaller area, and the pressure rises only as high as the load demands — until the
+load is too heavy, the relief valve blows off, and the cylinder <em>stalls</em>.</p>
+
+<div class="demo" data-demo="circuit">
+  <canvas class="pic"></canvas>
+  <div class="btnrow">
+    <span style="font-family:var(--mono);font-size:.78rem;color:var(--muted)">valve:</span>
+    <button class="btn on" data-dir="extend">◀ extend</button>
+    <button class="btn" data-dir="hold">■ hold</button>
+    <button class="btn" data-dir="retract">retract ▶</button>
+  </div>
+  <div class="controls"></div>
+  <div class="readouts"></div>
+</div>
+
+<p>Notice the pressure gauge: on a light load the system runs at low pressure (it only makes the force it needs);
+on a heavy load the pressure climbs. Hit the relief setting and the excess oil dumps back to tank — the gauge
+pins, the cylinder stops, and you're just heating oil. A hydraulic system makes <em>force on demand</em>, not a
+fixed force.</p>
+
+<h2>Step 3 · The differential asymmetry</h2>
+<h3>Fat rod = faster, weaker retract</h3>
+<p>Change the rod diameter and watch the extend and retract numbers split apart. Because retract uses the smaller
+annulus area, the <em>same</em> pump flow makes the piston move faster coming back — but that smaller area also
+makes <em>less</em> force at the same pressure. Extend is the mirror image: slow but strong. The ratio of the two
+is exactly the ratio of the areas.</p>
+
+<div class="demo" data-demo="asym">
+  <canvas class="plot"></canvas>
+  <div class="controls"></div>
+  <div class="readouts"></div>
+</div>
+
+<div class="chips">
+  <span class="chip">v = Q / A</span>
+  <span class="chip">F = P · A</span>
+  <span class="chip">extend: slow &amp; strong (A<sub>c</sub>)</span>
+  <span class="chip">retract: fast &amp; weak (A<sub>a</sub>)</span>
+  <span class="chip">relief caps pressure → caps force</span>
+  <span class="chip">power = P · Q</span>
+</div>
+
+<div class="takeaways">
+  <h3>Key takeaways</h3>
+  <ul>
+    <li><b>Flow sets speed, pressure sets force:</b> v = Q/A and F = P·A are the two equations behind every
+      hydraulic circuit.</li>
+    <li><b>A differential cylinder has two areas:</b> the full cap A<sub>c</sub> and the smaller rod-side annulus
+      A<sub>a</sub>.</li>
+    <li><b>Extend is slow &amp; strong; retract is fast &amp; weak,</b> with the speed and force ratios both equal
+      to A<sub>c</sub>/A<sub>a</sub>.</li>
+    <li><b>Pressure rises to meet the load</b> — no more. The relief valve caps it, which caps the available force
+      and causes stall when the load is too heavy.</li>
+    <li><b>Return flow differs from supply flow</b> because the two sides have different areas — on retract the
+      cap-side return actually exceeds pump flow.</li>
+    <li>These fundamentals scale directly to the multi-cylinder circuits ahead.</li>
+  </ul>
+</div>
+
+<h2>Investigate further</h2>
+<ol class="ex">
+  <li><b>Speed ratio.</b> A cylinder has a 50 mm bore and a 28 mm rod. By what factor is retract faster than extend?</li>
+  <li><b>Force from pressure.</b> With that cylinder at 150 bar, what force does it make extending vs retracting?</li>
+  <li><b>Stall.</b> Explain what physically happens when the load needs more force than the relief valve pressure can
+    provide. Where does the pump's energy go?</li>
+  <li><b>Design.</b> A machine must push hard while extending but return quickly. Explain why a differential cylinder
+    is naturally suited to this, and one situation where you'd instead want a double-rod (symmetric) cylinder.</li>
+</ol>
+
+<details><summary>Show discussion &amp; answers</summary>
+  <div class="qa">
+    <p><b>1.</b> A<sub>c</sub> = (π/4)·50² = 1963 mm²; A<sub>rod</sub> = (π/4)·28² = 616 mm²; A<sub>a</sub> = 1963 − 616
+    = 1347 mm². Retract/extend speed ratio = A<sub>c</sub>/A<sub>a</sub> = 1963/1347 ≈ <b>1.46×</b> faster.</p>
+    <p><b>2.</b> Extend F = P·A<sub>c</sub> = 150×10⁵ Pa × 1963×10⁻⁶ m² ≈ <b>29.5 kN</b>. Retract F = P·A<sub>a</sub> =
+    150×10⁵ × 1347×10⁻⁶ ≈ <b>20.2 kN</b>. The extend force is larger by the same 1.46× ratio.</p>
+    <p><b>3.</b> The pressure rises until it hits the relief setting, but that's still not enough force (F = P·A) to move
+    the load, so the piston stalls. The pump keeps delivering flow, which now has nowhere to go but over the relief valve
+    back to tank — all that hydraulic power (P·Q) turns into <b>heat</b>. Stalling against the relief is a common cause of
+    hydraulic systems overheating.</p>
+    <p><b>4.</b> A differential cylinder extends on the large cap area (slow, high force — good for the working push) and
+    retracts on the small annulus area (fast, lower force — fine for a no-load return), which is exactly a "push hard,
+    return quickly" duty. You'd choose a <b>double-rod / symmetric</b> cylinder when you need equal speed and force in
+    both directions — for example a servo actuator whose control behaviour must be identical extending and retracting, so
+    the dynamics don't change with direction.</p>
+  </div>
+</details>
+
+<footer>
+  Hydraulic Circuits 1 · self-contained, no external libraries or network · speeds, forces, pressures, and flows all
+  computed live from v = Q/A and F = P·A. Next: two cylinders in series.
+</footer>
+
+</div><!-- /wrap -->
+
+<script>
+"use strict";
+(function(){
+  const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const COL={in:'#E8A33D',out:'#22C3AE',grid2:'#16262F',axis:'#3A5464',text:'#7FA0AE',blue:'#9BD0FF',red:'#FF8FA3',oil:'#E8A33D',steel:'#5E7686'};
+  const BORE=0.050, STROKE=0.30, PRELIEF=160e5; // Pa
+
+  function el(tag,cls){const e=document.createElement(tag); if(cls)e.className=cls; return e;}
+  function fitCanvas(cv,aspect){
+    const dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1));
+    const cssW=cv.clientWidth || cv.parentElement.clientWidth || 300;
+    const cssH=Math.round(cssW*aspect);
+    cv.style.height=cssH+'px'; cv.width=Math.round(cssW*dpr); cv.height=Math.round(cssH*dpr);
+    const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); return {ctx,W:cssW,H:cssH};
+  }
+  function addSliders(container,defs,params,onChange,handles){
+    defs.forEach(p=>{ params[p.key]=p.value;
+      const c=el('div','ctrl'), row=el('div','row');
+      const name=el('span','name'); name.innerHTML=p.label;
+      const val=el('span','val'); const fmt=p.fmt||(v=>v.toFixed(2)); val.textContent=fmt(p.value);
+      row.appendChild(name); row.appendChild(val);
+      const inp=document.createElement('input'); inp.type='range';
+      inp.min=p.min; inp.max=p.max; inp.step=p.step; inp.value=p.value;
+      inp.setAttribute('aria-label',(p.aria||p.label).replace(/<[^>]+>/g,''));
+      inp.addEventListener('input',()=>{ params[p.key]=parseFloat(inp.value); val.textContent=fmt(params[p.key]); onChange&&onChange(); });
+      c.appendChild(row); c.appendChild(inp); container.appendChild(c);
+      if(handles) handles[p.key]={inp,val,fmt};
+    });
+  }
+  function setReadouts(container,items){ container.innerHTML='';
+    items.forEach(r=>{ const s=el('span','ro'+(r.cls?' '+r.cls:'')); s.innerHTML=r.label+' <b>'+r.value+'</b>'; container.appendChild(s); }); }
+  function areas(rodRatio){ const Ac=Math.PI/4*BORE*BORE; const Arod=Ac*rodRatio*rodRatio; return {Ac, Aa:Ac-Arod}; }
+
+  // ---------------- Demo 1: live circuit ----------------
+  (function buildCircuit(){
+    const root=document.querySelector('[data-demo=circuit]'); if(!root) return;
+    const pic=root.querySelector('.pic');
+    const controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+    const params={}; let dir='extend', x=0.12, raf=null, last=null, flowPhase=0;
+    addSliders(controls,[
+      {key:'Q',label:'pump flow (L/min)',min:4,max:40,step:1,value:20,fmt:v=>v.toFixed(0)},
+      {key:'load',label:'load (kN)',min:0,max:40,step:1,value:12,fmt:v=>v.toFixed(0)},
+      {key:'rod',label:'rod / bore ratio',min:0.2,max:0.75,step:0.01,value:0.56,fmt:v=>v.toFixed(2)}
+    ],params,null);
+    root.querySelectorAll('[data-dir]').forEach(b=>b.addEventListener('click',()=>{ dir=b.dataset.dir;
+      root.querySelectorAll('[data-dir]').forEach(o=>o.classList.toggle('on',o===b)); }));
+    function physics(){ const {Ac,Aa}=areas(params.rod); const Q=params.Q/60000, F=params.load*1000;
+      const A = dir==='retract'? Aa : Ac; const availF=PRELIEF*A;
+      let stalled=false, P, v=0, retFlow=0;
+      if(dir==='hold'){ v=0; P=Math.min(PRELIEF, F/Ac); }
+      else { if(F>availF){ stalled=true; P=PRELIEF; v=0; } else { P=Math.max(3e5,F/A); v=Q/A; if(dir==='retract') v=-v; }
+        retFlow = dir==='retract'? Ac*Math.abs(v) : Aa*Math.abs(v); }
+      // end-of-travel deadhead
+      const atEnd = (x>=STROKE-1e-4 && (dir==='extend')) || (x<=1e-4 && dir==='retract');
+      if(atEnd){ v=0; P=Math.min(PRELIEF, dir==='hold'?P:PRELIEF); }
+      return {Ac,Aa,A,Q,F,P,v,stalled:stalled||(atEnd&&dir!=='hold'),retFlow,availF};
+    }
+    function line(ctx,pts,active,rev){ ctx.strokeStyle=active?COL.oil:'#2b3d47'; ctx.lineWidth=active?3:2.5;
+      ctx.beginPath(); pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.stroke();
+      if(active){ ctx.fillStyle=COL.oil; for(let i=0;i<pts.length-1;i++){ const a=pts[i],b=pts[i+1];
+        const t=(flowPhase%1); const mx=a[0]+(b[0]-a[0])*t, my=a[1]+(b[1]-a[1])*t;
+        const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy)||1; const ux=dx/L*(rev?-1:1),uy=dy/L*(rev?-1:1);
+        ctx.beginPath(); ctx.moveTo(mx+ux*4,my+uy*4); ctx.lineTo(mx-ux*3+uy*3,my-uy*3-ux*3); ctx.lineTo(mx-ux*3-uy*3,my-uy*3+ux*3); ctx.closePath(); ctx.fill(); } }
+    }
+    function draw(now){
+      const {ctx,W,H}=fitCanvas(pic,0.60); const ph=physics();
+      let dt=last?Math.min(0.05,(now-last)/1000):0.016; last=now;
+      x=Math.max(0,Math.min(STROKE, x+ph.v*dt)); flowPhase+=dt*2.2;
+      ctx.clearRect(0,0,W,H);
+      // ---- cylinder (right) ----
+      const cylL=W*0.42, cylR=W*0.86, midY=H*0.40, cylTop=midY-H*0.14, cylBot=midY+H*0.14;
+      const frac=x/STROKE, pistonX=cylL+8+(cylR-cylL-16)*frac;
+      ctx.strokeStyle=COL.steel; ctx.lineWidth=2.5; ctx.strokeRect(cylL,cylTop,cylR-cylL,cylBot-cylTop);
+      // cap-side oil (left of piston), rod-side (right)
+      const extending = ph.v>0, retracting=ph.v<0;
+      ctx.fillStyle='rgba(232,163,61,0.28)'; ctx.fillRect(cylL+1,cylTop+1,pistonX-cylL-1,cylBot-cylTop-2);
+      ctx.fillStyle='rgba(155,208,255,0.12)'; ctx.fillRect(pistonX+6,cylTop+1,cylR-pistonX-7,cylBot-cylTop-2);
+      // piston + rod + load
+      ctx.fillStyle=COL.steel; ctx.fillRect(pistonX-3,cylTop+2,6,cylBot-cylTop-4);
+      const rodH=(cylBot-cylTop)*params.rod*0.9;
+      ctx.fillRect(pistonX,midY-rodH/2, (cylR-pistonX)+W*0.02, rodH);
+      ctx.fillStyle='#0E1B24'; ctx.strokeStyle=ph.stalled?COL.red:COL.out; ctx.lineWidth=2.4;
+      ctx.fillRect(cylR+W*0.02,midY-H*0.11,W*0.09,H*0.22); ctx.strokeRect(cylR+W*0.02,midY-H*0.11,W*0.09,H*0.22);
+      ctx.fillStyle=COL.text; ctx.font='10px ui-monospace, monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('load',cylR+W*0.065,midY); ctx.textBaseline='alphabetic';
+      ctx.textAlign='left'; ctx.fillStyle=COL.oil; ctx.fillText('cap Ac',cylL+4,cylTop-5);
+      ctx.fillStyle=COL.blue; ctx.textAlign='right'; ctx.fillText('rod Aa',cylR-4,cylTop-5);
+      // ---- pump (bottom-left) ----
+      const pumpX=W*0.10, pumpY=H*0.78, pr=H*0.075;
+      ctx.strokeStyle=COL.steel; ctx.lineWidth=2.5; ctx.fillStyle='#0E1B24';
+      ctx.beginPath(); ctx.arc(pumpX,pumpY,pr,0,7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle=COL.out; ctx.beginPath(); ctx.moveTo(pumpX-pr*0.4,pumpY-pr*0.5); ctx.lineTo(pumpX+pr*0.6,pumpY); ctx.lineTo(pumpX-pr*0.4,pumpY+pr*0.5); ctx.closePath(); ctx.fill();
+      ctx.fillStyle=COL.text; ctx.font='9px ui-monospace, monospace'; ctx.textAlign='center'; ctx.fillText('pump',pumpX,pumpY+pr+11);
+      // ---- relief valve ----
+      const relX=W*0.24, relY=pumpY;
+      ctx.strokeStyle=COL.steel; ctx.lineWidth=2; ctx.strokeRect(relX-10,relY-12,20,24);
+      ctx.beginPath(); ctx.moveTo(relX,relY-12); ctx.lineTo(relX,relY-24); ctx.stroke();
+      const blowing=ph.stalled||ph.P>=PRELIEF-1e5;
+      ctx.strokeStyle=blowing?COL.red:COL.steel; ctx.beginPath(); ctx.moveTo(relX-6,relY+4); ctx.lineTo(relX+6,relY-4); ctx.stroke();
+      ctx.fillStyle=blowing?COL.red:COL.text; ctx.font='9px ui-monospace, monospace'; ctx.fillText('relief',relX,relY+pr+11);
+      // ---- DCV box ----
+      const dcvX=W*0.42-24, dcvY=H*0.66;
+      ctx.strokeStyle=COL.steel; ctx.lineWidth=2; ctx.strokeRect(dcvX-22,dcvY-14,44,28);
+      ctx.fillStyle=COL.text; ctx.fillText('valve',dcvX,dcvY+24);
+      const dirTxt = dir==='extend'?'▶ extend':dir==='retract'?'◀ retract':'■ hold';
+      ctx.fillStyle=dir==='hold'?COL.text:COL.oil; ctx.fillText(dirTxt,dcvX,dcvY-20);
+      // ---- lines with flow ----
+      const supplyActive = dir!=='hold' && !ph.stalled;
+      line(ctx,[[pumpX,pumpY-pr],[pumpX,H*0.66],[dcvX-22,H*0.66]],supplyActive,false);       // pump→valve
+      line(ctx,[[relX,relY-24],[relX,H*0.60],[pumpX,H*0.60]],blowing,false);                  // relief dump (visual)
+      // valve→cylinder cap and rod lines
+      const capLineActive = supplyActive && dir==='extend';
+      const rodLineActive = supplyActive && dir==='retract';
+      line(ctx,[[dcvX+22,dcvY-6],[cylL-6,dcvY-6],[cylL-6,midY],[cylL,midY]],capLineActive,false);
+      line(ctx,[[dcvX+22,dcvY+6],[cylR+2,dcvY+6],[cylR+2,cylBot+6]],rodLineActive,false);
+      // pressure gauge
+      const gx=W*0.30, gy=H*0.30, gr=H*0.11;
+      ctx.strokeStyle=COL.steel; ctx.lineWidth=2; ctx.fillStyle='#0E1B24'; ctx.beginPath(); ctx.arc(gx,gy,gr,0,7); ctx.fill(); ctx.stroke();
+      const frac2=Math.min(1,ph.P/PRELIEF), ang=Math.PI*0.8 + frac2*Math.PI*1.4;
+      ctx.strokeStyle=blowing?COL.red:COL.out; ctx.lineWidth=2.5; ctx.beginPath(); ctx.moveTo(gx,gy); ctx.lineTo(gx+Math.cos(ang)*gr*0.8,gy+Math.sin(ang)*gr*0.8); ctx.stroke();
+      ctx.fillStyle=COL.text; ctx.font='9px ui-monospace, monospace'; ctx.textAlign='center'; ctx.fillText((ph.P/1e5).toFixed(0)+' bar',gx,gy+gr+11);
+      if(ph.stalled){ ctx.fillStyle=COL.red; ctx.font='11px ui-monospace, monospace'; ctx.textAlign='right'; ctx.fillText('STALLED — relief dumping to tank',W-8,H-8); }
+      // readouts
+      setReadouts(ro,[
+        {label:'mode', value: dir==='hold'?'holding':(ph.v>0?'extending':ph.v<0?'retracting':'stalled')},
+        {label:'speed', value:(Math.abs(ph.v)*1000).toFixed(0)+' mm/s', cls: Math.abs(ph.v)>0?'good':''},
+        {label:'pressure', value:(ph.P/1e5).toFixed(0)+' bar', cls: ph.stalled?'warn':''},
+        {label:'max force now', value:(ph.availF/1000).toFixed(1)+' kN'},
+        {label:'return flow', value:(ph.retFlow*60000).toFixed(1)+' L/min'},
+        {label:'power', value:(ph.P*ph.Q/1000).toFixed(1)+' kW'}
+      ]);
+      raf=requestAnimationFrame(draw);
+    }
+    window.addEventListener('resize',()=>{ if(REDUCED) fitCanvas(pic,0.60); });
+    if(REDUCED){ last=performance.now(); draw(performance.now()); cancelAnimationFrame(raf); }
+    else raf=requestAnimationFrame(draw);
+  })();
+
+  // ---------------- Demo 2: extend/retract asymmetry ----------------
+  (function buildAsym(){
+    const root=document.querySelector('[data-demo=asym]'); if(!root) return;
+    const plot=root.querySelector('.plot');
+    const controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+    const params={};
+    addSliders(controls,[
+      {key:'Q',label:'pump flow (L/min)',min:4,max:40,step:1,value:20,fmt:v=>v.toFixed(0)},
+      {key:'rod',label:'rod / bore ratio',min:0.2,max:0.75,step:0.01,value:0.56,fmt:v=>v.toFixed(2)},
+      {key:'P',label:'pressure (bar)',min:20,max:250,step:5,value:150,fmt:v=>v.toFixed(0)}
+    ],params,onChange);
+    function draw(){
+      const {ctx,W,H}=fitCanvas(plot,0.60); ctx.clearRect(0,0,W,H);
+      const {Ac,Aa}=areas(params.rod); const Q=params.Q/60000, P=params.P*1e5;
+      const vE=Q/Ac, vR=Q/Aa, fE=P*Ac, fR=P*Aa;
+      const pad={l:12,r:12,t:20,b:24}; const colW=(W-pad.l-pad.r)/4;
+      const bars=[
+        {x:0, label:'extend v', val:vE*1000, unit:'mm/s', max:vR*1000*1.15, col:COL.out},
+        {x:1, label:'retract v', val:vR*1000, unit:'mm/s', max:vR*1000*1.15, col:COL.out},
+        {x:2, label:'extend F', val:fE/1000, unit:'kN', max:fE/1000*1.15, col:COL.in},
+        {x:3, label:'retract F', val:fR/1000, unit:'kN', max:fE/1000*1.15, col:COL.in}
+      ];
+      bars.forEach(b=>{ const cx=pad.l+b.x*colW+colW*0.5, bw=colW*0.5;
+        const h=(H-pad.t-pad.b)*(b.val/b.max); const y0=H-pad.b;
+        ctx.fillStyle=b.col; ctx.globalAlpha=b.x%2? .6:1; ctx.fillRect(cx-bw/2,y0-h,bw,h); ctx.globalAlpha=1;
+        ctx.fillStyle=COL.text; ctx.font='10px ui-monospace, monospace'; ctx.textAlign='center';
+        ctx.fillText(b.val.toFixed(b.unit==='kN'?1:0), cx, y0-h-5);
+        ctx.fillStyle='#9fb4bf'; ctx.font='9px ui-monospace, monospace'; ctx.fillText(b.label, cx, y0+12);
+      });
+      ctx.strokeStyle=COL.grid2; ctx.beginPath(); ctx.moveTo(pad.l,H-pad.b); ctx.lineTo(W-pad.r,H-pad.b); ctx.moveTo(W/2,pad.t); ctx.lineTo(W/2,H-pad.b); ctx.stroke();
+      ctx.fillStyle=COL.text; ctx.font='9px ui-monospace, monospace'; ctx.textAlign='center'; ctx.textBaseline='top';
+      ctx.fillText('SPEED (teal)', W*0.25, pad.t-14); ctx.fillText('FORCE (amber)', W*0.75, pad.t-14);
+    }
+    function onChange(){ draw();
+      const {Ac,Aa}=areas(params.rod); const ratio=Ac/Aa;
+      setReadouts(ro,[
+        {label:'Ac (cap)', value:(Ac*1e4).toFixed(1)+' cm²'},
+        {label:'Aa (rod side)', value:(Aa*1e4).toFixed(1)+' cm²'},
+        {label:'area ratio Ac/Aa', value:ratio.toFixed(2)},
+        {label:'retract is', value:ratio.toFixed(2)+'× faster, '+ (1/ratio).toFixed(2)+'× the force'}
+      ]);
+    }
+    window.addEventListener('resize',draw);
+    onChange();
+  })();
+})();
+</script>
+</body>
+</html>

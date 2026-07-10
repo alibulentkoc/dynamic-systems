@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 1 · Dynamic Systems Everywhere</title>
+<style>
+  :root{
+    --paper:#EEF2F5; --card:#FFFFFF; --ink:#17252E; --muted:#5E7686; --line:#D3DDE4; --line2:#E3EAEF;
+    --panel:#0E1B24; --grid2:#16262F; --axis:#3A5464;
+    --in:#E8A33D; --out:#22C3AE; --accent:#22C3AE; --accent-ink:#0A5B52; --blue:#9BD0FF; --red:#FF8FA3; --steel:#8296a0;
+    --mono: ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    --sans: system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box} html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.6;font-size:17px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:940px;margin:0 auto;padding:0 20px 120px}
+  header.hero{padding:64px 0 34px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono);font-size:.78rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+  h1{font-size:clamp(2rem,5vw,3.1rem);line-height:1.06;margin:0 0 18px;letter-spacing:-.02em;font-weight:750}
+  .lede{font-size:1.12rem;color:#33454f;max-width:62ch;margin:0}
+  h2{font-size:1.02rem;font-family:var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:52px 0 14px;font-weight:600}
+  h3{font-size:1.5rem;letter-spacing:-.01em;margin:6px 0 10px;font-weight:700}
+  p{margin:0 0 16px} em{font-style:normal;color:var(--accent-ink);font-weight:600}
+  .goal{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:0 14px 14px 0;padding:18px 22px;margin:20px 0}
+  .goal .lab{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-ink);display:block;margin-bottom:6px}
+  .eq{font-family:var(--mono);background:var(--panel);color:#DCE7EC;border-radius:12px;padding:18px 20px;margin:16px 0;overflow-x:auto;font-size:.98rem;line-height:2}
+  .eq .cmt{color:#6E8794} .eq .hl-in{color:var(--in)} .eq .hl-out{color:var(--out)} .eq .hl-k{color:#9BD0FF}
+  .plain-eq{font-family:var(--mono);font-size:1rem;color:var(--ink);background:#F6F9FB;border:1px solid var(--line2);border-radius:9px;padding:10px 14px;display:inline-block;margin:4px 0}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px}
+  .chip{font-family:var(--mono);font-size:.82rem;padding:6px 11px;border-radius:999px;background:#F0F5F8;border:1px solid var(--line);color:#3a4d57}
+  .demo{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:22px 0}
+  .demo>canvas{background:var(--panel);border-radius:10px;width:100%;height:auto;display:block}
+  .btnrow{display:flex;flex-wrap:wrap;gap:8px;margin:14px 4px 2px;align-items:center}
+  .btn{font-family:var(--mono);font-size:.78rem;color:var(--accent-ink);background:none;border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}
+  .btn:hover{background:#F0F5F8} .btn.on{background:var(--accent);color:#04302b;border-color:var(--accent)}
+  .controls{display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;margin:16px 4px 4px}
+  @media (max-width:640px){.controls{grid-template-columns:1fr}}
+  .ctrl{display:flex;flex-direction:column;gap:5px}
+  .ctrl .row{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:.86rem}
+  .ctrl .name{color:var(--ink)} .ctrl .val{color:var(--accent-ink);font-weight:600}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:5px;background:var(--line);border-radius:5px;outline:none;margin:6px 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.25);cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--accent);border:2px solid #fff;cursor:pointer}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:.78rem;color:var(--muted);margin:8px 4px}
+  .legend span::before{content:"— ";font-weight:700}
+  .readouts{display:flex;flex-wrap:wrap;gap:8px 10px;margin:14px 4px 2px;font-family:var(--mono);font-size:.82rem}
+  .ro{background:#F0F5F8;border:1px solid var(--line);border-radius:8px;padding:6px 10px;color:#3a4d57} .ro b{color:var(--accent-ink)}
+  .ro.good{background:#eafaf6;border-color:var(--accent)} .ro.good b{color:var(--accent-ink)}
+  .takeaways{background:var(--panel);color:#DCE7EC;border-radius:16px;padding:26px 28px;margin:40px 0}
+  .takeaways h3{color:#fff} .takeaways li{margin:9px 0} .takeaways b{color:var(--out)}
+  details{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:2px 16px;margin:10px 0}
+  details[open]{padding-bottom:12px}
+  summary{cursor:pointer;font-weight:600;padding:12px 0;list-style:none}
+  summary::-webkit-details-marker{display:none} summary::before{content:"▸ ";color:var(--accent-ink)} details[open] summary::before{content:"▾ "}
+  .qa{font-size:.97rem} .qa p{margin:8px 0}
+  ol.ex{padding-left:1.3em} ol.ex li{margin:8px 0}
+  footer{margin-top:60px;padding-top:20px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.8rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+  <p class="eyebrow">Foundations of Dynamic Systems · Lesson 1</p>
+  <h1>Dynamic Systems Everywhere</h1>
+  <p class="lede">Push a heavy cart and it eases up to speed, then coasts when you stop. Step on a scale and it
+  reads your weight almost at once. Those two everyday objects sit at opposite ends of one spectrum — and telling
+  them apart is the whole idea behind everything in this course. A <em>dynamic</em> system responds over time and
+  <em>remembers</em>; a <em>static</em> one just mirrors the input right now.</p>
+</header>
+
+<div class="goal"><span class="lab">The big idea</span>
+  A <em>static</em> system's output depends only on the input at this instant. A <em>dynamic</em> system's output
+  depends on the input's whole recent <em>history</em> — because it stores energy, and stored energy is memory.
+  The compact summary of that stored history is the system's <em>state</em>. Finding and using the state is what
+  this entire course is about.
+</div>
+
+<h2>Step 1 · Static vs. dynamic</h2>
+<h3>Memory is the whole distinction</h3>
+<p>The bathroom scale is nearly <em>static</em>: press with a force, it shows that force; remove it, the reading is
+gone. It stores almost no energy, so it has almost no memory. The shopping cart is <em>dynamic</em>: how fast it's
+moving depends not on how hard you push this instant, but on how hard you've pushed over the last few seconds. That
+memory has a physical name — <em>momentum</em> — and it's stored in the cart's <em>mass</em>.</p>
+<div class="chips">
+  <span class="chip">static → output tracks input now</span>
+  <span class="chip">dynamic → output remembers history</span>
+  <span class="chip">memory = stored energy</span>
+  <span class="chip">state = compact summary of that history</span>
+</div>
+
+<h2>Step 2 · A first model — the "chase"</h2>
+<h3>Output always trying to catch its input</h3>
+<p>Put the lightest possible math on the idea. Imagine a system whose output y is always trying to catch up to its
+input u — the bigger the gap, the faster it moves:</p>
+<div class="eq">
+  <span class="hl-out">dy/dt</span> = (1/<span class="hl-k">τ</span>) · ( <span class="hl-in">u</span> − <span class="hl-out">y</span> )
+  &nbsp;&nbsp;<span class="cmt">// rate of change = gap ÷ time constant</span>
+</div>
+<p>Read it symbol by symbol: <em>dy/dt</em> is how fast the output moves right now; <em>u − y</em> is the gap between
+target and current value — the engine of the motion; and <em>τ</em> (tau), the <em>time constant</em> in seconds,
+sets the pace. Small τ → the 1/τ out front is large → the system snaps toward the target (a nimble drone). Large τ →
+sluggish, easing in slowly (a loaded freight elevator, or a big room warming up).</p>
+
+<h2>Step 3 · See it — the same push, two systems</h2>
+<h3>Static jumps; dynamic chases</h3>
+<p>Below, the <em>same</em> input is fed to both systems: a sudden push at t = 1 s. The <span style="color:#9BD0ff">static</span>
+system mirrors it instantly; the <span style="color:#22C3AE">dynamic</span> one chases it with time constant τ. Drag τ
+and watch the personality change; switch to a <em>pulse</em> (push then release) to see the dynamic system lag on the
+way <em>down</em> too — that lag is the memory.</p>
+
+<div class="demo" data-demo="chase">
+  <canvas class="scope"></canvas>
+  <div class="btnrow">
+    <button class="btn on" data-input="step">step (push &amp; hold)</button>
+    <button class="btn" data-input="pulse">pulse (push &amp; release)</button>
+    <button class="btn" data-replay>▶ replay</button>
+  </div>
+  <div class="legend">
+    <span style="color:#E8A33D">input u(t)</span>
+    <span style="color:#9BD0FF">static output</span>
+    <span style="color:#22C3AE">dynamic output (chase)</span>
+  </div>
+  <div class="controls"></div>
+  <div class="readouts"></div>
+</div>
+
+<p>Three things to notice in the teal (dynamic) curve: it <em>doesn't jump</em> — it curves, and that curve is the
+memory; it <em>rises fastest at the start</em>, when the gap u − y is biggest, then eases off; and after a while it
+<em>settles</em> on the target and looks static again. Dynamics matter most <em>during change</em>. After a push, the
+dynamic output reaches about <em>63%</em> of the way in exactly one time constant, and is essentially settled after
+about <em>4τ</em>.</p>
+
+<div class="goal"><span class="lab">Try this</span>
+  Set τ very small (0.2 s). The teal curve nearly matches the input — the system is so fast it looks almost static.
+  That's a deep preview: <em>"static" is just "dynamic, but too fast to notice on your timescale."</em> A steel beam is
+  static to your hand but very much dynamic to a vibration sensor.
+</div>
+
+<h2>Step 4 · The same idea, across real machines</h2>
+<p>Once you look, lag-and-remember behavior is everywhere: a car body keeps bobbing after the wheel clears a bump; an
+elevator accelerates, cruises, decelerates; a drone climbs <em>toward</em> a commanded height; a room warms gradually;
+and a hydraulic cylinder builds speed as oil flows in — with the trapped oil acting slightly springy, storing energy.
+Every one takes an input, stores some energy, and releases its response over time. No storage, no dynamics.</p>
+
+<div class="takeaways">
+  <h3>Key takeaways</h3>
+  <ul>
+    <li>A <b>static</b> system's output depends only on the present input; a <b>dynamic</b> system's output depends on
+      the recent <b>history</b> of the input.</li>
+    <li>Dynamics come from <b>stored energy</b> — momentum in a mass, charge in a capacitor, compressed oil in a
+      cylinder. No storage → no memory → no dynamics.</li>
+    <li>The <b>state</b> is the compact summary of that stored history — often <b>position and velocity</b>. Finding and
+      using the state is what this whole course is about.</li>
+    <li>The first-order <b>"chase,"</b> dy/dt = (1/τ)(u − y), captures a huge amount of real behavior; the <b>time
+      constant τ</b> sets how eager the chase is (63% in one τ, settled by ~4τ).</li>
+    <li>"Static" is often just "dynamic, but fast relative to how we're watching."</li>
+  </ul>
+</div>
+
+<h2>Quick-check quiz</h2>
+<details><summary>1 · In one sentence, what separates a static from a dynamic system?</summary>
+  <div class="qa"><p>A static system's output depends only on the input at the present instant; a dynamic system's
+  output depends on the recent history of the input — it has memory.</p></div></details>
+<details><summary>2 · Scale vs. shopping cart — which is more "dynamic," and what does it have that the other lacks?</summary>
+  <div class="qa"><p>The shopping cart. It stores energy (momentum in its mass) and therefore remembers past pushes;
+  the scale stores almost no energy, so it reflects only the present force.</p></div></details>
+<details><summary>3 · What physical quantity stores the "memory" of a moving shopping cart?</summary>
+  <div class="qa"><p><b>Momentum</b>, stored in the cart's <b>mass</b> (equivalently its velocity — part of the cart's
+  state).</p></div></details>
+<details><summary>4 · Two drones respond to a climb command — one snaps up, one drifts up slowly. Which has the larger τ?</summary>
+  <div class="qa"><p>The <b>slow</b> drone. A larger τ makes the 1/τ factor smaller, so the system chases its target
+  more slowly.</p></div></details>
+<details><summary>5 · Why is a steel beam "static to your hand but dynamic to a vibration sensor"?</summary>
+  <div class="qa"><p>Nothing about the beam changes — the <b>timescale of observation</b> does. Your hand acts over
+  tenths of a second, on which the beam's vibrations are far too fast and tiny to feel, so it seems rigid. A vibration
+  sensor watches microsecond-to-millisecond behavior, on which the beam's stored elastic energy produces real,
+  measurable ringing.</p></div></details>
+
+<h2>Exercises</h2>
+<details><summary>C1 · Rate of change right now</summary>
+  <div class="qa"><p>In dy/dt = (1/τ)(u − y), with u = 1, y = 0.4, τ = 2 s:
+  dy/dt = ½(1 − 0.4) = ½(0.6) = <b>0.3 per second</b>.</p></div></details>
+<details><summary>C2 · One small step forward</summary>
+  <div class="qa"><p>With Δt = 0.1 s, y<sub>new</sub> ≈ y + Δt·(dy/dt) = 0.4 + 0.1×0.3 = <b>0.43</b>. The output crept
+  closer to the target of 1 — exactly what "chasing" looks like, one small step at a time (this is the update rule the
+  demo integrates).</p></div></details>
+<details><summary>C3 · Where does it settle?</summary>
+  <div class="qa"><p>dy/dt = 0 requires u − y = 0, i.e. y = u = <b>1</b>. The system stops changing only when it has
+  fully caught up to its target — its <b>steady state</b>. That's why the dynamic curve flattens at the input level.</p></div></details>
+<details><summary>D1 · Design: one fixed τ can't satisfy both complaints</summary>
+  <div class="qa"><p>A single fixed τ forces one personality everywhere: small τ is quick but nervous; large τ is calm
+  but slow — you can't get "quick when far, calm when close" from one constant. The fix is a <b>scheduled/adaptive</b>
+  time constant: let τ depend on a measured condition — the <b>error size</b> (calmer when close, snappier when far),
+  <b>altitude/ground proximity</b> (gentle near the ground, faster up high), or <b>payload/mass</b>. Any answer tying τ
+  to a sensible measurable quantity, with the right direction of effect, is correct. You've just reasoned your way to
+  adaptive control.</p></div></details>
+
+<footer>Lesson 1 · self-contained, no external libraries or network · the chase is integrated live. Next: Orders of a System.</footer>
+</div>
+
+<script>
+"use strict";
+(function(){
+  const REDUCED=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const COL={in:'#E8A33D',out:'#22C3AE',grid2:'#16262F',axis:'#3A5464',text:'#7FA0AE',blue:'#9BD0FF',red:'#FF8FA3'};
+  const T_END=8, STEP_T=1;
+  function el(t,c){const e=document.createElement(t);if(c)e.className=c;return e;}
+  function fit(cv,a){const dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1));const w=cv.clientWidth||cv.parentElement.clientWidth||300;const h=Math.round(w*a);cv.style.height=h+'px';cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);return{ctx:x,W:w,H:h};}
+  function sliders(cont,defs,p,cb){defs.forEach(d=>{p[d.key]=d.value;const c=el('div','ctrl'),r=el('div','row');const n=el('span','name');n.innerHTML=d.label;const v=el('span','val');const f=d.fmt||(x=>x.toFixed(2));v.textContent=f(d.value);r.appendChild(n);r.appendChild(v);const i=document.createElement('input');i.type='range';i.min=d.min;i.max=d.max;i.step=d.step;i.value=d.value;i.setAttribute('aria-label',d.label.replace(/<[^>]+>/g,''));i.addEventListener('input',()=>{p[d.key]=parseFloat(i.value);v.textContent=f(p[d.key]);cb&&cb();});c.appendChild(r);c.appendChild(i);cont.appendChild(c);});}
+  function reads(cont,items){cont.innerHTML='';items.forEach(r=>{const s=el('span','ro'+(r.cls?' '+r.cls:''));s.innerHTML=r.label+' <b>'+r.value+'</b>';cont.appendChild(s);});}
+
+  const root=document.querySelector('[data-demo=chase]'); if(!root) return;
+  const scope=root.querySelector('.scope'), controls=root.querySelector('.controls'), ro=root.querySelector('.readouts');
+  const p={}; let input='step', playT=0, last=null, raf=null;
+  sliders(controls,[
+    {key:'tau',label:'time constant τ (s)',min:0.2,max:4,step:0.1,value:1.2,fmt:v=>v.toFixed(1)+' s'},
+    {key:'speed',label:'replay speed (×)',min:0.5,max:3,step:0.5,value:1,fmt:v=>v.toFixed(1)+'×'}
+  ],p,null);
+  root.querySelectorAll('[data-input]').forEach(b=>b.addEventListener('click',()=>{input=b.dataset.input;playT=0;root.querySelectorAll('[data-input]').forEach(o=>o.classList.toggle('on',o===b));}));
+  root.querySelector('[data-replay]').addEventListener('click',()=>{playT=0;});
+
+  function u_of(t){ if(input==='step') return t>=STEP_T?1:0; return (t>=STEP_T && t<4)?1:0; } // pulse 1..4s
+  // integrate the chase y'=(u-y)/tau over [0,T_END]
+  function curves(tau){
+    const N=800, dt=T_END/N, U=[],Y=[],TT=[]; let y=0;
+    for(let i=0;i<=N;i++){const t=i*dt; const u=u_of(t); if(i>0) y+=dt*(u-y)/tau; U.push(u);Y.push(y);TT.push(t);}
+    return {U,Y,TT};
+  }
+  function draw(now){
+    const {ctx,W,H}=fit(scope,0.60); let dt=last?Math.min(0.05,(now-last)/1000):0.016; last=now;
+    playT=Math.min(T_END, playT+dt*p.speed);
+    const {U,Y,TT}=curves(p.tau);
+    const pad={l:38,r:14,t:16,b:26};
+    const gx=t=>pad.l+(t/T_END)*(W-pad.l-pad.r);
+    const gy=v=>pad.t+(1-(v/1.2))*(H-pad.t-pad.b);
+    ctx.clearRect(0,0,W,H);
+    // grid
+    ctx.strokeStyle=COL.grid2;ctx.lineWidth=1;
+    for(let v=0;v<=1;v+=0.5){const yy=gy(v);ctx.beginPath();ctx.moveTo(pad.l,yy);ctx.lineTo(W-pad.r,yy);ctx.stroke();}
+    for(let t=0;t<=T_END;t+=1){const xx=gx(t);ctx.beginPath();ctx.moveTo(xx,pad.t);ctx.lineTo(xx,H-pad.b);ctx.strokeStyle=t===STEP_T?COL.axis:COL.grid2;ctx.stroke();}
+    ctx.fillStyle=COL.text;ctx.font='9px ui-monospace,monospace';ctx.textAlign='right';ctx.fillText('1.0',pad.l-4,gy(1)+3);ctx.fillText('0',pad.l-4,gy(0)+3);
+    ctx.textAlign='center';ctx.fillText('push at t=1s',gx(STEP_T),H-8);ctx.fillText('time (s) →',(W)/2,H-8);
+    // draw up to playhead
+    function trace(arr,color,w,dash){ctx.strokeStyle=color;ctx.lineWidth=w;if(dash)ctx.setLineDash(dash);ctx.beginPath();let st=false;
+      for(let i=0;i<arr.length;i++){if(TT[i]>playT)break;const X=gx(TT[i]),Yv=gy(arr[i]);st?ctx.lineTo(X,Yv):(ctx.moveTo(X,Yv),st=true);}ctx.stroke();ctx.setLineDash([]);}
+    trace(U,COL.in,1.8,[5,4]);      // input
+    trace(U,COL.blue,2.0);           // static == input (drawn solid over)
+    trace(Y,COL.out,3);              // dynamic
+    // playhead + current dynamic dot
+    let idx=0; while(idx<TT.length-1 && TT[idx]<playT) idx++;
+    const hx=gx(Math.min(playT,T_END));
+    ctx.strokeStyle='rgba(155,208,255,0.35)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(hx,pad.t);ctx.lineTo(hx,H-pad.b);ctx.stroke();
+    ctx.fillStyle=COL.out;ctx.beginPath();ctx.arc(hx,gy(Y[idx]),4,0,7);ctx.fill();
+    // readouts
+    const settle=4*p.tau;
+    reads(ro,[
+      {label:'τ',value:p.tau.toFixed(1)+' s'},
+      {label:'reaches 63% at',value:'t = '+(STEP_T+p.tau).toFixed(1)+' s'},
+      {label:'settled (~4τ) by',value:'t = '+(STEP_T+settle).toFixed(1)+' s'},
+      {label:'input',value:input==='step'?'step':'pulse'},
+      {label:'now',value:'y = '+Y[idx].toFixed(2)+'  (gap '+(U[idx]-Y[idx]).toFixed(2)+')',cls: Math.abs(U[idx]-Y[idx])<0.03?'good':''}
+    ]);
+    raf=requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',()=>{if(REDUCED)fit(scope,0.60);});
+  if(REDUCED){playT=T_END;last=performance.now();draw(performance.now());cancelAnimationFrame(raf);} else raf=requestAnimationFrame(draw);
+})();
+</script>
+</body>
+</html>
