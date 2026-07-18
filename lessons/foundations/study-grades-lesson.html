@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study Hours &amp; Grades — A First-Order System, End to End</title>
+<style>
+  :root{--paper:#EEF2F5;--amber:#E8A33D;--teal:#22C3AE;--navy:#0E1B24;--ink:#1c2b33;--muted:#5d6f79;--line:#c9d4da;--grid:#16303c;--grid-soft:#12242e;--axis:#3a5b68;}
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);line-height:1.62;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:900px;margin:0 auto;padding:26px 20px 90px}
+  header.hero{border:1px solid var(--line);border-radius:14px;padding:24px 26px;margin-bottom:22px;background:linear-gradient(180deg,#ffffff,#f5f8fa);}
+  .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  h1{font-size:28px;margin:6px 0 8px;letter-spacing:-.01em}.hero .sub{color:var(--muted);font-size:15.5px;margin:0}
+  nav.toc{position:sticky;top:0;z-index:20;background:rgba(238,242,245,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);margin:0 -20px 22px;padding:9px 20px;display:flex;gap:6px;flex-wrap:wrap;font-size:12.5px}
+  nav.toc a{color:var(--muted);text-decoration:none;border:1px solid var(--line);background:#fff;padding:5px 11px;border-radius:20px;font-weight:600;white-space:nowrap;transition:.15s}
+  nav.toc a:hover{border-color:#a9bcc6;color:var(--ink)}
+  section{margin:34px 0}
+  section>h2{font-size:21px;margin:0 0 4px;display:flex;align-items:center;gap:10px}
+  section>h2 .num{display:inline-flex;width:26px;height:26px;border-radius:8px;background:var(--navy);color:var(--teal);font-size:14px;align-items:center;justify-content:center;flex:0 0 auto}
+  section>.lead{color:var(--muted);font-size:14px;margin:2px 0 14px}
+  p{margin:10px 0}.muted{color:var(--muted)}.small{font-size:13px}
+  .card{border:1px solid var(--line);background:#fff;border-radius:12px;padding:18px 20px;margin:14px 0}
+  figure.viz{margin:16px 0;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#fff,#f7fafb);padding:14px 16px 10px}
+  figure.viz svg{display:block;width:100%;height:auto}figure.viz figcaption{font-size:12.5px;color:var(--muted);margin-top:6px;text-align:center}
+  .demo{border:1px solid var(--line);border-radius:12px;background:#fff;margin:16px 0;overflow:hidden}
+  .demo .demohead{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;background:var(--navy);color:#dff3ee}
+  .demo .demohead .t{font-weight:700;font-size:13.5px}.demo .demohead .tag{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal)}
+  .demo .demobody{padding:16px}
+  .scope{background:var(--navy);border-radius:10px;padding:12px 12px 8px;border:1px solid #0a141b}
+  .scope .scopehead{display:flex;justify-content:space-between;align-items:center;color:#7fa0ac;font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;padding:0 2px}
+  .scope .dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+  canvas{display:block;width:100%;border-radius:8px;touch-action:none}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:12.5px;color:#9db6c0}
+  .legend span{display:inline-flex;align-items:center;gap:7px}.swatch{width:16px;height:3px;border-radius:2px;display:inline-block}
+  .controls{display:grid;gap:13px;margin-top:14px}
+  .ctl{display:grid;grid-template-columns:180px 1fr 104px;align-items:center;gap:12px}
+  .ctl label{font-size:13.5px;font-weight:600}
+  .ctl .val{font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;text-align:right;background:var(--paper);border:1px solid var(--line);border-radius:7px;padding:4px 8px}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:3px;background:linear-gradient(90deg,var(--teal),#7fc9bf);outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid var(--teal);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid var(--teal);cursor:pointer}
+  input[type=range].amber{background:linear-gradient(90deg,#f0c584,var(--amber))}
+  input[type=range].amber::-webkit-slider-thumb{border-color:var(--amber)}input[type=range].amber::-moz-range-thumb{border-color:var(--amber)}
+  .btn{appearance:none;border:1px solid var(--line);background:#fff;color:var(--ink);font-weight:600;font-size:13px;padding:8px 14px;border-radius:9px;cursor:pointer}
+  .btn:hover{border-color:#a9bcc6}.btn.primary{background:var(--navy);color:#eaf6f2;border-color:var(--navy)}.btn.ghost{background:transparent}.btn.sel{background:var(--teal);border-color:var(--teal);color:var(--navy)}
+  .eq{font-family:"Cambria Math","Times New Roman",Georgia,serif;font-size:18px;color:var(--ink);display:flex;align-items:center;flex-wrap:wrap;gap:2px;padding:10px 12px;background:var(--paper);border-radius:8px;border:1px solid var(--line);margin:10px 0;line-height:1}
+  .eq.center{justify-content:center}.eq.big{font-size:22px}
+  .eqi{display:inline-flex;font-size:15px;padding:2px 8px;vertical-align:middle}
+  .frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 4px;line-height:1}
+  .frac .num{padding:0 6px 2px;border-bottom:1.4px solid currentColor}.frac .den{padding:2px 6px 0}
+  var,.it{font-style:italic}.sub2{font-size:.7em;vertical-align:sub}.sup2{font-size:.7em;vertical-align:super}.op{margin:0 5px}
+  .steps{display:grid;gap:10px}
+  .step{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:#fff;opacity:.4;filter:grayscale(.35);transition:.3s}
+  .step.on{opacity:1;filter:none;border-color:#bcd0d8;box-shadow:0 1px 0 rgba(34,195,174,.15)}
+  .step .lab{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:4px}
+  .pill{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px;background:rgba(34,195,174,.14);color:#0f7d6e;border:1px solid rgba(34,195,174,.35)}
+  .pill.amber{background:rgba(232,163,61,.16);color:#a56a12;border-color:rgba(232,163,61,.4)}
+  .callout{border-left:3px solid var(--teal);background:#f2fbf9;border-radius:0 8px 8px 0;padding:11px 15px;margin:12px 0;font-size:14px}
+  .callout.amber{border-left-color:var(--amber);background:#fdf7ee}
+  .callout.warn{border-left-color:#c8503c;background:#fdf2f0}
+  .readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;margin-top:12px}
+  .metric{background:var(--navy);color:#dff3ee;border-radius:10px;padding:10px 12px}
+  .metric .m-lab{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#7fa0ac}
+  .metric .m-val{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:19px;margin-top:2px}
+  .metric .m-val.amber{color:var(--amber)}.metric .m-val.teal{color:var(--teal)}
+  details{border:1px solid var(--line);border-radius:10px;padding:2px 15px;margin:12px 0;background:#fff}
+  summary{cursor:pointer;font-weight:600;padding:11px 0;font-size:14.5px;list-style:none}
+  summary::-webkit-details-marker{display:none}summary::before{content:"\25b8";color:var(--teal);margin-right:8px;display:inline-block;transition:.2s}
+  details[open] summary::before{transform:rotate(90deg)}.qbtn{margin:4px 6px 10px 0}
+  .flexrow{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}.flexrow>.grow{flex:1 1 320px;min-width:270px}
+  .takeaways{border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#0E1B24,#12242e);color:#dff3ee;padding:18px 22px}
+  .takeaways h2{color:#fff;margin-top:0}.takeaways ul{margin:8px 0 0;padding-left:18px}.takeaways li{margin:8px 0}.takeaways b{color:var(--teal)}
+  .foot{color:var(--muted);font-size:12.5px;text-align:center;margin-top:30px}
+  code.tk{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--paper);padding:1px 6px;border-radius:5px;font-size:13px;border:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="kicker">Foundations of Dynamic Systems &middot; Worked Example &middot; Learning Curve</div>
+    <h1>Study Hours &amp; Grades</h1>
+    <p class="sub">The first hours of study move your exam score a lot; later hours move it less. That diminishing return &mdash; knowledge climbing toward a ceiling &mdash; is the same first-order shape as a capacitor charging, only with study hours in place of time.</p>
+  </header>
+
+  <div class="callout amber" style="margin-top:-6px">
+    <strong>A model, not a prophecy.</strong> Real learning has plateaus, breakthroughs, forgetting, sleep, and test-day nerves. This lesson captures the robust part &mdash; <em>diminishing returns</em> and the idea of a reachable <em>ceiling</em> &mdash; to reason about study, not to predict any individual's grade.
+  </div>
+
+  <nav class="toc">
+    <a href="#scene">&#9312; The setup</a>
+    <a href="#state">&#9313; The state</a>
+    <a href="#build">&#9314; Build the equation</a>
+    <a href="#ceiling">&#9315; The ceiling sets the grade</a>
+    <a href="#curve">&#9316; The study curve</a>
+    <a href="#takeaways">&#9317; Takeaways</a>
+  </nav>
+
+  <section id="scene">
+    <h2><span class="num">1</span> The setup</h2>
+    <p class="lead">Big early gains, then polishing.</p>
+    <p>Open the book cold and the first few hours are gold: you learn the core ideas that most of the exam rests on. Keep going and each additional hour adds a little less &mdash; you're now chasing edge cases and polish. Meanwhile the grade you earn is just which band your score lands in: an A above 90, a B above 80, a C above 70. The question is how many hours it takes to cross each line.</p>
+
+    <figure class="viz">
+      <svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diminishing-returns study curve with grade bands">
+        <!-- grade bands -->
+        <rect x="70" y="40" width="500" height="26" fill="rgba(34,195,174,0.16)"/>
+        <rect x="70" y="66" width="500" height="26" fill="rgba(34,195,174,0.09)"/>
+        <rect x="70" y="92" width="500" height="26" fill="rgba(232,163,61,0.12)"/>
+        <text x="580" y="58" font-family="Georgia,serif" font-size="14" fill="#0f7d6e">A</text>
+        <text x="580" y="84" font-family="Georgia,serif" font-size="14" fill="#22867a">B</text>
+        <text x="580" y="110" font-family="Georgia,serif" font-size="14" fill="#a56a12">C</text>
+        <!-- axes -->
+        <line x1="70" y1="40" x2="70" y2="250" stroke="#8fa2ab" stroke-width="2"/>
+        <line x1="70" y1="250" x2="570" y2="250" stroke="#8fa2ab" stroke-width="2"/>
+        <text x="30" y="150" font-family="-apple-system,Arial" font-size="12" fill="#5d6f79" transform="rotate(-90,30,150)">exam score</text>
+        <text x="320" y="284" text-anchor="middle" font-family="-apple-system,Arial" font-size="12" fill="#5d6f79">cumulative study hours</text>
+        <!-- learning curve (approach to ceiling ~66px from top = score 92-ish) -->
+        <path d="M70,225 C160,150 260,95 370,72 C450,58 520,54 570,52" fill="none" stroke="#22C3AE" stroke-width="3"/>
+        <!-- early vs late annotations -->
+        <line x1="95" y1="215" x2="140" y2="168" stroke="#E8A33D" stroke-width="2"/>
+        <text x="150" y="200" font-family="-apple-system,Arial" font-size="11" fill="#a56a12">first hours:</text>
+        <text x="150" y="214" font-family="-apple-system,Arial" font-size="11" fill="#a56a12">big gains</text>
+        <line x1="470" y1="56" x2="510" y2="56" stroke="#7fa0ac" stroke-width="2"/>
+        <text x="430" y="44" font-family="-apple-system,Arial" font-size="11" fill="#5d6f79">later hours: polishing</text>
+        <!-- ceiling -->
+        <line x1="70" y1="48" x2="570" y2="48" stroke="#7fa0ac" stroke-width="1.4" stroke-dasharray="5 4"/>
+        <text x="76" y="34" font-family="Georgia,serif" font-size="12" fill="#7fa0ac">ceiling (max attainable score)</text>
+      </svg>
+      <figcaption>Score rises fast, then flattens toward a ceiling set by how you study. Grades are just thresholds the curve crosses on its way up.</figcaption>
+    </figure>
+  </section>
+
+  <section id="state">
+    <h2><span class="num">2</span> Choosing the state variable</h2>
+    <p class="lead">Track what you've actually mastered.</p>
+    <p>The state is your mastery of the material, which we read as an expected exam score <span class="eqi"><var>K</var></span> out of 100. What's different here is the <em>independent variable</em>: not clock time, but <strong>cumulative study hours</strong> <var>h</var>. First-order systems aren't only about time &mdash; the same math governs any accumulation with diminishing returns, and here the "clock" is hours-on-task.</p>
+  </section>
+
+  <section id="build">
+    <h2><span class="num">3</span> Building the equation from a learning balance</h2>
+    <p class="lead">Each hour's gain shrinks as you near your ceiling.</p>
+
+    <figure class="viz">
+      <svg viewBox="0 0 640 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Learning balance">
+        <defs><marker id="farw" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#5d6f79"/></marker></defs>
+        <rect x="14" y="42" width="180" height="70" rx="10" fill="#f2fbf9" stroke="#22C3AE" stroke-width="1.6"/>
+        <text x="104" y="68" text-anchor="middle" font-family="-apple-system,Arial" font-size="12" fill="#0f7d6e">GAIN PER HOUR</text>
+        <text x="104" y="96" text-anchor="middle" font-family="Georgia,serif" font-size="20" fill="#0f7d6e">dK/dh</text>
+        <line x1="196" y1="77" x2="262" y2="77" stroke="#5d6f79" stroke-width="2" marker-end="url(#farw)"/>
+        <text x="330" y="70" text-anchor="middle" font-family="-apple-system,Arial" font-size="12" fill="#8794a0">PROPORTIONAL TO</text>
+        <text x="330" y="94" text-anchor="middle" font-family="-apple-system,Arial" font-size="12" fill="#8794a0">ROOM LEFT</text>
+        <line x1="398" y1="77" x2="464" y2="77" stroke="#5d6f79" stroke-width="2" marker-end="url(#farw)"/>
+        <rect x="468" y="42" width="158" height="70" rx="10" fill="#fdf7ee" stroke="#E8A33D" stroke-width="1.6"/>
+        <text x="547" y="68" text-anchor="middle" font-family="-apple-system,Arial" font-size="12" fill="#a56a12">ROOM TO CEILING</text>
+        <text x="547" y="96" text-anchor="middle" font-family="Georgia,serif" font-size="18" fill="#a56a12">K_max &minus; K</text>
+        <text x="320" y="156" text-anchor="middle" font-family="Georgia,serif" font-size="18" fill="#1c2b33">dK/dh = k (K_max &minus; K)</text>
+        <text x="320" y="180" text-anchor="middle" font-family="-apple-system,Arial" font-size="12" fill="#5d6f79">k = learning rate &middot; K_max = ceiling set by your study approach</text>
+      </svg>
+      <figcaption>The gain from an hour of study is proportional to how far you still are below your ceiling. Far below, hours pay off big; near the ceiling, they barely move the needle.</figcaption>
+    </figure>
+
+    <div class="demo">
+      <div class="demohead"><span class="t">Interactive &middot; Assemble the learning law</span><span class="tag">Demo 1</span></div>
+      <div class="demobody">
+        <div class="controls" style="margin-bottom:14px">
+          <div class="ctl"><label>Learning rate <var>k</var></label><input type="range" id="sg1_k" class="amber" min="0.02" max="0.2" step="0.005" value="0.08"><span class="val" id="sg1_kv">0.08 /hr</span></div>
+          <div class="ctl"><label>Ceiling <var>K</var><span class="sub2">max</span></label><input type="range" id="sg1_Km" min="60" max="100" step="1" value="95"><span class="val" id="sg1_Kmv">95</span></div>
+        </div>
+        <div class="steps" id="sg1_steps">
+          <div class="step on"><div class="lab">Learning balance</div><div class="eq big center"><span class="frac"><span class="num">d<var>K</var></span><span class="den">d<var>h</var></span></span><span class="op">=</span>(gain per hour)</div></div>
+          <div class="step"><div class="lab">Gain &prop; room left below your ceiling</div><div class="eq big center" style="background:#f2fbf9;border-color:rgba(34,195,174,.4)"><span class="frac"><span class="num">d<var>K</var></span><span class="den">d<var>h</var></span></span><span class="op">=</span><span id="sg1_k2">0.08</span>(<span id="sg1_Km2">95</span><span class="op">&minus;</span><var>K</var>)</div></div>
+          <div class="step"><div class="lab">Shift to the gap G = K_max &minus; K</div><div class="eq big center"><span class="frac"><span class="num">d<var>G</var></span><span class="den">d<var>h</var></span></span><span class="op">=</span><span class="op">&minus;</span><var>k</var>&middot;<var>G</var><span class="op" style="margin-left:14px;color:#0f7d6e">&larr; the leaking tank</span></div></div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn primary" id="sg1_next">Reveal next step &#9656;</button>
+          <button class="btn ghost" id="sg1_reset">Reset</button>
+        </div>
+        <div class="readout">
+          <div class="metric"><div class="m-lab">Hour-scale &tau; = 1/k</div><div class="m-val teal" id="sg1_mtau">12.5 hr</div></div>
+          <div class="metric"><div class="m-lab">Ceiling score</div><div class="m-val amber" id="sg1_mss">95</div></div>
+          <div class="metric"><div class="m-lab">Order</div><div class="m-val">1st</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="ceiling">
+    <h2><span class="num">4</span> The ceiling sets the grade you can reach</h2>
+    <p class="lead">The twist: more hours can't beat a low ceiling &mdash; only a better approach can.</p>
+    <p>Your score climbs toward <span class="eqi"><var>K</var><span class="sub2">max</span></span> and levels off there. That ceiling isn't fixed ability &mdash; it's set by <em>how</em> you study: active recall vs re-reading, worked problems vs skimming, spacing vs cramming, and how solid your prerequisites are. If your ceiling sits at 85, piling on hours brings you close to 85 but <strong>never to an A</strong>. The fix isn't more hours &mdash; it's raising the ceiling with better methods (or the rate <var>k</var>, which gets you there sooner).</p>
+
+    <figure class="viz">
+      <svg viewBox="0 0 640 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ceiling decides attainable grade">
+        <rect x="20" y="40" width="285" height="100" rx="12" fill="#fdf7ee" stroke="#E8A33D"/>
+        <text x="162" y="66" text-anchor="middle" font-family="-apple-system,Arial" font-size="12" fill="#a56a12">CEILING 85 (re-reading, cramming)</text>
+        <text x="162" y="96" text-anchor="middle" font-family="Georgia,serif" font-size="17" fill="#a56a12">tops out at a B</text>
+        <text x="162" y="122" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#b23a26">more hours won't reach an A</text>
+        <text x="322" y="96" text-anchor="middle" font-family="Georgia,serif" font-size="24" fill="#5d6f79">vs</text>
+        <rect x="336" y="40" width="285" height="100" rx="12" fill="#f2fbf9" stroke="#22C3AE"/>
+        <text x="478" y="66" text-anchor="middle" font-family="-apple-system,Arial" font-size="12" fill="#0f7d6e">CEILING 95 (recall, problems, spacing)</text>
+        <text x="478" y="96" text-anchor="middle" font-family="Georgia,serif" font-size="17" fill="#0f7d6e">an A is in range</text>
+        <text x="478" y="122" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#0f7d6e">hours now translate to the grade</text>
+      </svg>
+      <figcaption>Same effort, two study approaches. The ceiling &mdash; a property of method and preparation, not a fixed limit &mdash; decides which grade hours can buy.</figcaption>
+    </figure>
+
+    <p>Undoing the gap shift gives the score curve &mdash; tap to reveal:</p>
+    <div class="eq big center" id="sg2_reveal" style="cursor:pointer;user-select:none">
+      <var>K</var>(<var>h</var>)<span class="op">=</span><span id="sg2_hidden" style="letter-spacing:.15em;color:var(--muted)">tap&nbsp;to&nbsp;reveal</span>
+    </div>
+  </section>
+
+  <section id="curve">
+    <h2><span class="num">5</span> The study curve</h2>
+    <p class="lead">Set your starting point, ceiling, and rate; see where the hours land you.</p>
+
+    <div class="demo">
+      <div class="demohead"><span class="t">Interactive &middot; Study toward a grade</span><span class="tag">Demo 2</span></div>
+      <div class="demobody">
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <button class="btn" id="sg2_gap">Overlay gap K_max &minus; K</button>
+        </div>
+        <div class="flexrow">
+          <div class="grow" style="flex:0 0 140px;min-width:130px">
+            <div class="scope" style="padding-bottom:14px">
+              <div class="scopehead"><span><span class="dot" style="background:var(--teal)"></span>GRADE</span><span id="sg2_klab">40</span></div>
+              <canvas id="sg2_meter" width="260" height="440"></canvas>
+            </div>
+          </div>
+          <div class="grow">
+            <div class="scope">
+              <div class="scopehead"><span><span class="dot" style="background:var(--teal)"></span>EXAM SCORE vs STUDY HOURS</span><span id="sg2_cursorlab">h = 0.0 hr</span></div>
+              <canvas id="sg2_plot" width="760" height="360"></canvas>
+              <div class="legend">
+                <span><span class="swatch" style="background:var(--teal)"></span>K(h)</span>
+                <span><span class="swatch" style="background:var(--amber)"></span>gap K_max &minus; K</span>
+                <span><span class="swatch" style="background:#7fa0ac"></span>A / B / C lines</span>
+              </div>
+            </div>
+            <p class="small muted" style="margin-top:8px">The amber gap curve is the pure exponential underneath &mdash; it decays toward zero as you approach your ceiling, which is exactly why late hours add so little. Drag the plot to move the cursor.</p>
+          </div>
+        </div>
+        <div class="controls">
+          <div class="ctl"><label>Starting score <var>K</var><span class="sub2">0</span></label><input type="range" id="sg2_K0" min="20" max="70" step="1" value="40"><span class="val" id="sg2_K0v">40</span></div>
+          <div class="ctl"><label>Ceiling <var>K</var><span class="sub2">max</span></label><input type="range" id="sg2_Km" class="amber" min="60" max="100" step="1" value="95"><span class="val" id="sg2_Kmv">95</span></div>
+          <div class="ctl"><label>Learning rate <var>k</var></label><input type="range" id="sg2_k" min="0.02" max="0.2" step="0.005" value="0.08"><span class="val" id="sg2_kv">0.08 /hr</span></div>
+        </div>
+        <div class="readout">
+          <div class="metric"><div class="m-lab">score at cursor</div><div class="m-val teal" id="sg2_mK">40.0</div></div>
+          <div class="metric"><div class="m-lab">grade</div><div class="m-val" id="sg2_mgrade">D/F</div></div>
+          <div class="metric"><div class="m-lab">gain this hour</div><div class="m-val amber" id="sg2_mgain">4.40 /hr</div></div>
+          <div class="metric"><div class="m-lab">hours to A (90)</div><div class="m-val" id="sg2_mtoA">30.0 hr</div></div>
+        </div>
+        <div class="callout warn" id="sg2_warn" style="display:none;margin-top:14px"><strong>An A is above your ceiling.</strong> With this approach the score levels off before 90, so extra hours can't earn an A. Raise the ceiling with better study methods (or lift the rate to get there faster).</div>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn primary" id="sg2_run">&#9654; Run</button>
+          <button class="btn" id="sg2_pause">&#9208; Pause</button>
+          <button class="btn ghost" id="sg2_rst">&#8635; Reset h=0</button>
+        </div>
+      </div>
+    </div>
+
+    <details>
+      <summary>Full worked solution &amp; hours-to-a-grade</summary>
+      <p>With the gap G = K<sub>max</sub> &minus; K, the law is pure decay dG/dh = &minus;kG, so G(h) = G<sub>0</sub>e<sup>&minus;kh</sup>. Adding the ceiling back:</p>
+      <div class="eq big center" style="background:#f2fbf9;border-color:rgba(34,195,174,.4)"><var>K</var>(<var>h</var>)<span class="op">=</span><var>K</var><span class="sub2">max</span><span class="op">&minus;</span>(<var>K</var><span class="sub2">max</span><span class="op">&minus;</span><var>K</var><span class="sub2">0</span>)<var>e</var><span class="sup2">&minus;<var>kh</var></span></div>
+      <p>Hours to reach a target score G<sub>t</sub> (90 for an A):</p>
+      <div class="eq center"><var>h</var><span class="op">=</span><span class="op">&minus;</span><span class="frac"><span class="num">1</span><span class="den"><var>k</var></span></span>&nbsp;ln<span class="op">(</span><span class="frac"><span class="num"><var>K</var><span class="sub2">max</span><span class="op">&minus;</span>90</span><span class="den"><var>K</var><span class="sub2">max</span><span class="op">&minus;</span><var>K</var><span class="sub2">0</span></span></span><span class="op">)</span></div>
+      <p class="small muted">Valid only when the target is below K<sub>max</sub>. Defaults (K<sub>0</sub>=40, K<sub>max</sub>=95, k=0.08): C at ~9.9 hr, B at ~16.2 hr, A at ~30.0 hr &mdash; the last grade costs the most hours because the gap is smallest there.</p>
+    </details>
+  </section>
+
+  <section id="takeaways">
+    <div class="takeaways">
+      <h2>Takeaways</h2>
+      <ul>
+        <li><b>Mastery is the state; the "clock" is study hours.</b> First-order structure doesn't need time &mdash; any diminishing-returns accumulation qualifies.</li>
+        <li><b>Diminishing returns is the whole story.</b> dK/dh = k(K<sub>max</sub> &minus; K): each hour's gain shrinks as you near the ceiling.</li>
+        <li><b>The ceiling decides the reachable grade.</b> If K<sub>max</sub> &lt; 90, no number of hours yields an A &mdash; raise the ceiling with better methods, don't just add time.</li>
+        <li><b>Front-load effort.</b> Early hours buy the most points; the last grade band is the most expensive because the gap is smallest.</li>
+      </ul>
+    </div>
+    <details>
+      <summary>Quick check 1 &mdash; which hours are worth most?</summary>
+      <p class="small muted">Starting at 40 with ceiling 95 and k = 0.08, do you gain more from hours 0&ndash;5 or hours 20&ndash;25?</p>
+      <button class="btn qbtn" onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+      <div style="display:none" class="callout">Hours 0&ndash;5, by a lot. Gain rate is k(K<sub>max</sub>&minus;K): about 4.4 pts/hr at the start vs under 1 pt/hr by hour 20. The early gap is large, so those hours convert to points most efficiently.</div>
+    </details>
+    <details>
+      <summary>Quick check 2 &mdash; stuck below an A</summary>
+      <p class="small muted">You've studied 40 hours and plateaued at 84. What does the model say to change?</p>
+      <button class="btn qbtn" onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+      <div style="display:none" class="callout">You're near a ceiling around 85 &mdash; more hours barely help. Raise K<sub>max</sub> by changing <em>how</em> you study (practice problems and self-testing over re-reading, target weak topics, space sessions). That lifts the whole curve; hours then translate into the A.</div>
+    </details>
+    <details>
+      <summary>Exercise &mdash; budget your hours</summary>
+      <p class="small muted">K<sub>0</sub> = 40, K<sub>max</sub> = 95, k = 0.08 /hr. You have 16 hours before the exam. Which grade band do you land in, and how many more hours would an A take?</p>
+      <button class="btn qbtn" onclick="this.nextElementSibling.style.display='block'">Show solution</button>
+      <div style="display:none" class="callout">K(16) = 95 &minus; 55&middot;e<sup>&minus;0.08&middot;16</sup> = 95 &minus; 55&middot;e<sup>&minus;1.28</sup> = 95 &minus; 55&middot;0.278 &asymp; 79.7 &mdash; just under a B, essentially a high C. An A (90) needs ~30 hours total, so ~14 more hours &mdash; and note those 14 hours buy only ~10 points, versus the ~40 points the first 16 hours bought. Diminishing returns in action.</div>
+    </details>
+  </section>
+
+  <p class="foot">Foundations of Dynamic Systems &middot; self-contained &amp; offline &middot; learning-curve first-order response.</p>
+</div>
+<script>
+(function(){
+  "use strict";
+  var DPR=Math.max(1,Math.min(2,window.devicePixelRatio||1));
+  var C={grid:"#16303c",gridSoft:"#12242e",axis:"#3a5b68",txt:"#9db6c0",txtHi:"#dff3ee",amber:"#E8A33D",teal:"#22C3AE",gold:"#e0b24a"};
+  function setup(cv,w,h){cv.width=w*DPR;cv.height=h*DPR;cv.style.aspectRatio=w+" / "+h;var x=cv.getContext("2d");x.setTransform(DPR,0,0,DPR,0,0);cv._w=w;cv._h=h;return x;}
+  function clear(x,w,h){x.clearRect(0,0,w,h);}
+  function frame(x,b,tMax,yMax,yl,tunit){var i;x.fillStyle="#0b1820";x.fillRect(b.x,b.y,b.w,b.h);x.lineWidth=1;
+    for(i=0;i<=10;i++){var gx=b.x+b.w*i/10;x.strokeStyle=(i%5===0)?C.grid:C.gridSoft;x.beginPath();x.moveTo(gx,b.y);x.lineTo(gx,b.y+b.h);x.stroke();}
+    for(i=0;i<=8;i++){var gy=b.y+b.h*i/8;x.strokeStyle=(i%4===0)?C.grid:C.gridSoft;x.beginPath();x.moveTo(b.x,gy);x.lineTo(b.x+b.w,gy);x.stroke();}
+    x.strokeStyle=C.axis;x.lineWidth=1.4;x.beginPath();x.moveTo(b.x,b.y);x.lineTo(b.x,b.y+b.h);x.lineTo(b.x+b.w,b.y+b.h);x.stroke();
+    x.fillStyle=C.txt;x.font="11px ui-monospace,Menlo,Consolas,monospace";x.textAlign="center";x.textBaseline="top";
+    for(i=0;i<=5;i++)x.fillText((tMax*i/5).toFixed(0),b.x+b.w*i/5,b.y+b.h+5);
+    x.fillText(tunit||"t (s)",b.x+b.w,b.y+b.h+18);
+    x.textAlign="right";x.textBaseline="middle";
+    for(i=0;i<=4;i++)x.fillText((yMax*i/4).toFixed(0),b.x-6,b.y+b.h-b.h*i/4);
+    x.save();x.translate(b.x-32,b.y+b.h/2);x.rotate(-Math.PI/2);x.textAlign="center";x.textBaseline="middle";x.fillStyle=C.txt;x.fillText(yl,0,0);x.restore();}
+  function mapX(b,tMax,t){return b.x+b.w*(t/tMax);}
+  function mapY(b,yMax,y){return b.y+b.h-b.h*(y/yMax);}
+  function curve(x,b,tMax,yMax,fn,color,w){x.strokeStyle=color;x.lineWidth=w||2.6;x.lineJoin="round";x.beginPath();var s=false;
+    for(var i=0;i<=240;i++){var t=tMax*i/240,y=fn(t);var px=mapX(b,tMax,t),py=mapY(b,yMax,Math.max(0,Math.min(yMax,y)));if(!s){x.moveTo(px,py);s=true;}else x.lineTo(px,py);}x.stroke();}
+  function gradeOf(s){return s>=90?"A":s>=80?"B":s>=70?"C":s>=60?"D":"F";}
+  function gradeColor(s){return s>=90?"#22C3AE":s>=80?"#57c8b8":s>=70?"#e0b24a":s>=60?"#d98f4a":"#c8503c";}
+
+  // DEMO 1 - learning-law builder
+  (function(){
+    var k=document.getElementById("sg1_k"),Km=document.getElementById("sg1_Km");
+    var step=0,steps=document.querySelectorAll("#sg1_steps .step");
+    function nums(){var kk=parseFloat(k.value),km=parseFloat(Km.value);
+      document.getElementById("sg1_kv").textContent=kk.toFixed(3)+" /hr";
+      document.getElementById("sg1_Kmv").textContent=km.toFixed(0);
+      document.getElementById("sg1_k2").textContent=kk.toFixed(3);
+      document.getElementById("sg1_Km2").textContent=km.toFixed(0);
+      document.getElementById("sg1_mtau").textContent=(1/kk).toFixed(1)+" hr";
+      document.getElementById("sg1_mss").textContent=km.toFixed(0);}
+    function show(){steps.forEach(function(s,i){s.classList.toggle("on",i<=step);});}
+    document.getElementById("sg1_next").onclick=function(){if(step<steps.length-1){step++;show();}};
+    document.getElementById("sg1_reset").onclick=function(){step=0;show();};
+    k.oninput=nums;Km.oninput=nums;nums();show();
+  })();
+
+  // DEMO 2 - study curve + grade meter
+  var sg2redraw;
+  (function(){
+    var mC=document.getElementById("sg2_meter"),plotC=document.getElementById("sg2_plot");
+    var mx=setup(mC,260,440),px=setup(plotC,760,360);
+    var K0=document.getElementById("sg2_K0"),Km=document.getElementById("sg2_Km"),k=document.getElementById("sg2_k");
+    var box={x:46,y:20,w:670,h:280},cursorH=0,playing=false,showGap=false;
+    function P(){return{K0:parseFloat(K0.value),Km:parseFloat(Km.value),k:parseFloat(k.value)};}
+    function KOf(h){var p=P();return p.Km-(p.Km-p.K0)*Math.exp(-p.k*h);}
+    function gapOf(h){var p=P();return (p.Km-p.K0)*Math.exp(-p.k*h);}
+    function hMaxOf(){var p=P();return Math.min(100,Math.max(20,4/p.k));}
+    function hoursTo(g){var p=P();if(p.K0>=g)return 0;if(g>=p.Km)return Infinity;return -(1/p.k)*Math.log((p.Km-g)/(p.K0-p.Km)*-1);}
+    function drawMeter(K){
+      clear(mx,260,440);
+      var bx0=95,bw=70,top=30,bot=400,H=bot-top;
+      // bands (score 0..100 mapped bot..top)
+      function yFor(s){return bot-H*(s/100);}
+      var bands=[[90,100,"rgba(34,195,174,0.30)"],[80,90,"rgba(87,200,184,0.22)"],[70,80,"rgba(224,178,74,0.22)"],[0,70,"rgba(120,140,150,0.12)"]];
+      bands.forEach(function(bd){mx.fillStyle=bd[2];mx.fillRect(bx0,yFor(bd[1]),bw,yFor(bd[0])-yFor(bd[1]));});
+      // track outline
+      mx.strokeStyle="#31505d";mx.lineWidth=2;mx.strokeRect(bx0,top,bw,H);
+      // threshold labels
+      mx.fillStyle=C.txt;mx.font="11px ui-monospace,monospace";mx.textAlign="right";mx.textBaseline="middle";
+      [["A",90],["B",80],["C",70]].forEach(function(t){var y=yFor(t[1]);
+        mx.strokeStyle="rgba(157,182,192,.4)";mx.beginPath();mx.moveTo(bx0,y);mx.lineTo(bx0+bw,y);mx.stroke();
+        mx.fillText(t[0]+" "+t[1],bx0-6,y);});
+      // fill to K
+      var fillY=yFor(K);
+      mx.fillStyle=gradeColor(K);
+      mx.fillRect(bx0+2,fillY,bw-4,bot-fillY);
+      mx.strokeStyle="#0b1820";mx.lineWidth=2;mx.beginPath();mx.moveTo(bx0,fillY);mx.lineTo(bx0+bw,fillY);mx.stroke();
+      // letter badge
+      mx.fillStyle=gradeColor(K);mx.beginPath();mx.arc(bx0+bw/2,18,0,0,0);
+      mx.font="bold 22px -apple-system,Arial";mx.textAlign="center";mx.textBaseline="middle";
+      mx.fillStyle="#0b1820";mx.fillText("",0,0);
+      // score number
+      mx.fillStyle="#dff3ee";mx.font="bold 16px ui-monospace,monospace";mx.textAlign="center";
+      mx.fillText(K.toFixed(0),bx0+bw/2,bot+22);
+      document.getElementById("sg2_klab").textContent=gradeOf(K)+" \u00b7 "+K.toFixed(0);
+    }
+    function drawPlot(){
+      var p=P(),hMax=hMaxOf(),yMax=100;
+      clear(px,760,360);frame(px,box,hMax,yMax,"exam score","study hours (h)");
+      // grade band tints
+      function yFor(s){return mapY(box,yMax,s);}
+      px.fillStyle="rgba(34,195,174,0.10)";px.fillRect(box.x,yFor(100),box.w,yFor(90)-yFor(100));
+      px.fillStyle="rgba(87,200,184,0.07)";px.fillRect(box.x,yFor(90),box.w,yFor(80)-yFor(90));
+      px.fillStyle="rgba(224,178,74,0.08)";px.fillRect(box.x,yFor(80),box.w,yFor(70)-yFor(80));
+      // grade lines
+      [["A",90,"#22C3AE"],["B",80,"#57c8b8"],["C",70,"#e0b24a"]].forEach(function(g){var y=yFor(g[1]);
+        px.strokeStyle=g[2];px.globalAlpha=.7;px.setLineDash([6,3]);px.lineWidth=1.4;
+        px.beginPath();px.moveTo(box.x,y);px.lineTo(box.x+box.w,y);px.stroke();px.setLineDash([]);px.globalAlpha=1;
+        px.fillStyle=g[2];px.font="11px ui-monospace,monospace";px.textAlign="left";px.fillText(g[0],box.x+box.w-16,y-8);});
+      // ceiling line
+      var cy=yFor(p.Km);
+      px.strokeStyle="rgba(127,160,172,.55)";px.setLineDash([3,3]);px.lineWidth=1.4;
+      px.beginPath();px.moveTo(box.x,cy);px.lineTo(box.x+box.w,cy);px.stroke();px.setLineDash([]);
+      px.fillStyle="#7fa0ac";px.textAlign="left";px.fillText("ceiling "+p.Km.toFixed(0),box.x+6,cy-8);
+      // tau
+      var tx=mapX(box,hMax,1/p.k);
+      px.strokeStyle="rgba(127,160,172,.3)";px.setLineDash([4,4]);px.beginPath();px.moveTo(tx,box.y);px.lineTo(tx,box.y+box.h);px.stroke();px.setLineDash([]);
+      px.fillText("\u03c4",tx+4,box.y+12);
+      // curves
+      curve(px,box,hMax,yMax,KOf,C.teal,2.8);
+      if(showGap)curve(px,box,hMax,yMax,gapOf,C.amber,2.4);
+      // crossing dots for each reachable grade line
+      [90,80,70].forEach(function(g){var hh=hoursTo(g);if(isFinite(hh)&&hh>0&&hh<=hMax){var dx=mapX(box,hMax,hh);
+        px.fillStyle=gradeColor(g);px.beginPath();px.arc(dx,yFor(g),4,0,6.29);px.fill();px.strokeStyle="#0b1820";px.lineWidth=1.6;px.stroke();}});
+      // cursor
+      var Kc=KOf(cursorH),ccx=mapX(box,hMax,cursorH),ccy=yFor(Kc);
+      px.strokeStyle="rgba(157,182,192,.4)";px.lineWidth=1;px.beginPath();px.moveTo(ccx,box.y);px.lineTo(ccx,box.y+box.h);px.stroke();
+      px.fillStyle=C.teal;px.beginPath();px.arc(ccx,ccy,5,0,6.29);px.fill();px.strokeStyle="#0b1820";px.lineWidth=2;px.stroke();
+      if(showGap){var gy2=yFor(gapOf(cursorH));px.fillStyle=C.amber;px.beginPath();px.arc(ccx,gy2,4,0,6.29);px.fill();}
+      // readouts
+      document.getElementById("sg2_cursorlab").textContent="h = "+cursorH.toFixed(1)+" hr";
+      document.getElementById("sg2_mK").textContent=Kc.toFixed(1);
+      var gEl=document.getElementById("sg2_mgrade");gEl.textContent=gradeOf(Kc);gEl.style.color=gradeColor(Kc);
+      document.getElementById("sg2_mgain").textContent=(p.k*(p.Km-Kc)).toFixed(2)+" /hr";
+      var hA=hoursTo(90),toA=document.getElementById("sg2_mtoA");
+      if(hA===0)toA.textContent="already A";
+      else if(!isFinite(hA))toA.textContent="raise ceiling";
+      else toA.textContent=hA.toFixed(1)+" hr";
+      document.getElementById("sg2_warn").style.display=(p.Km<90)?"block":"none";
+      drawMeter(Kc);
+    }
+    sg2redraw=drawPlot;
+    var dragging=false;
+    function hFromEvent(e){var r=plotC.getBoundingClientRect();var xp=((e.touches?e.touches[0].clientX:e.clientX)-r.left)*(plotC._w/r.width);var f=(xp-box.x)/box.w;f=Math.max(0,Math.min(1,f));return f*hMaxOf();}
+    function down(e){dragging=true;cursorH=hFromEvent(e);drawPlot();e.preventDefault();}
+    function move(e){if(dragging){cursorH=hFromEvent(e);drawPlot();e.preventDefault();}}
+    function up(){dragging=false;}
+    plotC.addEventListener("mousedown",down);window.addEventListener("mousemove",move);window.addEventListener("mouseup",up);
+    plotC.addEventListener("touchstart",down,{passive:false});plotC.addEventListener("touchmove",move,{passive:false});plotC.addEventListener("touchend",up);
+    function loop(){if(playing){cursorH+=hMaxOf()/200;if(cursorH>hMaxOf()){cursorH=hMaxOf();playing=false;}drawPlot();}requestAnimationFrame(loop);}
+    document.getElementById("sg2_run").onclick=function(){if(cursorH>=hMaxOf())cursorH=0;playing=true;};
+    document.getElementById("sg2_pause").onclick=function(){playing=false;};
+    document.getElementById("sg2_rst").onclick=function(){playing=false;cursorH=0;drawPlot();};
+    var bG=document.getElementById("sg2_gap");
+    bG.onclick=function(){showGap=!showGap;bG.classList.toggle("sel",showGap);drawPlot();};
+    function upd(){document.getElementById("sg2_K0v").textContent=parseFloat(K0.value).toFixed(0);
+      document.getElementById("sg2_Kmv").textContent=parseFloat(Km.value).toFixed(0);
+      document.getElementById("sg2_kv").textContent=parseFloat(k.value).toFixed(3)+" /hr";drawPlot();}
+    K0.oninput=upd;Km.oninput=upd;k.oninput=upd;
+    var revealed=false;
+    document.getElementById("sg2_reveal").onclick=function(){if(revealed)return;revealed=true;
+      document.getElementById("sg2_hidden").outerHTML='<span style="color:#0f7d6e;font-weight:700"><var>K</var><span class="sub2">max</span><span class="op">&minus;</span>(<var>K</var><span class="sub2">max</span><span class="op">&minus;</span><var>K</var><span class="sub2">0</span>)<var>e</var><span class="sup2">&minus;<var>kh</var></span></span>';};
+    upd();loop();
+  })();
+
+  var rt;window.addEventListener("resize",function(){clearTimeout(rt);rt=setTimeout(function(){if(sg2redraw)sg2redraw();},150);});
+})();
+</script>
+</body>
+</html>

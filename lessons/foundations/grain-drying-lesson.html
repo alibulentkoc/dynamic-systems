@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grain Drying — A First-Order System, End to End</title>
+<style>
+  :root{--paper:#EEF2F5;--amber:#E8A33D;--teal:#22C3AE;--navy:#0E1B24;--ink:#1c2b33;--muted:#5d6f79;--line:#c9d4da;--grid:#16303c;--grid-soft:#12242e;--axis:#3a5b68;}
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);line-height:1.62;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:900px;margin:0 auto;padding:26px 20px 90px}
+  header.hero{border:1px solid var(--line);border-radius:14px;padding:24px 26px;margin-bottom:22px;background:linear-gradient(180deg,#ffffff,#f5f8fa);}
+  .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  h1{font-size:28px;margin:6px 0 8px;letter-spacing:-.01em}.hero .sub{color:var(--muted);font-size:15.5px;margin:0}
+  nav.toc{position:sticky;top:0;z-index:20;background:rgba(238,242,245,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);margin:0 -20px 22px;padding:9px 20px;display:flex;gap:6px;flex-wrap:wrap;font-size:12.5px}
+  nav.toc a{color:var(--muted);text-decoration:none;border:1px solid var(--line);background:#fff;padding:5px 11px;border-radius:20px;font-weight:600;white-space:nowrap;transition:.15s}
+  nav.toc a:hover{border-color:#a9bcc6;color:var(--ink)}
+  section{margin:34px 0}
+  section>h2{font-size:21px;margin:0 0 4px;display:flex;align-items:center;gap:10px}
+  section>h2 .num{display:inline-flex;width:26px;height:26px;border-radius:8px;background:var(--navy);color:var(--teal);font-size:14px;align-items:center;justify-content:center;flex:0 0 auto}
+  section>.lead{color:var(--muted);font-size:14px;margin:2px 0 14px}
+  p{margin:10px 0}.muted{color:var(--muted)}.small{font-size:13px}
+  .card{border:1px solid var(--line);background:#fff;border-radius:12px;padding:18px 20px;margin:14px 0}
+  figure.viz{margin:16px 0;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#fff,#f7fafb);padding:14px 16px 10px}
+  figure.viz svg{display:block;width:100%;height:auto}figure.viz figcaption{font-size:12.5px;color:var(--muted);margin-top:6px;text-align:center}
+  .demo{border:1px solid var(--line);border-radius:12px;background:#fff;margin:16px 0;overflow:hidden}
+  .demo .demohead{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;background:var(--navy);color:#dff3ee}
+  .demo .demohead .t{font-weight:700;font-size:13.5px}.demo .demohead .tag{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal)}
+  .demo .demobody{padding:16px}
+  .scope{background:var(--navy);border-radius:10px;padding:12px 12px 8px;border:1px solid #0a141b}
+  .scope .scopehead{display:flex;justify-content:space-between;align-items:center;color:#7fa0ac;font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;padding:0 2px}
+  .scope .dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+  canvas{display:block;width:100%;border-radius:8px;touch-action:none}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:12.5px;color:#9db6c0}
+  .legend span{display:inline-flex;align-items:center;gap:7px}.swatch{width:16px;height:3px;border-radius:2px;display:inline-block}
+  .controls{display:grid;gap:13px;margin-top:14px}
+  .ctl{display:grid;grid-template-columns:170px 1fr 104px;align-items:center;gap:12px}
+  .ctl label{font-size:13.5px;font-weight:600}
+  .ctl .val{font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;text-align:right;background:var(--paper);border:1px solid var(--line);border-radius:7px;padding:4px 8px}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:3px;background:linear-gradient(90deg,var(--teal),#7fc9bf);outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid var(--teal);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid var(--teal);cursor:pointer}
+  input[type=range].amber{background:linear-gradient(90deg,#f0c584,var(--amber))}
+  input[type=range].amber::-webkit-slider-thumb{border-color:var(--amber)}input[type=range].amber::-moz-range-thumb{border-color:var(--amber)}
+  .btn{appearance:none;border:1px solid var(--line);background:#fff;color:var(--ink);font-weight:600;font-size:13px;padding:8px 14px;border-radius:9px;cursor:pointer}
+  .btn:hover{border-color:#a9bcc6}.btn.primary{background:var(--navy);color:#eaf6f2;border-color:var(--navy)}.btn.ghost{background:transparent}.btn.sel{background:var(--teal);border-color:var(--teal);color:var(--navy)}
+  .eq{font-family:"Cambria Math","Times New Roman",Georgia,serif;font-size:18px;color:var(--ink);display:flex;align-items:center;flex-wrap:wrap;gap:2px;padding:10px 12px;background:var(--paper);border-radius:8px;border:1px solid var(--line);margin:10px 0;line-height:1}
+  .eq.center{justify-content:center}.eq.big{font-size:22px}
+  .eqi{display:inline-flex;font-size:15px;padding:2px 8px;vertical-align:middle}
+  .frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 4px;line-height:1}
+  .frac .num{padding:0 6px 2px;border-bottom:1.4px solid currentColor}.frac .den{padding:2px 6px 0}
+  var,.it{font-style:italic}.sub2{font-size:.7em;vertical-align:sub}.sup2{font-size:.7em;vertical-align:super}.op{margin:0 5px}
+  .steps{display:grid;gap:10px}
+  .step{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:#fff;opacity:.4;filter:grayscale(.35);transition:.3s}
+  .step.on{opacity:1;filter:none;border-color:#bcd0d8;box-shadow:0 1px 0 rgba(34,195,174,.15)}
+  .step .lab{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:4px}
+  .pill{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px;background:rgba(34,195,174,.14);color:#0f7d6e;border:1px solid rgba(34,195,174,.35)}
+  .pill.amber{background:rgba(232,163,61,.16);color:#a56a12;border-color:rgba(232,163,61,.4)}
+  .callout{border-left:3px solid var(--teal);background:#f2fbf9;border-radius:0 8px 8px 0;padding:11px 15px;margin:12px 0;font-size:14px}
+  .callout.amber{border-left-color:var(--amber);background:#fdf7ee}
+  .callout.warn{border-left-color:#c8503c;background:#fdf2f0}
+  .readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;margin-top:12px}
+  .metric{background:var(--navy);color:#dff3ee;border-radius:10px;padding:10px 12px}
+  .metric .m-lab{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#7fa0ac}
+  .metric .m-val{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:19px;margin-top:2px}
+  .metric .m-val.amber{color:var(--amber)}.metric .m-val.teal{color:var(--teal)}
+  details{border:1px solid var(--line);border-radius:10px;padding:2px 15px;margin:12px 0;background:#fff}
+  summary{cursor:pointer;font-weight:600;padding:11px 0;font-size:14.5px;list-style:none}
+  summary::-webkit-details-marker{display:none}summary::before{content:"\25b8";color:var(--teal);margin-right:8px;display:inline-block;transition:.2s}
+  details[open] summary::before{transform:rotate(90deg)}.qbtn{margin:4px 6px 10px 0}
+  .flexrow{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}.flexrow>.grow{flex:1 1 320px;min-width:270px}
+  .takeaways{border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#0E1B24,#12242e);color:#dff3ee;padding:18px 22px}
+  .takeaways h2{color:#fff;margin-top:0}.takeaways ul{margin:8px 0 0;padding-left:18px}.takeaways li{margin:8px 0}.takeaways b{color:var(--teal)}
+  .foot{color:var(--muted);font-size:12.5px;text-align:center;margin-top:30px}
+  code.tk{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--paper);padding:1px 6px;border-radius:5px;font-size:13px;border:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="kicker">Foundations of Dynamic Systems &middot; Worked Example &middot; Agricultural Process</div>
+    <h1>Grain Drying</h1>
+    <p class="sub">Corn comes off the field near 21% moisture but must reach about 15% for safe storage. Push air through the grain and moisture leaves &mdash; fast at first, then slower as the kernels approach balance with the air. It is Newton's cooling for water: decay toward an equilibrium the air itself sets.</p>
+  </header>
+
+  <nav class="toc">
+    <a href="#scene">&#9312; The setup</a>
+    <a href="#state">&#9313; The state</a>
+    <a href="#build">&#9314; Build the equation</a>
+    <a href="#floor">&#9315; The air sets the floor</a>
+    <a href="#curve">&#9316; The drying curve</a>
+    <a href="#takeaways">&#9317; Takeaways</a>
+  </nav>
+
+  <section id="scene">
+    <h2><span class="num">1</span> The setup</h2>
+    <p class="lead">Wet grain, moving air, a storage target.</p>
+    <p>Freshly harvested corn holds around 20&ndash;22% moisture &mdash; too wet to store, since mold and spoilage set in above roughly 15&ndash;16%. A fan drives air up through the grain mass; each kernel gives up moisture to the passing air in proportion to how much wetter it is than the air can hold. Whether that air is heated (drying) or just cool aeration air, the same law governs: the bigger the gap above equilibrium, the faster water leaves.</p>
+
+    <figure class="viz">
+      <svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Grain bin with airflow removing moisture">
+        <defs>
+          <marker id="air" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#22C3AE"/></marker>
+          <marker id="vap" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="#E8A33D"/></marker>
+        </defs>
+        <!-- bin walls -->
+        <path d="M170,80 L170,250 L430,250 L430,80" fill="none" stroke="#31505d" stroke-width="4"/>
+        <!-- grain mass (stippled) -->
+        <rect x="174" y="120" width="252" height="126" fill="#e7c877" opacity="0.55"/>
+        <g fill="#a9832f">
+          <circle cx="196" cy="150" r="3"/><circle cx="232" cy="140" r="3"/><circle cx="270" cy="158" r="3"/><circle cx="312" cy="146" r="3"/><circle cx="352" cy="160" r="3"/><circle cx="392" cy="148" r="3"/>
+          <circle cx="212" cy="186" r="3"/><circle cx="252" cy="196" r="3"/><circle cx="296" cy="184" r="3"/><circle cx="338" cy="198" r="3"/><circle cx="378" cy="188" r="3"/>
+          <circle cx="200" cy="222" r="3"/><circle cx="244" cy="228" r="3"/><circle cx="300" cy="220" r="3"/><circle cx="356" cy="230" r="3"/><circle cx="400" cy="222" r="3"/>
+        </g>
+        <text x="300" y="112" text-anchor="middle" font-family="Georgia,serif" font-size="15" fill="#7a5a1e">grain moisture <tspan font-style="italic">M(t)</tspan></text>
+        <!-- perforated floor -->
+        <line x1="170" y1="250" x2="430" y2="250" stroke="#31505d" stroke-width="3"/>
+        <g stroke="#8fa2ab" stroke-width="2"><line x1="190" y1="250" x2="190" y2="258"/><line x1="230" y1="250" x2="230" y2="258"/><line x1="270" y1="250" x2="270" y2="258"/><line x1="310" y1="250" x2="310" y2="258"/><line x1="350" y1="250" x2="350" y2="258"/><line x1="390" y1="250" x2="390" y2="258"/></g>
+        <!-- fan / air in -->
+        <line x1="300" y1="290" x2="300" y2="258" stroke="#22C3AE" stroke-width="3" marker-end="url(#air)"/>
+        <rect x="212" y="270" width="176" height="24" rx="6" fill="#f2fbf9" stroke="#22C3AE"/>
+        <text x="300" y="287" text-anchor="middle" font-family="Georgia,serif" font-size="13" fill="#0f7d6e">drying air (sets <tspan font-style="italic">M</tspan><tspan font-size="9" dy="3">e</tspan><tspan dy="-3">)</tspan></text>
+        <!-- moisture vapor leaving top -->
+        <line x1="240" y1="118" x2="228" y2="70" stroke="#E8A33D" stroke-width="2.4" marker-end="url(#vap)"/>
+        <line x1="300" y1="118" x2="300" y2="66" stroke="#E8A33D" stroke-width="2.4" marker-end="url(#vap)"/>
+        <line x1="360" y1="118" x2="372" y2="70" stroke="#E8A33D" stroke-width="2.4" marker-end="url(#vap)"/>
+        <rect x="452" y="70" width="172" height="28" rx="7" fill="#fdf7ee" stroke="#E8A33D"/>
+        <text x="538" y="89" text-anchor="middle" font-family="Georgia,serif" font-size="13" fill="#a56a12">moisture out &prop; (<tspan font-style="italic">M</tspan> &minus; <tspan font-style="italic">M</tspan><tspan font-size="9" dy="3">e</tspan><tspan dy="-3">)</tspan></text>
+        <!-- target flag -->
+        <rect x="452" y="180" width="172" height="46" rx="8" fill="#eef6f9" stroke="#22C3AE"/>
+        <text x="538" y="200" text-anchor="middle" font-family="-apple-system,Arial" font-size="11" fill="#0f7d6e">STORAGE TARGET</text>
+        <text x="538" y="218" text-anchor="middle" font-family="Georgia,serif" font-size="16" fill="#0f7d6e">15% moisture</text>
+      </svg>
+      <figcaption>Air enters through a perforated floor and carries moisture out the top. The rate depends on how far the grain sits above the equilibrium moisture M<sub>e</sub> the air can support.</figcaption>
+    </figure>
+  </section>
+
+  <section id="state">
+    <h2><span class="num">2</span> Choosing the state variable</h2>
+    <p class="lead">Track the water the grain is holding.</p>
+    <p>Each kernel stores <em>water</em>, and we measure that as moisture content <span class="eqi"><var>M</var></span> (percent of the grain's weight). The drying law is written in terms of that moisture, so the state is <span class="pill">M(t)</span>. This is the exact analog of temperature in cooling and voltage in the capacitor &mdash; the stored quantity the loss law depends on.</p>
+    <p class="small muted">We use wet-basis percent here, as growers do. Drying research usually writes the same model for the dimensionless <em>moisture ratio</em> (defined in &sect;4), which strips out the units entirely.</p>
+  </section>
+
+  <section id="build">
+    <h2><span class="num">3</span> Building the equation from a moisture balance</h2>
+    <p class="lead">Accumulation = inflow &minus; outflow, now counting water.</p>
+
+    <figure class="viz">
+      <svg viewBox="0 0 640 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Moisture balance">
+        <defs><marker id="farw" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#5d6f79"/></marker></defs>
+        <rect x="14" y="42" width="150" height="70" rx="10" fill="#f3f5f7" stroke="#c9d4da" stroke-dasharray="5 4"/>
+        <text x="89" y="72" text-anchor="middle" font-family="-apple-system,Arial" font-size="12" fill="#8794a0">WATER IN</text>
+        <text x="89" y="96" text-anchor="middle" font-family="Georgia,serif" font-size="20" fill="#8794a0">0</text>
+        <line x1="166" y1="77" x2="232" y2="77" stroke="#5d6f79" stroke-width="2" marker-end="url(#farw)"/>
+        <rect x="236" y="36" width="168" height="82" rx="10" fill="#f2fbf9" stroke="#22C3AE" stroke-width="1.6"/>
+        <text x="320" y="64" text-anchor="middle" font-family="-apple-system,Arial" font-size="12" fill="#0f7d6e">STORED WATER</text>
+        <text x="320" y="94" text-anchor="middle" font-family="Georgia,serif" font-size="20" fill="#0f7d6e">dM/dt</text>
+        <line x1="406" y1="77" x2="472" y2="77" stroke="#5d6f79" stroke-width="2" marker-end="url(#farw)"/>
+        <rect x="476" y="42" width="150" height="70" rx="10" fill="#fdf7ee" stroke="#E8A33D" stroke-width="1.6"/>
+        <text x="551" y="68" text-anchor="middle" font-family="-apple-system,Arial" font-size="12" fill="#a56a12">EVAPORATION</text>
+        <text x="551" y="94" text-anchor="middle" font-family="Georgia,serif" font-size="14" fill="#a56a12">k(M &minus; M_e)</text>
+        <text x="320" y="160" text-anchor="middle" font-family="Georgia,serif" font-size="17" fill="#1c2b33">dM/dt = 0 &minus; k(M &minus; M_e)</text>
+        <text x="320" y="186" text-anchor="middle" font-family="Georgia,serif" font-size="15" fill="#0f7d6e">the thin-layer (Lewis) drying law</text>
+      </svg>
+      <figcaption>No water is added, so the moisture only falls. The thin-layer law says the loss is proportional to the gap above equilibrium &mdash; identical in form to Newton's cooling.</figcaption>
+    </figure>
+
+    <div class="demo">
+      <div class="demohead"><span class="t">Interactive &middot; Assemble the drying law</span><span class="tag">Demo 1</span></div>
+      <div class="demobody">
+        <div class="controls" style="margin-bottom:14px">
+          <div class="ctl"><label>Drying rate <var>k</var></label><input type="range" id="gd1_k" class="amber" min="0.02" max="1" step="0.01" value="0.15"><span class="val" id="gd1_kv">0.15 hr&#8315;&#185;</span></div>
+          <div class="ctl"><label>Equilib. <var>M</var><span class="sub2">e</span></label><input type="range" id="gd1_Me" min="6" max="18" step="0.5" value="10"><span class="val" id="gd1_Mev">10.0%</span></div>
+        </div>
+        <div class="steps" id="gd1_steps">
+          <div class="step on"><div class="lab">Moisture balance</div><div class="eq big center"><span class="frac"><span class="num">d<var>M</var></span><span class="den">d<var>t</var></span></span><span class="op">=</span>0<span class="op">&minus;</span>(evaporation)</div></div>
+          <div class="step"><div class="lab">Thin-layer law: loss &prop; gap above equilibrium</div><div class="eq big center" style="background:#f2fbf9;border-color:rgba(34,195,174,.4)"><span class="frac"><span class="num">d<var>M</var></span><span class="den">d<var>t</var></span></span><span class="op">=</span><span class="op">&minus;</span><span id="gd1_k2">0.15</span>(<var>M</var><span class="op">&minus;</span><span id="gd1_Me2">10</span>)</div></div>
+          <div class="step"><div class="lab">Shift to moisture ratio MR = (M&minus;M_e)/(M_0&minus;M_e)</div><div class="eq big center"><span class="frac"><span class="num">d<var>MR</var></span><span class="den">d<var>t</var></span></span><span class="op">=</span><span class="op">&minus;</span><var>k</var>&middot;<var>MR</var><span class="op" style="margin-left:14px;color:#0f7d6e">&larr; the leaking tank</span></div></div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn primary" id="gd1_next">Reveal next step &#9656;</button>
+          <button class="btn ghost" id="gd1_reset">Reset</button>
+        </div>
+        <div class="readout">
+          <div class="metric"><div class="m-lab">Time constant &tau; = 1/k</div><div class="m-val teal" id="gd1_mtau">6.7 hr</div></div>
+          <div class="metric"><div class="m-lab">Equilibrium M_e</div><div class="m-val amber" id="gd1_mss">10.0%</div></div>
+          <div class="metric"><div class="m-lab">Order</div><div class="m-val">1st</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="floor">
+    <h2><span class="num">4</span> The air sets the floor</h2>
+    <p class="lead">The new twist: you cannot dry below what the air will allow.</p>
+    <p>Unlike ambient temperature (fixed by the room), the equilibrium moisture <span class="eqi"><var>M</var><span class="sub2">e</span></span> is a <em>design choice</em> &mdash; it's whatever moisture the grain would settle to in balance with the drying air, set by that air's temperature and relative humidity. Warm, dry air ⟶ low M<sub>e</sub>; cool, humid air ⟶ high M<sub>e</sub>. The grain decays toward M<sub>e</sub> and stops there. <strong>If M<sub>e</sub> sits above 15%, no amount of running the fan reaches storage moisture.</strong></p>
+
+    <figure class="viz">
+      <svg viewBox="0 0 640 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Air conditions set the equilibrium moisture floor">
+        <rect x="20" y="40" width="285" height="100" rx="12" fill="#fdf7ee" stroke="#E8A33D"/>
+        <text x="162" y="66" text-anchor="middle" font-family="-apple-system,Arial" font-size="12" fill="#a56a12">COOL / HUMID AIR</text>
+        <text x="162" y="96" text-anchor="middle" font-family="Georgia,serif" font-size="17" fill="#a56a12">high M_e (e.g. 17%)</text>
+        <text x="162" y="122" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#b23a26">can't reach 15% - stalls wet</text>
+        <text x="322" y="96" text-anchor="middle" font-family="Georgia,serif" font-size="24" fill="#5d6f79">vs</text>
+        <rect x="336" y="40" width="285" height="100" rx="12" fill="#f2fbf9" stroke="#22C3AE"/>
+        <text x="478" y="66" text-anchor="middle" font-family="-apple-system,Arial" font-size="12" fill="#0f7d6e">WARM / DRY AIR</text>
+        <text x="478" y="96" text-anchor="middle" font-family="Georgia,serif" font-size="17" fill="#0f7d6e">low M_e (e.g. 10%)</text>
+        <text x="478" y="122" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#0f7d6e">passes through 15% - safe</text>
+      </svg>
+      <figcaption>The same grain, two air conditions. The equilibrium the air supports decides whether 15% is even attainable &mdash; the central design lever in grain drying.</figcaption>
+    </figure>
+
+    <p>With the shift M<sub>e</sub> undone, the full solution is the cooling curve's twin &mdash; tap to reveal:</p>
+    <div class="eq big center" id="gd2_reveal" style="cursor:pointer;user-select:none">
+      <var>M</var>(<var>t</var>)<span class="op">=</span><span id="gd2_hidden" style="letter-spacing:.15em;color:var(--muted)">tap&nbsp;to&nbsp;reveal</span>
+    </div>
+  </section>
+
+  <section id="curve">
+    <h2><span class="num">5</span> The drying curve</h2>
+    <p class="lead">Set the harvest moisture and the air, and watch it dry toward &mdash; or stall above &mdash; 15%.</p>
+
+    <div class="demo">
+      <div class="demohead"><span class="t">Interactive &middot; Dry the corn</span><span class="tag">Demo 2</span></div>
+      <div class="demobody">
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <button class="btn" id="gd2_excess">Overlay excess M &minus; M_e</button>
+        </div>
+        <div class="flexrow">
+          <div class="grow" style="flex:0 0 150px;min-width:140px">
+            <div class="scope" style="padding-bottom:14px">
+              <div class="scopehead"><span><span class="dot" style="background:var(--amber)"></span>KERNEL</span><span id="gd2_klab">21.0%</span></div>
+              <canvas id="gd2_kernel" width="280" height="440"></canvas>
+            </div>
+          </div>
+          <div class="grow">
+            <div class="scope">
+              <div class="scopehead"><span><span class="dot" style="background:var(--teal)"></span>MOISTURE CONTENT</span><span id="gd2_cursorlab">t = 0.0 hr</span></div>
+              <canvas id="gd2_plot" width="760" height="360"></canvas>
+              <div class="legend">
+                <span><span class="swatch" style="background:var(--teal)"></span>M(t)</span>
+                <span><span class="swatch" style="background:var(--amber)"></span>M &minus; M_e</span>
+                <span><span class="swatch" style="background:#e0b24a"></span>15% target</span>
+                <span><span class="swatch" style="background:#7fa0ac"></span>M_e floor</span>
+              </div>
+            </div>
+            <p class="small muted" style="margin-top:8px">The amber excess curve M &minus; M<sub>e</sub> is the pure exponential hiding underneath &mdash; it decays to zero as the grain reaches equilibrium. Drag the plot to move the cursor.</p>
+          </div>
+        </div>
+        <div class="controls">
+          <div class="ctl"><label>Harvest <var>M</var><span class="sub2">0</span></label><input type="range" id="gd2_M0" min="16" max="26" step="0.5" value="21"><span class="val" id="gd2_M0v">21.0%</span></div>
+          <div class="ctl"><label>Air equilib. <var>M</var><span class="sub2">e</span></label><input type="range" id="gd2_Me" class="amber" min="6" max="18" step="0.5" value="10"><span class="val" id="gd2_Mev">10.0%</span></div>
+          <div class="ctl"><label>Drying rate <var>k</var></label><input type="range" id="gd2_k" min="0.02" max="1" step="0.01" value="0.15"><span class="val" id="gd2_kv">0.15 hr&#8315;&#185;</span></div>
+        </div>
+        <div class="readout">
+          <div class="metric"><div class="m-lab">M at cursor</div><div class="m-val teal" id="gd2_mM">21.0%</div></div>
+          <div class="metric"><div class="m-lab">excess M &minus; M_e</div><div class="m-val amber" id="gd2_mex">11.0%</div></div>
+          <div class="metric"><div class="m-lab">time to 15%</div><div class="m-val" id="gd2_mtt">5.3 hr</div></div>
+          <div class="metric"><div class="m-lab">&tau; = 1/k</div><div class="m-val" id="gd2_mtau">6.7 hr</div></div>
+        </div>
+        <div class="callout warn" id="gd2_warn" style="display:none;margin-top:14px"><strong>Air too humid.</strong> M<sub>e</sub> is at or above 15%, so the grain stalls above storage moisture no matter how long the fan runs. Warm or dry the air to lower M<sub>e</sub>.</div>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn primary" id="gd2_run">&#9654; Run</button>
+          <button class="btn" id="gd2_pause">&#9208; Pause</button>
+          <button class="btn ghost" id="gd2_rst">&#8635; Reset t=0</button>
+        </div>
+      </div>
+    </div>
+
+    <details>
+      <summary>Full worked solution &amp; time-to-target</summary>
+      <p>With excess moisture &phi; = M &minus; M<sub>e</sub>, the law is pure decay d&phi;/dt = &minus;k&phi;, so &phi;(t) = &phi;<sub>0</sub>e<sup>&minus;kt</sup>. Adding M<sub>e</sub> back:</p>
+      <div class="eq big center" style="background:#f2fbf9;border-color:rgba(34,195,174,.4)"><var>M</var>(<var>t</var>)<span class="op">=</span><var>M</var><span class="sub2">e</span><span class="op">+</span>(<var>M</var><span class="sub2">0</span><span class="op">&minus;</span><var>M</var><span class="sub2">e</span>)<var>e</var><span class="sup2">&minus;<var>kt</var></span></div>
+      <p>To find when it hits a target M<sub>t</sub> = 15%, invert:</p>
+      <div class="eq center"><var>t</var><span class="op">=</span><span class="op">&minus;</span><span class="frac"><span class="num">1</span><span class="den"><var>k</var></span></span>&nbsp;ln<span class="op">(</span><span class="frac"><span class="num"><var>M</var><span class="sub2">t</span><span class="op">&minus;</span><var>M</var><span class="sub2">e</span></span><span class="den"><var>M</var><span class="sub2">0</span><span class="op">&minus;</span><var>M</var><span class="sub2">e</span></span></span><span class="op">)</span></div>
+      <p class="small muted">Valid only when M<sub>t</sub> &gt; M<sub>e</sub>. Default numbers: t = &minus;(1/0.15)&middot;ln(5/11) &asymp; 5.3 hr.</p>
+    </details>
+  </section>
+
+  <section id="takeaways">
+    <div class="takeaways">
+      <h2>Takeaways</h2>
+      <ul>
+        <li><b>Moisture content is the state.</b> The kernel stores water; the drying law is written in M.</li>
+        <li><b>Drying is Newton's cooling for water.</b> dM/dt = &minus;k(M &minus; M<sub>e</sub>) &mdash; loss proportional to the gap above equilibrium.</li>
+        <li><b>The air sets the floor M<sub>e</sub>.</b> Warm, dry air lowers it; if M<sub>e</sub> &ge; 15% the grain can never reach safe storage.</li>
+        <li><b>Full solution + a stopping time:</b> M(t) = M<sub>e</sub> + (M<sub>0</sub> &minus; M<sub>e</sub>)e<sup>&minus;kt</sup>, and 15% is reached at t = &minus;(1/k)&middot;ln[(15 &minus; M<sub>e</sub>)/(M<sub>0</sub> &minus; M<sub>e</sub>)].</li>
+      </ul>
+    </div>
+    <details>
+      <summary>Quick check 1 &mdash; is 15% reachable?</summary>
+      <p class="small muted">Your aeration air gives an equilibrium moisture of M<sub>e</sub> = 16%. Corn is at 21%. Can you reach 15% storage moisture?</p>
+      <button class="btn qbtn" onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+      <div style="display:none" class="callout">No. The grain decays toward 16% and stops; 15% is below the floor the air supports. You'd need warmer or drier air to drop M<sub>e</sub> below 15% first.</div>
+    </details>
+    <details>
+      <summary>Quick check 2 &mdash; how long to store-ready</summary>
+      <p class="small muted">M<sub>0</sub> = 21%, M<sub>e</sub> = 10%, k = 0.15 hr&#8315;&#185;. Time to reach 15%?</p>
+      <button class="btn qbtn" onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+      <div style="display:none" class="callout">t = &minus;(1/0.15)&middot;ln[(15&minus;10)/(21&minus;10)] = &minus;(6.67)&middot;ln(0.4545) = 6.67 &times; 0.788 &asymp; 5.3 hr.</div>
+    </details>
+    <details>
+      <summary>Exercise &mdash; overdrying costs money</summary>
+      <p class="small muted">Grain sold by weight: overdrying past 15% throws away water you could have sold. With M<sub>e</sub> = 10%, how far past the 15% crossing (in time constants) until the grain hits 13%, and why does this argue for stopping promptly?</p>
+      <button class="btn qbtn" onclick="this.nextElementSibling.style.display='block'">Show solution</button>
+      <div style="display:none" class="callout">MR at 15% = 5/11 = 0.455; at 13% = 3/11 = 0.273. Extra time = &minus;(1/k)&middot;ln(0.273/0.455) = &minus;&tau;&middot;ln(0.600) = 0.51&tau; &asymp; 3.4 hr more. Every point below 15% is shrinkage loss (and wasted fan energy), so drying control aims to stop right at the target &mdash; a first-order set-point problem.</div>
+    </details>
+  </section>
+
+  <p class="foot">Foundations of Dynamic Systems &middot; self-contained &amp; offline &middot; agricultural first-order response.</p>
+</div>
+<script>
+(function(){
+  "use strict";
+  var DPR=Math.max(1,Math.min(2,window.devicePixelRatio||1));
+  var C={grid:"#16303c",gridSoft:"#12242e",axis:"#3a5b68",txt:"#9db6c0",txtHi:"#dff3ee",amber:"#E8A33D",teal:"#22C3AE",gold:"#e0b24a"};
+  function setup(cv,w,h){cv.width=w*DPR;cv.height=h*DPR;cv.style.aspectRatio=w+" / "+h;var x=cv.getContext("2d");x.setTransform(DPR,0,0,DPR,0,0);cv._w=w;cv._h=h;return x;}
+  function clear(x,w,h){x.clearRect(0,0,w,h);}
+  function frame(x,b,tMax,yMax,yl,tunit){var i;x.fillStyle="#0b1820";x.fillRect(b.x,b.y,b.w,b.h);x.lineWidth=1;
+    for(i=0;i<=10;i++){var gx=b.x+b.w*i/10;x.strokeStyle=(i%5===0)?C.grid:C.gridSoft;x.beginPath();x.moveTo(gx,b.y);x.lineTo(gx,b.y+b.h);x.stroke();}
+    for(i=0;i<=8;i++){var gy=b.y+b.h*i/8;x.strokeStyle=(i%4===0)?C.grid:C.gridSoft;x.beginPath();x.moveTo(b.x,gy);x.lineTo(b.x+b.w,gy);x.stroke();}
+    x.strokeStyle=C.axis;x.lineWidth=1.4;x.beginPath();x.moveTo(b.x,b.y);x.lineTo(b.x,b.y+b.h);x.lineTo(b.x+b.w,b.y+b.h);x.stroke();
+    x.fillStyle=C.txt;x.font="11px ui-monospace,Menlo,Consolas,monospace";x.textAlign="center";x.textBaseline="top";
+    for(i=0;i<=5;i++)x.fillText((tMax*i/5).toFixed(0),b.x+b.w*i/5,b.y+b.h+5);
+    x.fillText("t ("+(tunit||"s")+")",b.x+b.w,b.y+b.h+18);
+    x.textAlign="right";x.textBaseline="middle";
+    for(i=0;i<=4;i++)x.fillText((yMax*i/4).toFixed(0),b.x-6,b.y+b.h-b.h*i/4);
+    x.save();x.translate(b.x-32,b.y+b.h/2);x.rotate(-Math.PI/2);x.textAlign="center";x.textBaseline="middle";x.fillStyle=C.txt;x.fillText(yl,0,0);x.restore();}
+  function mapX(b,tMax,t){return b.x+b.w*(t/tMax);}
+  function mapY(b,yMax,y){return b.y+b.h-b.h*(y/yMax);}
+  function curve(x,b,tMax,yMax,fn,color,w){x.strokeStyle=color;x.lineWidth=w||2.6;x.lineJoin="round";x.beginPath();var s=false;
+    for(var i=0;i<=240;i++){var t=tMax*i/240,y=fn(t);var px=mapX(b,tMax,t),py=mapY(b,yMax,Math.max(0,Math.min(yMax,y)));if(!s){x.moveTo(px,py);s=true;}else x.lineTo(px,py);}x.stroke();}
+
+  // DEMO 1 - drying-law builder
+  (function(){
+    var k=document.getElementById("gd1_k"),Me=document.getElementById("gd1_Me");
+    var step=0,steps=document.querySelectorAll("#gd1_steps .step");
+    function nums(){var kk=parseFloat(k.value),me=parseFloat(Me.value);
+      document.getElementById("gd1_kv").textContent=kk.toFixed(2)+" hr\u207b\u00b9";
+      document.getElementById("gd1_Mev").textContent=me.toFixed(1)+"%";
+      document.getElementById("gd1_k2").textContent=kk.toFixed(2);
+      document.getElementById("gd1_Me2").textContent=me.toFixed(0);
+      document.getElementById("gd1_mtau").textContent=(1/kk).toFixed(1)+" hr";
+      document.getElementById("gd1_mss").textContent=me.toFixed(1)+"%";}
+    function show(){steps.forEach(function(s,i){s.classList.toggle("on",i<=step);});}
+    document.getElementById("gd1_next").onclick=function(){if(step<steps.length-1){step++;show();}};
+    document.getElementById("gd1_reset").onclick=function(){step=0;show();};
+    k.oninput=nums;Me.oninput=nums;nums();show();
+  })();
+
+  // DEMO 2 - drying curve + kernel
+  var gd2redraw;
+  (function(){
+    var kC=document.getElementById("gd2_kernel"),plotC=document.getElementById("gd2_plot");
+    var kx=setup(kC,280,440),px=setup(plotC,760,360);
+    var M0=document.getElementById("gd2_M0"),Me=document.getElementById("gd2_Me"),k=document.getElementById("gd2_k");
+    var box={x:50,y:20,w:666,h:280},cursorT=0,playing=false,animT=0,showEx=false,TARGET=15;
+    function P(){return{M0:parseFloat(M0.value),Me:parseFloat(Me.value),k:parseFloat(k.value)};}
+    function MOf(t){var p=P();return p.Me+(p.M0-p.Me)*Math.exp(-p.k*t);}
+    function exOf(t){var p=P();return (p.M0-p.Me)*Math.exp(-p.k*t);}
+    function tMaxOf(){var p=P();return Math.min(120,Math.max(12,5/p.k));}
+    function ttNum(){var p=P();if(p.M0<=TARGET+1e-9)return null;if(p.Me>=TARGET)return Infinity;return -(1/p.k)*Math.log((TARGET-p.Me)/(p.M0-p.Me));}
+    function lerp(a,b,f){return a+(b-a)*f;}
+    function drawKernel(M){
+      clear(kx,280,440);var p=P(),cx=140,cy=240;
+      // dryness fraction from absolute moisture 6..26 -> color
+      var wet=Math.max(0,Math.min(1,(M-6)/20));
+      var r=Math.round(lerp(240,150,wet)),g=Math.round(lerp(214,110,wet)),bl=Math.round(lerp(140,30,wet));
+      // vapor wisps proportional to rate
+      var rate=p.k*(M-p.Me);
+      var nv=Math.max(0,Math.min(4,Math.round(rate*3)));
+      kx.strokeStyle="rgba(232,163,61,0.7)";kx.lineWidth=3;
+      for(var v=0;v<nv;v++){var xoff=cx-45+v*30;kx.beginPath();kx.moveTo(xoff,120);
+        kx.quadraticCurveTo(xoff+10,90,xoff,62);kx.quadraticCurveTo(xoff-10,36,xoff,12);kx.stroke();}
+      // corn kernel silhouette (rounded tooth)
+      var scale=lerp(0.92,1.0,wet); // slight shrink when dry
+      kx.save();kx.translate(cx,cy);kx.scale(scale,scale);
+      kx.fillStyle="rgb("+r+","+g+","+bl+")";
+      kx.strokeStyle="#8a6a1e";kx.lineWidth=3;
+      kx.beginPath();
+      kx.moveTo(0,-95);
+      kx.bezierCurveTo(70,-92,84,-10,60,70);
+      kx.bezierCurveTo(46,120,-46,120,-60,70);
+      kx.bezierCurveTo(-84,-10,-70,-92,0,-95);
+      kx.closePath();kx.fill();kx.stroke();
+      // highlight
+      kx.fillStyle="rgba(255,255,255,0.18)";kx.beginPath();kx.ellipse(-22,-30,20,40,-0.3,0,6.29);kx.fill();
+      kx.restore();
+      // moisture label
+      kx.fillStyle="#0b1820";kx.font="bold 20px ui-monospace,monospace";kx.textAlign="center";kx.textBaseline="middle";
+      kx.fillText(M.toFixed(1)+"%",cx,cy+8);
+      // target badge
+      if(M<=TARGET+1e-6){kx.fillStyle="rgba(34,195,174,0.95)";kx.beginPath();kx.arc(cx,390,20,0,6.29);kx.fill();
+        kx.strokeStyle="#fff";kx.lineWidth=3;kx.beginPath();kx.moveTo(cx-9,390);kx.lineTo(cx-2,397);kx.lineTo(cx+10,383);kx.stroke();
+        kx.fillStyle="#0f7d6e";kx.font="12px ui-monospace,monospace";kx.fillText("store-ready",cx,418);}
+      document.getElementById("gd2_klab").textContent=M.toFixed(1)+"%";
+    }
+    function drawPlot(){
+      var p=P(),tMax=tMaxOf(),yMax=Math.max(p.M0+3,24);
+      clear(px,760,360);frame(px,box,tMax,yMax,"moisture %","hr");
+      // Me floor line
+      var fy=mapY(box,yMax,p.Me);
+      px.strokeStyle="rgba(127,160,172,.55)";px.setLineDash([5,4]);px.lineWidth=1.4;
+      px.beginPath();px.moveTo(box.x,fy);px.lineTo(box.x+box.w,fy);px.stroke();px.setLineDash([]);
+      px.fillStyle="#7fa0ac";px.font="11px ui-monospace,monospace";px.textAlign="left";px.fillText("M_e = "+p.Me.toFixed(1),box.x+6,fy-8);
+      // 15% target line
+      var gy=mapY(box,yMax,TARGET);
+      px.strokeStyle="rgba(224,178,74,.85)";px.setLineDash([6,3]);px.lineWidth=1.6;
+      px.beginPath();px.moveTo(box.x,gy);px.lineTo(box.x+box.w,gy);px.stroke();px.setLineDash([]);
+      px.fillStyle=C.gold;px.fillText("15% target",box.x+box.w-70,gy-8);
+      // tau line
+      var tx=mapX(box,tMax,1/p.k);
+      px.strokeStyle="rgba(127,160,172,.35)";px.setLineDash([4,4]);px.beginPath();px.moveTo(tx,box.y);px.lineTo(tx,box.y+box.h);px.stroke();px.setLineDash([]);
+      px.fillStyle="#7fa0ac";px.fillText("t = \u03c4",tx+5,box.y+14);
+      // curves
+      curve(px,box,tMax,yMax,MOf,C.teal,2.8);
+      if(showEx)curve(px,box,tMax,yMax,exOf,C.amber,2.4);
+      // crossing marker at 15%
+      var tt=ttNum();
+      if(tt!==null&&isFinite(tt)&&tt<=tMax){var mx=mapX(box,tMax,tt);
+        px.fillStyle=C.gold;px.beginPath();px.arc(mx,gy,5,0,6.29);px.fill();px.strokeStyle="#0b1820";px.lineWidth=2;px.stroke();}
+      // cursor
+      var Mc=MOf(cursorT),ccx=mapX(box,tMax,cursorT),ccy=mapY(box,yMax,Mc);
+      px.strokeStyle="rgba(157,182,192,.4)";px.lineWidth=1;px.beginPath();px.moveTo(ccx,box.y);px.lineTo(ccx,box.y+box.h);px.stroke();
+      px.fillStyle=C.teal;px.beginPath();px.arc(ccx,ccy,5,0,6.29);px.fill();px.strokeStyle="#0b1820";px.lineWidth=2;px.stroke();
+      if(showEx){var ey=mapY(box,yMax,exOf(cursorT));px.fillStyle=C.amber;px.beginPath();px.arc(ccx,ey,4,0,6.29);px.fill();}
+      // readouts
+      document.getElementById("gd2_cursorlab").textContent="t = "+cursorT.toFixed(1)+" hr";
+      document.getElementById("gd2_mM").textContent=Mc.toFixed(1)+"%";
+      document.getElementById("gd2_mex").textContent=exOf(cursorT).toFixed(1)+"%";
+      document.getElementById("gd2_mtau").textContent=(1/p.k).toFixed(1)+" hr";
+      var ttEl=document.getElementById("gd2_mtt");
+      if(tt===null)ttEl.textContent="already \u226415%";
+      else if(!isFinite(tt))ttEl.textContent="never";
+      else ttEl.textContent=tt.toFixed(1)+" hr";
+      document.getElementById("gd2_warn").style.display=(p.Me>=TARGET)?"block":"none";
+      drawKernel(Mc);
+    }
+    gd2redraw=drawPlot;
+    var dragging=false;
+    function tFromEvent(e){var r=plotC.getBoundingClientRect();var xp=((e.touches?e.touches[0].clientX:e.clientX)-r.left)*(plotC._w/r.width);var f=(xp-box.x)/box.w;f=Math.max(0,Math.min(1,f));return f*tMaxOf();}
+    function down(e){dragging=true;cursorT=tFromEvent(e);drawPlot();e.preventDefault();}
+    function move(e){if(dragging){cursorT=tFromEvent(e);drawPlot();e.preventDefault();}}
+    function up(){dragging=false;}
+    plotC.addEventListener("mousedown",down);window.addEventListener("mousemove",move);window.addEventListener("mouseup",up);
+    plotC.addEventListener("touchstart",down,{passive:false});plotC.addEventListener("touchmove",move,{passive:false});plotC.addEventListener("touchend",up);
+    function loop(){if(playing){cursorT+=tMaxOf()/200;animT+=0.016;if(cursorT>tMaxOf()){cursorT=tMaxOf();playing=false;}drawPlot();}requestAnimationFrame(loop);}
+    document.getElementById("gd2_run").onclick=function(){if(cursorT>=tMaxOf())cursorT=0;playing=true;};
+    document.getElementById("gd2_pause").onclick=function(){playing=false;};
+    document.getElementById("gd2_rst").onclick=function(){playing=false;cursorT=0;drawPlot();};
+    var bE=document.getElementById("gd2_excess");
+    bE.onclick=function(){showEx=!showEx;bE.classList.toggle("sel",showEx);drawPlot();};
+    function upd(){document.getElementById("gd2_M0v").textContent=parseFloat(M0.value).toFixed(1)+"%";
+      document.getElementById("gd2_Mev").textContent=parseFloat(Me.value).toFixed(1)+"%";
+      document.getElementById("gd2_kv").textContent=parseFloat(k.value).toFixed(2)+" hr\u207b\u00b9";drawPlot();}
+    M0.oninput=upd;Me.oninput=upd;k.oninput=upd;
+    var revealed=false;
+    document.getElementById("gd2_reveal").onclick=function(){if(revealed)return;revealed=true;
+      document.getElementById("gd2_hidden").outerHTML='<span style="color:#0f7d6e;font-weight:700"><var>M</var><span class="sub2">e</span><span class="op">+</span>(<var>M</var><span class="sub2">0</span><span class="op">&minus;</span><var>M</var><span class="sub2">e</span>)<var>e</var><span class="sup2">&minus;<var>kt</var></span></span>';};
+    upd();loop();
+  })();
+
+  var rt;window.addEventListener("resize",function(){clearTimeout(rt);rt=setTimeout(function(){if(gd2redraw)gd2redraw();},150);});
+})();
+</script>
+</body>
+</html>

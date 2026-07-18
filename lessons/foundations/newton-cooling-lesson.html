@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Newton's Cooling — A First-Order System, End to End</title>
+<style>
+  :root{--paper:#EEF2F5;--amber:#E8A33D;--teal:#22C3AE;--navy:#0E1B24;--ink:#1c2b33;--muted:#5d6f79;--line:#c9d4da;--grid:#16303c;--grid-soft:#12242e;--axis:#3a5b68;}
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);line-height:1.62;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:900px;margin:0 auto;padding:26px 20px 90px}
+  header.hero{border:1px solid var(--line);border-radius:14px;padding:24px 26px;margin-bottom:22px;background:linear-gradient(180deg,#ffffff,#f5f8fa);}
+  .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  h1{font-size:28px;margin:6px 0 8px;letter-spacing:-.01em}.hero .sub{color:var(--muted);font-size:15.5px;margin:0}
+  nav.toc{position:sticky;top:0;z-index:20;background:rgba(238,242,245,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);margin:0 -20px 22px;padding:9px 20px;display:flex;gap:6px;flex-wrap:wrap;font-size:12.5px}
+  nav.toc a{color:var(--muted);text-decoration:none;border:1px solid var(--line);background:#fff;padding:5px 11px;border-radius:20px;font-weight:600;white-space:nowrap;transition:.15s}
+  nav.toc a:hover{border-color:#a9bcc6;color:var(--ink)}
+  section{margin:34px 0}
+  section>h2{font-size:21px;margin:0 0 4px;display:flex;align-items:center;gap:10px}
+  section>h2 .num{display:inline-flex;width:26px;height:26px;border-radius:8px;background:var(--navy);color:var(--teal);font-size:14px;align-items:center;justify-content:center;flex:0 0 auto}
+  section>.lead{color:var(--muted);font-size:14px;margin:2px 0 14px}
+  p{margin:10px 0}.muted{color:var(--muted)}.small{font-size:13px}
+  .card{border:1px solid var(--line);background:#fff;border-radius:12px;padding:18px 20px;margin:14px 0}
+  figure.viz{margin:16px 0;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#fff,#f7fafb);padding:14px 16px 10px}
+  figure.viz svg{display:block;width:100%;height:auto}figure.viz figcaption{font-size:12.5px;color:var(--muted);margin-top:6px;text-align:center}
+  .demo{border:1px solid var(--line);border-radius:12px;background:#fff;margin:16px 0;overflow:hidden}
+  .demo .demohead{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;background:var(--navy);color:#dff3ee}
+  .demo .demohead .t{font-weight:700;font-size:13.5px}.demo .demohead .tag{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal)}
+  .demo .demobody{padding:16px}
+  .scope{background:var(--navy);border-radius:10px;padding:12px 12px 8px;border:1px solid #0a141b}
+  .scope .scopehead{display:flex;justify-content:space-between;align-items:center;color:#7fa0ac;font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;padding:0 2px}
+  .scope .dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+  canvas{display:block;width:100%;border-radius:8px;touch-action:none}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:12.5px;color:#9db6c0}
+  .legend span{display:inline-flex;align-items:center;gap:7px}.swatch{width:16px;height:3px;border-radius:2px;display:inline-block}
+  .controls{display:grid;gap:13px;margin-top:14px}
+  .ctl{display:grid;grid-template-columns:150px 1fr 96px;align-items:center;gap:12px}
+  .ctl label{font-size:13.5px;font-weight:600}
+  .ctl .val{font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;text-align:right;background:var(--paper);border:1px solid var(--line);border-radius:7px;padding:4px 8px}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:3px;background:linear-gradient(90deg,var(--teal),#7fc9bf);outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid var(--teal);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid var(--teal);cursor:pointer}
+  input[type=range].amber{background:linear-gradient(90deg,#f0c584,var(--amber))}
+  input[type=range].amber::-webkit-slider-thumb{border-color:var(--amber)}input[type=range].amber::-moz-range-thumb{border-color:var(--amber)}
+  .btn{appearance:none;border:1px solid var(--line);background:#fff;color:var(--ink);font-weight:600;font-size:13px;padding:8px 14px;border-radius:9px;cursor:pointer}
+  .btn:hover{border-color:#a9bcc6}.btn.primary{background:var(--navy);color:#eaf6f2;border-color:var(--navy)}.btn.ghost{background:transparent}.btn.sel{background:var(--teal);border-color:var(--teal);color:var(--navy)}
+  .eq{font-family:"Cambria Math","Times New Roman",Georgia,serif;font-size:18px;color:var(--ink);display:flex;align-items:center;flex-wrap:wrap;gap:2px;padding:10px 12px;background:var(--paper);border-radius:8px;border:1px solid var(--line);margin:10px 0;line-height:1}
+  .eq.center{justify-content:center}.eq.big{font-size:22px}
+  .eqi{display:inline-flex;font-size:15px;padding:2px 8px;vertical-align:middle}
+  .frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 4px;line-height:1}
+  .frac .num{padding:0 6px 2px;border-bottom:1.4px solid currentColor}.frac .den{padding:2px 6px 0}
+  var,.it{font-style:italic}.sub2{font-size:.7em;vertical-align:sub}.sup2{font-size:.7em;vertical-align:super}.op{margin:0 5px}
+  .steps{display:grid;gap:10px}
+  .step{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:#fff;opacity:.4;filter:grayscale(.35);transition:.3s}
+  .step.on{opacity:1;filter:none;border-color:#bcd0d8;box-shadow:0 1px 0 rgba(34,195,174,.15)}
+  .step .lab{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:4px}
+  .pill{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px;background:rgba(34,195,174,.14);color:#0f7d6e;border:1px solid rgba(34,195,174,.35)}
+  .pill.amber{background:rgba(232,163,61,.16);color:#a56a12;border-color:rgba(232,163,61,.4)}
+  .callout{border-left:3px solid var(--teal);background:#f2fbf9;border-radius:0 8px 8px 0;padding:11px 15px;margin:12px 0;font-size:14px}
+  .callout.amber{border-left-color:var(--amber);background:#fdf7ee}
+  .readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;margin-top:12px}
+  .metric{background:var(--navy);color:#dff3ee;border-radius:10px;padding:10px 12px}
+  .metric .m-lab{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#7fa0ac}
+  .metric .m-val{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:19px;margin-top:2px}
+  .metric .m-val.amber{color:var(--amber)}.metric .m-val.teal{color:var(--teal)}
+  details{border:1px solid var(--line);border-radius:10px;padding:2px 15px;margin:12px 0;background:#fff}
+  summary{cursor:pointer;font-weight:600;padding:11px 0;font-size:14.5px;list-style:none}
+  summary::-webkit-details-marker{display:none}summary::before{content:"▸";color:var(--teal);margin-right:8px;display:inline-block;transition:.2s}
+  details[open] summary::before{transform:rotate(90deg)}.qbtn{margin:4px 6px 10px 0}
+  .flexrow{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}.flexrow>.grow{flex:1 1 320px;min-width:270px}
+  .takeaways{border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#0E1B24,#12242e);color:#dff3ee;padding:18px 22px}
+  .takeaways h2{color:#fff;margin-top:0}.takeaways ul{margin:8px 0 0;padding-left:18px}.takeaways li{margin:8px 0}.takeaways b{color:var(--teal)}
+  .foot{color:var(--muted);font-size:12.5px;text-align:center;margin-top:30px}
+  code.tk{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--paper);padding:1px 6px;border-radius:5px;font-size:13px;border:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="kicker">Foundations of Dynamic Systems · Worked Example · Thermal</div>
+    <h1>Newton's Cooling</h1>
+    <p class="sub">A hot cup of coffee cools toward room temperature — fast while it's hot, slow as it nears the room. Same first-order machinery as the tank, but now the target isn't zero. The trick is to decay the <em>difference</em> from equilibrium.</p>
+  </header>
+
+  <nav class="toc">
+    <a href="#scene">① The setup</a>
+    <a href="#state">② The state</a>
+    <a href="#build">③ Build the equation</a>
+    <a href="#shift">④ The equilibrium shift</a>
+    <a href="#cool">⑤ The cooling curve</a>
+    <a href="#takeaways">⑥ Takeaways</a>
+  </nav>
+
+  <!-- 1 -->
+  <section id="scene">
+    <h2><span class="num">1</span> The setup</h2>
+    <p class="lead">A phenomenon everyone has watched happen.</p>
+    <p>An object at temperature <var>T</var> sits in a room at ambient <span class="eqi"><var>T</var><span class="sub2">a</span></span>. Heat leaks out at a rate proportional to how much hotter the object is than its surroundings — Newton's law of cooling. The bigger the gap, the faster it cools; as the gap closes, cooling slows to a crawl.</p>
+
+    <figure class="viz">
+      <svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Hot cup cooling into ambient air">
+        <defs>
+          <linearGradient id="mug" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E8A33D" stop-opacity="0.9"/><stop offset="1" stop-color="#E8A33D" stop-opacity="0.5"/></linearGradient>
+          <marker id="heat" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#E8A33D"/></marker>
+        </defs>
+        <!-- ambient label -->
+        <rect x="440" y="40" width="176" height="30" rx="8" fill="#eef6f9" stroke="#22C3AE"/>
+        <text x="528" y="60" text-anchor="middle" font-family="Georgia,serif" font-size="15" fill="#0f7d6e">ambient <tspan font-style="italic">T</tspan><tspan font-size="10" dy="3">a</tspan><tspan dy="-3"> = 20°C</tspan></text>
+        <!-- steam -->
+        <path d="M210,70 q10,-18 0,-36 q-10,-18 0,-36" fill="none" stroke="#b9c7cf" stroke-width="3" opacity="0.7"/>
+        <path d="M240,66 q10,-18 0,-36 q-10,-18 0,-36" fill="none" stroke="#b9c7cf" stroke-width="3" opacity="0.55"/>
+        <!-- mug body -->
+        <path d="M170,110 L170,240 Q170,262 192,262 L268,262 Q290,262 290,240 L290,110 Z" fill="url(#mug)" stroke="#a56a12" stroke-width="2.5"/>
+        <ellipse cx="230" cy="110" rx="60" ry="12" fill="#f6c988" stroke="#a56a12" stroke-width="2.5"/>
+        <!-- handle -->
+        <path d="M290,140 q42,0 42,40 q0,40 -42,40" fill="none" stroke="#a56a12" stroke-width="7"/>
+        <!-- heat arrows leaving -->
+        <line x1="300" y1="150" x2="360" y2="130" stroke="#E8A33D" stroke-width="2.4" marker-end="url(#heat)"/>
+        <line x1="304" y1="185" x2="366" y2="185" stroke="#E8A33D" stroke-width="2.4" marker-end="url(#heat)"/>
+        <line x1="300" y1="220" x2="360" y2="240" stroke="#E8A33D" stroke-width="2.4" marker-end="url(#heat)"/>
+        <rect x="368" y="168" width="150" height="30" rx="7" fill="#fdf7ee" stroke="#E8A33D"/>
+        <text x="443" y="188" text-anchor="middle" font-family="Georgia,serif" font-size="14" fill="#a56a12"><tspan font-style="italic">Q</tspan><tspan font-size="10" dy="3">out</tspan><tspan dy="-3"> = hA(T−T</tspan><tspan font-size="10" dy="3">a</tspan><tspan dy="-3">)</tspan></text>
+        <!-- thermometer -->
+        <rect x="86" y="100" width="18" height="150" rx="9" fill="#fff" stroke="#8fa2ab" stroke-width="2"/>
+        <circle cx="95" cy="258" r="16" fill="#E86A4D"/>
+        <rect x="90" y="150" width="10" height="108" fill="#E86A4D"/>
+        <text x="60" y="106" font-family="Georgia,serif" font-size="14" fill="#1c2b33"><tspan font-style="italic">T</tspan></text>
+      </svg>
+      <figcaption>Heat flows from the hot object to the cool room in proportion to the temperature gap T − T<sub>a</sub>. When the gap vanishes, so does the flow.</figcaption>
+    </figure>
+  </section>
+
+  <!-- 2 -->
+  <section id="state">
+    <h2><span class="num">2</span> Choosing the state variable</h2>
+    <p class="lead">Track the quantity the cooling law is written in.</p>
+    <p>The object stores <em>thermal energy</em>, and for a lumped body that energy is <span class="eqi"><var>U</var>=<var>C</var><span class="sub2">th</span><var>T</var></span> — proportional to temperature. Since the cooling law speaks in temperature, the state is <span class="pill">T(t)</span>. The thermal capacitance <span class="eqi"><var>C</var><span class="sub2">th</span></span> plays the tank's cross-sectional-area role: it sets how much energy a degree of temperature represents.</p>
+  </section>
+
+  <!-- 3 -->
+  <section id="build">
+    <h2><span class="num">3</span> Building the equation from the energy balance</h2>
+    <p class="lead">Accumulation = inflow − outflow, now in joules.</p>
+
+    <figure class="viz">
+      <svg viewBox="0 0 640 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Thermal energy balance">
+        <defs><marker id="farw" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#5d6f79"/></marker></defs>
+        <rect x="14" y="42" width="150" height="70" rx="10" fill="#f3f5f7" stroke="#c9d4da" stroke-dasharray="5 4"/>
+        <text x="89" y="72" text-anchor="middle" font-family="-apple-system,Arial" font-size="12" fill="#8794a0">HEAT IN</text>
+        <text x="89" y="96" text-anchor="middle" font-family="Georgia,serif" font-size="20" fill="#8794a0">0</text>
+        <line x1="166" y1="77" x2="232" y2="77" stroke="#5d6f79" stroke-width="2" marker-end="url(#farw)"/>
+        <rect x="236" y="36" width="168" height="82" rx="10" fill="#f2fbf9" stroke="#22C3AE" stroke-width="1.6"/>
+        <text x="320" y="64" text-anchor="middle" font-family="-apple-system,Arial" font-size="12" fill="#0f7d6e">STORED ENERGY</text>
+        <text x="320" y="94" text-anchor="middle" font-family="Georgia,serif" font-size="19" fill="#0f7d6e">C_th · dT/dt</text>
+        <line x1="406" y1="77" x2="472" y2="77" stroke="#5d6f79" stroke-width="2" marker-end="url(#farw)"/>
+        <rect x="476" y="42" width="150" height="70" rx="10" fill="#fdf7ee" stroke="#E8A33D" stroke-width="1.6"/>
+        <text x="551" y="68" text-anchor="middle" font-family="-apple-system,Arial" font-size="12" fill="#a56a12">HEAT OUT</text>
+        <text x="551" y="94" text-anchor="middle" font-family="Georgia,serif" font-size="14" fill="#a56a12">hA(T−T_a)</text>
+        <text x="320" y="160" text-anchor="middle" font-family="Georgia,serif" font-size="17" fill="#1c2b33">C_th · dT/dt = 0 − hA(T − T_a)</text>
+        <text x="320" y="186" text-anchor="middle" font-family="Georgia,serif" font-size="15" fill="#5d6f79">divide by C_th ⟶ <tspan fill="#0f7d6e" font-size="16">dT/dt = −k (T − T_a)</tspan></text>
+      </svg>
+      <figcaption>No heat is added, so accumulation equals minus the loss. Dividing by the thermal capacitance folds the material properties into a single rate k = hA / C_th.</figcaption>
+    </figure>
+
+    <div class="demo">
+      <div class="demohead"><span class="t">Interactive · Assemble the balance</span><span class="tag">Demo 1</span></div>
+      <div class="demobody">
+        <div class="controls" style="margin-bottom:14px">
+          <div class="ctl"><label>Cooling rate <var>k</var></label><input type="range" id="co1_k" class="amber" min="0.01" max="0.15" step="0.005" value="0.05"><span class="val" id="co1_kv">0.050 s⁻¹</span></div>
+          <div class="ctl"><label>Ambient <var>T</var><span class="sub2">a</span></label><input type="range" id="co1_Ta" min="0" max="40" step="1" value="20"><span class="val" id="co1_Tav">20 °C</span></div>
+        </div>
+        <div class="steps" id="co1_steps">
+          <div class="step on"><div class="lab">Energy balance</div><div class="eq big center"><var>C</var><span class="sub2">th</span><span class="frac"><span class="num">d<var>T</var></span><span class="den">d<var>t</var></span></span><span class="op">=</span>0<span class="op">−</span><var>Q</var><span class="sub2">out</span></div></div>
+          <div class="step"><div class="lab">Newton's cooling law</div><div class="eq big center"><var>C</var><span class="sub2">th</span><span class="frac"><span class="num">d<var>T</var></span><span class="den">d<var>t</var></span></span><span class="op">=</span><span class="op">−</span><var>hA</var>(<var>T</var><span class="op">−</span><var>T</var><span class="sub2">a</span>)</div></div>
+          <div class="step"><div class="lab">Divide by C_th → state equation</div><div class="eq big center" style="background:#f2fbf9;border-color:rgba(34,195,174,.4)"><span class="frac"><span class="num">d<var>T</var></span><span class="den">d<var>t</var></span></span><span class="op">=</span><span class="op">−</span><span id="co1_k2">0.050</span>(<var>T</var><span class="op">−</span><span id="co1_Ta2">20</span>)</div></div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn primary" id="co1_next">Reveal next step ▸</button>
+          <button class="btn ghost" id="co1_reset">Reset</button>
+        </div>
+        <div class="readout">
+          <div class="metric"><div class="m-lab">Time constant τ = 1/k</div><div class="m-val teal" id="co1_mtau">20.0 s</div></div>
+          <div class="metric"><div class="m-lab">Equilibrium</div><div class="m-val amber" id="co1_mss">20 °C</div></div>
+          <div class="metric"><div class="m-lab">Order</div><div class="m-val">1st</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section id="shift">
+    <h2><span class="num">4</span> The equilibrium shift — back to the tank</h2>
+    <p class="lead">One substitution turns "decay to ambient" into "decay to zero."</p>
+    <p>The equation <span class="eqi"><span class="frac"><span class="num">d<var>T</var></span><span class="den">d<var>t</var></span></span>=−<var>k</var>(<var>T</var>−<var>T</var><span class="sub2">a</span>)</span> isn't quite the tank's — the state is measured from zero, but the cooling only cares about the gap. So define the <strong>excess temperature</strong> <span class="eqi">θ=<var>T</var>−<var>T</var><span class="sub2">a</span></span>. Since <span class="eqi"><var>T</var><span class="sub2">a</span></span> is constant, <span class="eqi">dθ/d<var>t</var>=d<var>T</var>/d<var>t</var></span>, and the whole thing collapses:</p>
+
+    <figure class="viz">
+      <svg viewBox="0 0 640 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Coordinate shift to excess temperature">
+        <rect x="20" y="40" width="250" height="100" rx="12" fill="#fdf7ee" stroke="#E8A33D"/>
+        <text x="145" y="72" text-anchor="middle" font-family="-apple-system,Arial" font-size="12" fill="#a56a12">MEASURED FROM 0°C</text>
+        <text x="145" y="106" text-anchor="middle" font-family="Georgia,serif" font-size="17" fill="#a56a12">dT/dt = −k(T − T_a)</text>
+        <text x="145" y="128" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#7a5a1e">target = T_a (not zero)</text>
+        <text x="305" y="96" text-anchor="middle" font-family="Georgia,serif" font-size="26" fill="#5d6f79">→</text>
+        <text x="305" y="120" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#5d6f79">θ = T−T_a</text>
+        <rect x="370" y="40" width="250" height="100" rx="12" fill="#f2fbf9" stroke="#22C3AE"/>
+        <text x="495" y="72" text-anchor="middle" font-family="-apple-system,Arial" font-size="12" fill="#0f7d6e">MEASURED FROM AMBIENT</text>
+        <text x="495" y="106" text-anchor="middle" font-family="Georgia,serif" font-size="19" fill="#0f7d6e">dθ/dt = −k·θ</text>
+        <text x="495" y="128" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#0f7d6e">the leaking tank, exactly</text>
+      </svg>
+      <figcaption>Shifting the origin to the equilibrium turns any "decay-to-a-value" problem into pure decay. The solution is θ(t) = θ₀e<sup>−kt</sup>, then add T<sub>a</sub> back.</figcaption>
+    </figure>
+
+    <p>Undoing the shift gives the full solution — tap to reveal:</p>
+    <div class="eq big center" id="co2_reveal" style="cursor:pointer;user-select:none">
+      <var>T</var>(<var>t</var>)<span class="op">=</span><span id="co2_hidden" style="letter-spacing:.15em;color:var(--muted)">tap&nbsp;to&nbsp;reveal</span>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section id="cool">
+    <h2><span class="num">5</span> The cooling curve</h2>
+    <p class="lead">Watch the object cool, and watch the excess θ decay to zero underneath it.</p>
+
+    <div class="demo">
+      <div class="demohead"><span class="t">Interactive · Cool it down</span><span class="tag">Demo 2</span></div>
+      <div class="demobody">
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <button class="btn" id="co2_theta">Overlay θ = T − T_a</button>
+        </div>
+        <div class="flexrow">
+          <div class="grow" style="flex:0 0 150px;min-width:140px">
+            <div class="scope" style="padding-bottom:14px">
+              <div class="scopehead"><span><span class="dot" style="background:var(--amber)"></span>OBJECT</span><span id="co2_objlab">90 °C</span></div>
+              <canvas id="co2_obj" width="280" height="440"></canvas>
+            </div>
+          </div>
+          <div class="grow">
+            <div class="scope">
+              <div class="scopehead"><span><span class="dot" style="background:var(--teal)"></span>TEMPERATURE</span><span id="co2_cursorlab">t = 0.0 s</span></div>
+              <canvas id="co2_plot" width="760" height="360"></canvas>
+              <div class="legend">
+                <span><span class="swatch" style="background:var(--teal)"></span>T(t)</span>
+                <span><span class="swatch" style="background:var(--amber)"></span>θ = T − T_a</span>
+                <span><span class="swatch" style="background:#7fa0ac"></span>ambient &amp; t = τ</span>
+              </div>
+            </div>
+            <p class="small muted" style="margin-top:8px">The amber θ curve is the teal T curve slid down by T<sub>a</sub> — and it decays straight to zero, revealing the pure exponential hiding inside. Drag to move the cursor.</p>
+          </div>
+        </div>
+        <div class="controls">
+          <div class="ctl"><label>Initial temp <var>T</var><span class="sub2">0</span></label><input type="range" id="co2_T0" min="30" max="100" step="1" value="90"><span class="val" id="co2_T0v">90 °C</span></div>
+          <div class="ctl"><label>Ambient <var>T</var><span class="sub2">a</span></label><input type="range" id="co2_Ta" min="0" max="40" step="1" value="20"><span class="val" id="co2_Tav">20 °C</span></div>
+          <div class="ctl"><label>Cooling rate <var>k</var></label><input type="range" id="co2_k" class="amber" min="0.01" max="0.15" step="0.005" value="0.05"><span class="val" id="co2_kv">0.050 s⁻¹</span></div>
+        </div>
+        <div class="readout">
+          <div class="metric"><div class="m-lab">T at cursor</div><div class="m-val teal" id="co2_mT">90.0 °C</div></div>
+          <div class="metric"><div class="m-lab">excess θ</div><div class="m-val amber" id="co2_mth">70.0 °C</div></div>
+          <div class="metric"><div class="m-lab">dT/dt</div><div class="m-val" id="co2_mrate">−3.50 °C/s</div></div>
+          <div class="metric"><div class="m-lab">half-life ln2/k</div><div class="m-val" id="co2_mhalf">13.9 s</div></div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn primary" id="co2_run">▶ Run</button>
+          <button class="btn" id="co2_pause">⏸ Pause</button>
+          <button class="btn ghost" id="co2_rst">↺ Reset t=0</button>
+        </div>
+      </div>
+    </div>
+
+    <details>
+      <summary>Full worked solution</summary>
+      <p>With θ = T − T<sub>a</sub>, the equation is pure decay dθ/dt = −kθ, so θ(t) = θ₀e<sup>−kt</sup> where θ₀ = T₀ − T<sub>a</sub>. Add ambient back:</p>
+      <div class="eq big center" style="background:#f2fbf9;border-color:rgba(34,195,174,.4)"><var>T</var>(<var>t</var>)<span class="op">=</span><var>T</var><span class="sub2">a</span><span class="op">+</span>(<var>T</var><span class="sub2">0</span><span class="op">−</span><var>T</var><span class="sub2">a</span>)<var>e</var><span class="sup2">−<var>kt</var></span></div>
+      <p class="small muted">Same structure as the RC's charge curve — an equilibrium plus a decaying error. Every "settles toward a value" first-order system wears this shape.</p>
+    </details>
+  </section>
+
+  <!-- 6 -->
+  <section id="takeaways">
+    <div class="takeaways">
+      <h2>Takeaways</h2>
+      <ul>
+        <li><b>Temperature is the state.</b> Stored thermal energy scales with T, and the cooling law is written in T.</li>
+        <li><b>Cooling drives the difference to zero, not the temperature.</b> Only the gap T − T<sub>a</sub> matters.</li>
+        <li><b>Shift to equilibrium and it's the tank again.</b> θ = T − T<sub>a</sub> gives dθ/dt = −kθ, solved as θ₀e<sup>−kt</sup>.</li>
+        <li><b>Full solution = equilibrium + decaying error:</b> T(t) = T<sub>a</sub> + (T₀ − T<sub>a</sub>)e<sup>−kt</sup>, with τ = 1/k.</li>
+      </ul>
+    </div>
+    <details>
+      <summary>Quick check 1 — the gap that matters</summary>
+      <p class="small muted">Two identical mugs start at 90°C, one in a 20°C room, one in a 5°C fridge. Which cools faster at t = 0, and why?</p>
+      <button class="btn qbtn" onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+      <div style="display:none" class="callout">The fridge mug. Initial rate is −k(T − T<sub>a</sub>): its gap is 85°C vs 70°C, so it loses heat faster. Both share the same k and τ, but the larger gap means a steeper start.</div>
+    </details>
+    <details>
+      <summary>Quick check 2 — reading the half-life</summary>
+      <p class="small muted">With k = 0.05 s⁻¹, how long until the excess temperature halves?</p>
+      <button class="btn qbtn" onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+      <div style="display:none" class="callout">Half-life = ln2/k = 0.693/0.05 ≈ 13.9 s. So a 70°C excess falls to 35°C in ~14 s, to 17.5°C in ~28 s, and so on.</div>
+    </details>
+    <details>
+      <summary>Exercise — the forensic estimate</summary>
+      <p class="small muted">An object found at 40°C in a 20°C room was 90°C when it started cooling with k = 0.05 s⁻¹. How long has it been cooling?</p>
+      <button class="btn qbtn" onclick="this.nextElementSibling.style.display='block'">Show solution</button>
+      <div style="display:none" class="callout">θ = T − T<sub>a</sub>: now 20°C, started 70°C. So e<sup>−kt</sup> = 20/70 = 0.286 ⟶ t = −ln(0.286)/0.05 = 1.253/0.05 ≈ 25 s. (This is exactly the logic behind estimating time-of-cooling in forensics.)</div>
+    </details>
+  </section>
+
+  <p class="foot">Foundations of Dynamic Systems · self-contained &amp; offline · thermal first-order response.</p>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var DPR=Math.max(1,Math.min(2,window.devicePixelRatio||1));
+  var C={grid:"#16303c",gridSoft:"#12242e",axis:"#3a5b68",txt:"#9db6c0",txtHi:"#dff3ee",amber:"#E8A33D",teal:"#22C3AE"};
+  function setup(cv,w,h){cv.width=w*DPR;cv.height=h*DPR;cv.style.aspectRatio=w+" / "+h;var x=cv.getContext("2d");x.setTransform(DPR,0,0,DPR,0,0);cv._w=w;cv._h=h;return x;}
+  function clear(x,w,h){x.clearRect(0,0,w,h);}
+  function frame(x,b,tMax,yMax,yl){var i;x.fillStyle="#0b1820";x.fillRect(b.x,b.y,b.w,b.h);x.lineWidth=1;
+    for(i=0;i<=10;i++){var gx=b.x+b.w*i/10;x.strokeStyle=(i%5===0)?C.grid:C.gridSoft;x.beginPath();x.moveTo(gx,b.y);x.lineTo(gx,b.y+b.h);x.stroke();}
+    for(i=0;i<=8;i++){var gy=b.y+b.h*i/8;x.strokeStyle=(i%4===0)?C.grid:C.gridSoft;x.beginPath();x.moveTo(b.x,gy);x.lineTo(b.x+b.w,gy);x.stroke();}
+    x.strokeStyle=C.axis;x.lineWidth=1.4;x.beginPath();x.moveTo(b.x,b.y);x.lineTo(b.x,b.y+b.h);x.lineTo(b.x+b.w,b.y+b.h);x.stroke();
+    x.fillStyle=C.txt;x.font="11px ui-monospace,Menlo,Consolas,monospace";x.textAlign="center";x.textBaseline="top";
+    for(i=0;i<=5;i++)x.fillText((tMax*i/5).toFixed(0),b.x+b.w*i/5,b.y+b.h+5);
+    x.fillText("t (s)",b.x+b.w,b.y+b.h+18);
+    x.textAlign="right";x.textBaseline="middle";
+    for(i=0;i<=4;i++)x.fillText((yMax*i/4).toFixed(0),b.x-6,b.y+b.h-b.h*i/4);
+    x.save();x.translate(b.x-34,b.y+b.h/2);x.rotate(-Math.PI/2);x.textAlign="center";x.textBaseline="middle";x.fillStyle=C.txt;x.fillText(yl,0,0);x.restore();}
+  function mapX(b,tMax,t){return b.x+b.w*(t/tMax);}
+  function mapY(b,yMax,y){return b.y+b.h-b.h*(y/yMax);}
+  function curve(x,b,tMax,yMax,fn,color,w){x.strokeStyle=color;x.lineWidth=w||2.6;x.lineJoin="round";x.beginPath();var s=false;
+    for(var i=0;i<=240;i++){var t=tMax*i/240,y=fn(t);var px=mapX(b,tMax,t),py=mapY(b,yMax,Math.max(0,Math.min(yMax,y)));if(!s){x.moveTo(px,py);s=true;}else x.lineTo(px,py);}x.stroke();}
+
+  // DEMO 1
+  (function(){
+    var k=document.getElementById("co1_k"),Ta=document.getElementById("co1_Ta");
+    var step=0,steps=document.querySelectorAll("#co1_steps .step");
+    function nums(){var kk=parseFloat(k.value),ta=parseFloat(Ta.value);
+      document.getElementById("co1_kv").textContent=kk.toFixed(3)+" s⁻¹";
+      document.getElementById("co1_Tav").textContent=ta.toFixed(0)+" °C";
+      document.getElementById("co1_k2").textContent=kk.toFixed(3);
+      document.getElementById("co1_Ta2").textContent=ta.toFixed(0);
+      document.getElementById("co1_mtau").textContent=(1/kk).toFixed(1)+" s";
+      document.getElementById("co1_mss").textContent=ta.toFixed(0)+" °C";}
+    function show(){steps.forEach(function(s,i){s.classList.toggle("on",i<=step);});}
+    document.getElementById("co1_next").onclick=function(){if(step<steps.length-1){step++;show();}};
+    document.getElementById("co1_reset").onclick=function(){step=0;show();};
+    k.oninput=nums;Ta.oninput=nums;nums();show();
+  })();
+
+  // DEMO 2
+  var co2redraw;
+  (function(){
+    var objC=document.getElementById("co2_obj"),plotC=document.getElementById("co2_plot");
+    var ox=setup(objC,280,440),px=setup(plotC,760,360);
+    var T0=document.getElementById("co2_T0"),Ta=document.getElementById("co2_Ta"),k=document.getElementById("co2_k");
+    var box={x:52,y:20,w:664,h:280},cursorT=0,playing=false,animT=0,showTheta=false,tMax=100;
+    function P(){return{T0:parseFloat(T0.value),Ta:parseFloat(Ta.value),k:parseFloat(k.value)};}
+    function TOf(t){var p=P();return p.Ta+(p.T0-p.Ta)*Math.exp(-p.k*t);}
+    function thOf(t){var p=P();return (p.T0-p.Ta)*Math.exp(-p.k*t);}
+    function lerp(a,b,f){return a+(b-a)*f;}
+    function drawObj(T){
+      clear(ox,280,440);var p=P();
+      var frac=(p.T0-p.Ta)>0?Math.max(0,Math.min(1,(T-p.Ta)/(p.T0-p.Ta))):0;
+      // color hot(amber/red) -> cool(teal)
+      var r=Math.round(lerp(60,232,frac)),g=Math.round(lerp(195,120,frac)),bl=Math.round(lerp(174,61,frac));
+      var cx=140;
+      // steam when hot
+      if(frac>0.4){ox.strokeStyle="rgba(185,199,207,"+(frac*0.6)+")";ox.lineWidth=3;
+        for(var s=0;s<2;s++){ox.beginPath();ox.moveTo(cx-20+s*40,150);
+          ox.quadraticCurveTo(cx-8+s*40,120,cx-20+s*40,95);ox.quadraticCurveTo(cx-32+s*40,70,cx-20+s*40,50);ox.stroke();}}
+      // mug
+      ox.fillStyle="rgba("+r+","+g+","+bl+",0.85)";
+      ox.strokeStyle="#5b7480";ox.lineWidth=3;
+      ox.beginPath();ox.moveTo(cx-58,175);ox.lineTo(cx-58,330);ox.quadraticCurveTo(cx-58,355,cx-33,355);
+      ox.lineTo(cx+33,355);ox.quadraticCurveTo(cx+58,355,cx+58,330);ox.lineTo(cx+58,175);ox.closePath();ox.fill();ox.stroke();
+      ox.beginPath();ox.ellipse(cx,175,58,13,0,0,6.29);ox.fillStyle="rgba("+Math.min(255,r+30)+","+Math.min(255,g+30)+","+Math.min(255,bl+30)+",0.9)";ox.fill();ox.stroke();
+      // handle
+      ox.beginPath();ox.moveTo(cx+58,205);ox.quadraticCurveTo(cx+100,205,cx+100,245);ox.quadraticCurveTo(cx+100,285,cx+58,285);ox.strokeStyle="#5b7480";ox.lineWidth=6;ox.stroke();
+      // temp text
+      ox.fillStyle="#0b1820";ox.font="bold 18px ui-monospace,monospace";ox.textAlign="center";ox.textBaseline="middle";
+      ox.fillText(T.toFixed(0)+"°",cx,270);
+      document.getElementById("co2_objlab").textContent=T.toFixed(0)+" °C";
+    }
+    function drawPlot(){
+      var p=P(),yMax=100;
+      clear(px,760,360);frame(px,box,tMax,yMax,"°C");
+      // ambient asymptote
+      var ay=mapY(box,yMax,p.Ta);
+      px.strokeStyle="rgba(127,160,172,.55)";px.setLineDash([5,4]);px.lineWidth=1.4;
+      px.beginPath();px.moveTo(box.x,ay);px.lineTo(box.x+box.w,ay);px.stroke();px.setLineDash([]);
+      px.fillStyle="#7fa0ac";px.font="11px ui-monospace,monospace";px.textAlign="left";px.fillText("T_a = "+p.Ta.toFixed(0),box.x+6,ay-8);
+      // tau line
+      var tx=mapX(box,tMax,1/p.k);
+      px.strokeStyle="rgba(127,160,172,.4)";px.setLineDash([4,4]);px.beginPath();px.moveTo(tx,box.y);px.lineTo(tx,box.y+box.h);px.stroke();px.setLineDash([]);
+      px.fillText("t = τ",tx+5,box.y+14);
+      // curves
+      curve(px,box,tMax,yMax,TOf,C.teal,2.8);
+      if(showTheta)curve(px,box,tMax,yMax,thOf,C.amber,2.4);
+      // cursor
+      var Tc=TOf(cursorT),ccx=mapX(box,tMax,cursorT),ccy=mapY(box,yMax,Tc);
+      px.strokeStyle="rgba(157,182,192,.4)";px.lineWidth=1;px.beginPath();px.moveTo(ccx,box.y);px.lineTo(ccx,box.y+box.h);px.stroke();
+      px.fillStyle=C.teal;px.beginPath();px.arc(ccx,ccy,5,0,6.29);px.fill();px.strokeStyle="#0b1820";px.lineWidth=2;px.stroke();
+      if(showTheta){var thy=mapY(box,yMax,thOf(cursorT));px.fillStyle=C.amber;px.beginPath();px.arc(ccx,thy,4,0,6.29);px.fill();}
+      document.getElementById("co2_cursorlab").textContent="t = "+cursorT.toFixed(1)+" s";
+      document.getElementById("co2_mT").textContent=Tc.toFixed(1)+" °C";
+      document.getElementById("co2_mth").textContent=thOf(cursorT).toFixed(1)+" °C";
+      document.getElementById("co2_mrate").textContent=(-p.k*(Tc-p.Ta)).toFixed(2)+" °C/s";
+      document.getElementById("co2_mhalf").textContent=(Math.LN2/p.k).toFixed(1)+" s";
+      drawObj(Tc);
+    }
+    co2redraw=drawPlot;
+    var dragging=false;
+    function tFromEvent(e){var r=plotC.getBoundingClientRect();var xp=((e.touches?e.touches[0].clientX:e.clientX)-r.left)*(plotC._w/r.width);var f=(xp-box.x)/box.w;f=Math.max(0,Math.min(1,f));return f*tMax;}
+    function down(e){dragging=true;cursorT=tFromEvent(e);drawPlot();e.preventDefault();}
+    function move(e){if(dragging){cursorT=tFromEvent(e);drawPlot();e.preventDefault();}}
+    function up(){dragging=false;}
+    plotC.addEventListener("mousedown",down);window.addEventListener("mousemove",move);window.addEventListener("mouseup",up);
+    plotC.addEventListener("touchstart",down,{passive:false});plotC.addEventListener("touchmove",move,{passive:false});plotC.addEventListener("touchend",up);
+    function loop(){if(playing){cursorT+=0.6;animT+=0.016;if(cursorT>tMax){cursorT=tMax;playing=false;}drawPlot();}requestAnimationFrame(loop);}
+    document.getElementById("co2_run").onclick=function(){if(cursorT>=tMax)cursorT=0;playing=true;};
+    document.getElementById("co2_pause").onclick=function(){playing=false;};
+    document.getElementById("co2_rst").onclick=function(){playing=false;cursorT=0;drawPlot();};
+    var bT=document.getElementById("co2_theta");
+    bT.onclick=function(){showTheta=!showTheta;bT.classList.toggle("sel",showTheta);drawPlot();};
+    function upd(){document.getElementById("co2_T0v").textContent=parseFloat(T0.value).toFixed(0)+" °C";
+      document.getElementById("co2_Tav").textContent=parseFloat(Ta.value).toFixed(0)+" °C";
+      document.getElementById("co2_kv").textContent=parseFloat(k.value).toFixed(3)+" s⁻¹";drawPlot();}
+    T0.oninput=upd;Ta.oninput=upd;k.oninput=upd;
+    var revealed=false;
+    document.getElementById("co2_reveal").onclick=function(){if(revealed)return;revealed=true;
+      document.getElementById("co2_hidden").outerHTML='<span style="color:#0f7d6e;font-weight:700"><var>T</var><span class="sub2">a</span><span class="op">+</span>(<var>T</var><span class="sub2">0</span><span class="op">−</span><var>T</var><span class="sub2">a</span>)<var>e</var><span class="sup2">−<var>kt</var></span></span>';};
+    upd();loop();
+  })();
+
+  var rt;window.addEventListener("resize",function(){clearTimeout(rt);rt=setTimeout(function(){if(co2redraw)co2redraw();},150);});
+})();
+</script>
+</body>
+</html>

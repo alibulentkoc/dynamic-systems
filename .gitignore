@@ -1,19 +1,11 @@
-# Jupyter Book build output
-_build/
-
-# Python
-__pycache__/
-*.py[cod]
-*.egg-info/
-.venv/
-venv/
-.ipynb_checkpoints/
-
-# OS / editor
+# OS / editor cruft
 .DS_Store
 Thumbs.db
-.vscode/
+*.swp
+*~
 .idea/
+.vscode/
 
-# Node (only used transiently for demo tests)
+# build / packaging artifacts
+*.zip
 node_modules/

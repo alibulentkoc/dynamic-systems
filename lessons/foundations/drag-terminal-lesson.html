@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drag &amp; Terminal Velocity — A First-Order System, End to End</title>
+<style>
+  :root{--paper:#EEF2F5;--amber:#E8A33D;--teal:#22C3AE;--navy:#0E1B24;--ink:#1c2b33;--muted:#5d6f79;--line:#c9d4da;--grid:#16303c;--grid-soft:#12242e;--axis:#3a5b68;}
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);line-height:1.62;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:900px;margin:0 auto;padding:26px 20px 90px}
+  header.hero{border:1px solid var(--line);border-radius:14px;padding:24px 26px;margin-bottom:22px;background:linear-gradient(180deg,#ffffff,#f5f8fa);}
+  .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  h1{font-size:28px;margin:6px 0 8px;letter-spacing:-.01em}.hero .sub{color:var(--muted);font-size:15.5px;margin:0}
+  nav.toc{position:sticky;top:0;z-index:20;background:rgba(238,242,245,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);margin:0 -20px 22px;padding:9px 20px;display:flex;gap:6px;flex-wrap:wrap;font-size:12.5px}
+  nav.toc a{color:var(--muted);text-decoration:none;border:1px solid var(--line);background:#fff;padding:5px 11px;border-radius:20px;font-weight:600;white-space:nowrap;transition:.15s}
+  nav.toc a:hover{border-color:#a9bcc6;color:var(--ink)}
+  section{margin:34px 0}
+  section>h2{font-size:21px;margin:0 0 4px;display:flex;align-items:center;gap:10px}
+  section>h2 .num{display:inline-flex;width:26px;height:26px;border-radius:8px;background:var(--navy);color:var(--teal);font-size:14px;align-items:center;justify-content:center;flex:0 0 auto}
+  section>.lead{color:var(--muted);font-size:14px;margin:2px 0 14px}
+  p{margin:10px 0}.muted{color:var(--muted)}.small{font-size:13px}
+  .card{border:1px solid var(--line);background:#fff;border-radius:12px;padding:18px 20px;margin:14px 0}
+  figure.viz{margin:16px 0;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#fff,#f7fafb);padding:14px 16px 10px}
+  figure.viz svg{display:block;width:100%;height:auto}figure.viz figcaption{font-size:12.5px;color:var(--muted);margin-top:6px;text-align:center}
+  .demo{border:1px solid var(--line);border-radius:12px;background:#fff;margin:16px 0;overflow:hidden}
+  .demo .demohead{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;background:var(--navy);color:#dff3ee}
+  .demo .demohead .t{font-weight:700;font-size:13.5px}.demo .demohead .tag{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal)}
+  .demo .demobody{padding:16px}
+  .scope{background:var(--navy);border-radius:10px;padding:12px 12px 8px;border:1px solid #0a141b}
+  .scope .scopehead{display:flex;justify-content:space-between;align-items:center;color:#7fa0ac;font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;padding:0 2px}
+  .scope .dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+  canvas{display:block;width:100%;border-radius:8px;touch-action:none}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:12.5px;color:#9db6c0}
+  .legend span{display:inline-flex;align-items:center;gap:7px}.swatch{width:16px;height:3px;border-radius:2px;display:inline-block}
+  .controls{display:grid;gap:13px;margin-top:14px}
+  .ctl{display:grid;grid-template-columns:150px 1fr 100px;align-items:center;gap:12px}
+  .ctl label{font-size:13.5px;font-weight:600}
+  .ctl .val{font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;text-align:right;background:var(--paper);border:1px solid var(--line);border-radius:7px;padding:4px 8px}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:3px;background:linear-gradient(90deg,var(--teal),#7fc9bf);outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid var(--teal);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid var(--teal);cursor:pointer}
+  input[type=range].amber{background:linear-gradient(90deg,#f0c584,var(--amber))}
+  input[type=range].amber::-webkit-slider-thumb{border-color:var(--amber)}input[type=range].amber::-moz-range-thumb{border-color:var(--amber)}
+  .btn{appearance:none;border:1px solid var(--line);background:#fff;color:var(--ink);font-weight:600;font-size:13px;padding:8px 14px;border-radius:9px;cursor:pointer}
+  .btn:hover{border-color:#a9bcc6}.btn.primary{background:var(--navy);color:#eaf6f2;border-color:var(--navy)}.btn.ghost{background:transparent}
+  .eq{font-family:"Cambria Math","Times New Roman",Georgia,serif;font-size:18px;color:var(--ink);display:flex;align-items:center;flex-wrap:wrap;gap:2px;padding:10px 12px;background:var(--paper);border-radius:8px;border:1px solid var(--line);margin:10px 0;line-height:1}
+  .eq.center{justify-content:center}.eq.big{font-size:22px}
+  .eqi{display:inline-flex;font-size:15px;padding:2px 8px;vertical-align:middle}
+  .frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 4px;line-height:1}
+  .frac .num{padding:0 6px 2px;border-bottom:1.4px solid currentColor}.frac .den{padding:2px 6px 0}
+  var,.it{font-style:italic}.sub2{font-size:.7em;vertical-align:sub}.sup2{font-size:.7em;vertical-align:super}.op{margin:0 5px}
+  .steps{display:grid;gap:10px}
+  .step{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:#fff;opacity:.4;filter:grayscale(.35);transition:.3s}
+  .step.on{opacity:1;filter:none;border-color:#bcd0d8;box-shadow:0 1px 0 rgba(34,195,174,.15)}
+  .step .lab{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:4px}
+  .pill{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px;background:rgba(34,195,174,.14);color:#0f7d6e;border:1px solid rgba(34,195,174,.35)}
+  .pill.amber{background:rgba(232,163,61,.16);color:#a56a12;border-color:rgba(232,163,61,.4)}
+  .callout{border-left:3px solid var(--teal);background:#f2fbf9;border-radius:0 8px 8px 0;padding:11px 15px;margin:12px 0;font-size:14px}
+  .callout.amber{border-left-color:var(--amber);background:#fdf7ee}
+  .readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;margin-top:12px}
+  .metric{background:var(--navy);color:#dff3ee;border-radius:10px;padding:10px 12px}
+  .metric .m-lab{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#7fa0ac}
+  .metric .m-val{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:19px;margin-top:2px}
+  .metric .m-val.amber{color:var(--amber)}.metric .m-val.teal{color:var(--teal)}
+  details{border:1px solid var(--line);border-radius:10px;padding:2px 15px;margin:12px 0;background:#fff}
+  summary{cursor:pointer;font-weight:600;padding:11px 0;font-size:14.5px;list-style:none}
+  summary::-webkit-details-marker{display:none}summary::before{content:"\25b8";color:var(--teal);margin-right:8px;display:inline-block;transition:.2s}
+  details[open] summary::before{transform:rotate(90deg)}.qbtn{margin:4px 6px 10px 0}
+  .flexrow{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}.flexrow>.grow{flex:1 1 320px;min-width:270px}
+  .takeaways{border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#0E1B24,#12242e);color:#dff3ee;padding:18px 22px}
+  .takeaways h2{color:#fff;margin-top:0}.takeaways ul{margin:8px 0 0;padding-left:18px}.takeaways li{margin:8px 0}.takeaways b{color:var(--teal)}
+  .foot{color:var(--muted);font-size:12.5px;text-align:center;margin-top:30px}
+  code.tk{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--paper);padding:1px 6px;border-radius:5px;font-size:13px;border:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="kicker">Foundations of Dynamic Systems &middot; Worked Example &middot; Mechanical</div>
+    <h1>Drag &amp; Terminal Velocity</h1>
+    <p class="sub">Push a mass with a steady force through a viscous medium and it speeds up &mdash; but not forever. Drag grows with speed until it exactly cancels the drive. Where that balance lands is the terminal velocity, and how the mass gets there is, once again, first order.</p>
+  </header>
+
+  <nav class="toc">
+    <a href="#scene">&#9312; The setup</a>
+    <a href="#state">&#9313; The state</a>
+    <a href="#build">&#9314; Build the equation</a>
+    <a href="#balance">&#9315; The force balance</a>
+    <a href="#run">&#9316; The velocity curve</a>
+    <a href="#takeaways">&#9317; Takeaways</a>
+  </nav>
+
+  <section id="scene">
+    <h2><span class="num">1</span> The setup</h2>
+    <p class="lead">A constant push, a resisting drag that grows with speed.</p>
+    <p>A body of mass <var>m</var> is driven by a constant force <var>F</var> while a viscous drag <span class="eqi"><var>b</var><var>v</var></span> opposes its motion &mdash; the faster it goes, the harder the medium pushes back. (Linear drag like this is the honest model for low-speed motion in a fluid, e.g. a bead settling in oil.) Early on, drag is tiny and the body accelerates hard; as speed builds, drag catches up.</p>
+
+    <figure class="viz">
+      <svg viewBox="0 0 640 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mass driven through a viscous medium">
+        <defs>
+          <marker id="fa" markerWidth="11" markerHeight="11" refX="9" refY="5.5" orient="auto"><path d="M0,0 L11,5.5 L0,11 Z" fill="#E8A33D"/></marker>
+          <marker id="da" markerWidth="11" markerHeight="11" refX="9" refY="5.5" orient="auto"><path d="M0,0 L11,5.5 L0,11 Z" fill="#22C3AE"/></marker>
+        </defs>
+        <rect x="16" y="40" width="608" height="164" rx="10" fill="#eef6f9" stroke="#cfe4e6"/>
+        <text x="40" y="62" font-family="-apple-system,Arial" font-size="11" fill="#7fa0ac" letter-spacing="1">VISCOUS MEDIUM</text>
+        <circle cx="320" cy="122" r="34" fill="#0E1B24" stroke="#22C3AE" stroke-width="2"/>
+        <text x="320" y="127" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="18" fill="#dff3ee">m</text>
+        <line x1="356" y1="122" x2="470" y2="122" stroke="#E8A33D" stroke-width="5" marker-end="url(#fa)"/>
+        <rect x="474" y="108" width="120" height="28" rx="7" fill="#fdf7ee" stroke="#E8A33D"/>
+        <text x="534" y="127" text-anchor="middle" font-family="Georgia,serif" font-size="15" fill="#a56a12">drive <tspan font-style="italic">F</tspan></text>
+        <line x1="284" y1="122" x2="190" y2="122" stroke="#22C3AE" stroke-width="4" marker-end="url(#da)"/>
+        <rect x="52" y="108" width="132" height="28" rx="7" fill="#f2fbf9" stroke="#22C3AE"/>
+        <text x="118" y="127" text-anchor="middle" font-family="Georgia,serif" font-size="15" fill="#0f7d6e">drag <tspan font-style="italic">b&middot;v</tspan></text>
+        <text x="320" y="185" text-anchor="middle" font-family="Georgia,serif" font-size="14" fill="#5d6f79">velocity <tspan font-style="italic">v</tspan> &rarr;</text>
+      </svg>
+      <figcaption>Two horizontal forces: a constant drive F and a speed-dependent drag bv. The net force &mdash; and thus the acceleration &mdash; shrinks as v rises.</figcaption>
+    </figure>
+  </section>
+
+  <section id="state">
+    <h2><span class="num">2</span> Choosing the state variable</h2>
+    <p class="lead">Newton's law is written in velocity's rate of change.</p>
+    <p>A mass stores <em>momentum</em>, <span class="eqi"><var>p</var>=<var>m</var><var>v</var></span>, and the drag law depends on velocity. So the state is <span class="pill">v(t)</span>. The mass <var>m</var> is the "storage size" here &mdash; the momentum stored per unit velocity &mdash; playing precisely the role area played for the tank and capacitance played for the RC.</p>
+  </section>
+
+  <section id="build">
+    <h2><span class="num">3</span> Building the equation from Newton's law</h2>
+    <p class="lead">Force balance is the mechanical conservation law.</p>
+
+    <figure class="viz">
+      <svg viewBox="0 0 640 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Newton's second law balance">
+        <rect x="20" y="44" width="600" height="66" rx="12" fill="#fbfdfe" stroke="#c9d4da"/>
+        <text x="320" y="34" text-anchor="middle" font-family="-apple-system,Arial" font-size="12" fill="#8794a0" letter-spacing="1">NEWTON'S SECOND LAW &middot; mass &times; acceleration = net force</text>
+        <text x="120" y="88" text-anchor="middle" font-family="Georgia,serif" font-size="20" fill="#0f7d6e">m &middot; dv/dt</text>
+        <text x="210" y="88" text-anchor="middle" font-family="Georgia,serif" font-size="20" fill="#1c2b33">=</text>
+        <text x="300" y="88" text-anchor="middle" font-family="Georgia,serif" font-size="20" fill="#a56a12">F</text>
+        <text x="360" y="88" text-anchor="middle" font-family="Georgia,serif" font-size="20" fill="#1c2b33">&minus;</text>
+        <text x="440" y="88" text-anchor="middle" font-family="Georgia,serif" font-size="20" fill="#0f7d6e">b&middot;v</text>
+        <text x="320" y="152" text-anchor="middle" font-family="Georgia,serif" font-size="16" fill="#5d6f79">divide by m &rarr; <tspan fill="#0f7d6e" font-size="17">dv/dt = &minus;(b/m)(v &minus; F/b)</tspan></text>
+      </svg>
+      <figcaption>Net force is drive minus drag. Dividing by the mass exposes the same first-order form &mdash; with the equilibrium sitting at v = F/b.</figcaption>
+    </figure>
+
+    <div class="demo">
+      <div class="demohead"><span class="t">Interactive &middot; Assemble Newton's equation</span><span class="tag">Demo 1</span></div>
+      <div class="demobody">
+        <div class="controls" style="margin-bottom:14px">
+          <div class="ctl"><label>Mass <var>m</var></label><input type="range" id="dr1_m" min="2" max="30" step="1" value="10"><span class="val" id="dr1_mv">10 kg</span></div>
+          <div class="ctl"><label>Drag coeff. <var>b</var></label><input type="range" id="dr1_b" class="amber" min="0.1" max="2" step="0.1" value="0.5"><span class="val" id="dr1_bv">0.5</span></div>
+        </div>
+        <div class="steps" id="dr1_steps">
+          <div class="step on"><div class="lab">Newton's second law</div><div class="eq big center"><var>m</var><span class="frac"><span class="num">d<var>v</var></span><span class="den">d<var>t</var></span></span><span class="op">=</span><var>F</var><span class="op">&minus;</span><var>b</var><var>v</var></div></div>
+          <div class="step"><div class="lab">Divide by mass</div><div class="eq big center"><span class="frac"><span class="num">d<var>v</var></span><span class="den">d<var>t</var></span></span><span class="op">=</span><span class="frac"><span class="num"><var>F</var></span><span class="den"><var>m</var></span></span><span class="op">&minus;</span><span class="frac"><span class="num"><var>b</var></span><span class="den"><var>m</var></span></span><var>v</var></div></div>
+          <div class="step"><div class="lab">Factor &rarr; equilibrium form</div><div class="eq big center" style="background:#f2fbf9;border-color:rgba(34,195,174,.4)"><span class="frac"><span class="num">d<var>v</var></span><span class="den">d<var>t</var></span></span><span class="op">=</span><span class="op">&minus;</span><span id="dr1_k">0.05</span><span class="op">(</span><var>v</var><span class="op">&minus;</span><span id="dr1_vt">10</span><span class="op">)</span></div></div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn primary" id="dr1_next">Reveal next step &#9656;</button>
+          <button class="btn ghost" id="dr1_reset">Reset</button>
+        </div>
+        <div class="readout">
+          <div class="metric"><div class="m-lab">Time constant &tau; = m/b</div><div class="m-val teal" id="dr1_mtau">20.0 s</div></div>
+          <div class="metric"><div class="m-lab">Terminal v = F/b</div><div class="m-val amber" id="dr1_mvt">10.0 m/s</div></div>
+          <div class="metric"><div class="m-lab">Order</div><div class="m-val">1st</div></div>
+        </div>
+        <p class="small muted" style="margin-top:8px">(Drive force held at F = 5 N for the builder.) Notice &tau; = m/b and the target v = F/b fall right out of the factored form.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="balance">
+    <h2><span class="num">4</span> The force balance sets the equilibrium</h2>
+    <p class="lead">Terminal velocity is simply where acceleration stops.</p>
+    <p>Set <span class="eqi">d<var>v</var>/d<var>t</var>=0</span> in Newton's law and the net force vanishes: <span class="eqi"><var>F</var>=<var>b</var><var>v</var><span class="sub2">t</span></span>, so <span class="eqi"><var>v</var><span class="sub2">t</span>=<var>F</var>/<var>b</var></span>. At that speed the drag has grown to exactly match the drive; nothing is left over to accelerate the mass, and it coasts at constant speed. This is the mechanical version of the RC reaching the source and the coffee reaching room temperature &mdash; an equilibrium found by balancing, then approached exponentially.</p>
+    <p>Guess the form from rest, then tap to reveal:</p>
+    <div class="eq big center" id="dr2_reveal" style="cursor:pointer;user-select:none">
+      <var>v</var>(<var>t</var>)<span class="op">=</span><span id="dr2_hidden" style="letter-spacing:.15em;color:var(--muted)">tap&nbsp;to&nbsp;reveal</span>
+    </div>
+  </section>
+
+  <section id="run">
+    <h2><span class="num">5</span> The velocity curve</h2>
+    <p class="lead">Watch the drag arrow grow to meet the drive.</p>
+
+    <div class="demo">
+      <div class="demohead"><span class="t">Interactive &middot; Accelerate to terminal</span><span class="tag">Demo 2</span></div>
+      <div class="demobody">
+        <div class="scope" style="margin-bottom:14px">
+          <div class="scopehead"><span><span class="dot" style="background:var(--amber)"></span>FORCES ON THE MASS</span><span id="dr2_flab">balance: 0%</span></div>
+          <canvas id="dr2_body" width="760" height="150"></canvas>
+        </div>
+        <div class="scope">
+          <div class="scopehead"><span><span class="dot" style="background:var(--teal)"></span>VELOCITY</span><span id="dr2_cursorlab">t = 0.0 s</span></div>
+          <canvas id="dr2_plot" width="760" height="340"></canvas>
+          <div class="legend">
+            <span><span class="swatch" style="background:var(--teal)"></span>v(t)</span>
+            <span><span class="swatch" style="background:#7fa0ac"></span>terminal v &amp; t = &tau;</span>
+          </div>
+        </div>
+        <p class="small muted" style="margin-top:8px">Up top, the teal drag arrow lengthens as v grows; when it matches the amber drive, the mass has hit terminal velocity. Drag the plot to move the cursor.</p>
+        <div class="controls">
+          <div class="ctl"><label>Drive <var>F</var></label><input type="range" id="dr2_F" min="1" max="12" step="0.5" value="5"><span class="val" id="dr2_Fv">5.0 N</span></div>
+          <div class="ctl"><label>Drag coeff. <var>b</var></label><input type="range" id="dr2_b" class="amber" min="0.1" max="2" step="0.1" value="0.5"><span class="val" id="dr2_bv">0.5</span></div>
+          <div class="ctl"><label>Mass <var>m</var></label><input type="range" id="dr2_m" min="2" max="30" step="1" value="10"><span class="val" id="dr2_mv">10 kg</span></div>
+        </div>
+        <div class="readout">
+          <div class="metric"><div class="m-lab">v at cursor</div><div class="m-val teal" id="dr2_mv2">0.00 m/s</div></div>
+          <div class="metric"><div class="m-lab">accel dv/dt</div><div class="m-val amber" id="dr2_ma">0.50 m/s&sup2;</div></div>
+          <div class="metric"><div class="m-lab">&tau; = m/b</div><div class="m-val" id="dr2_mtau">20.0 s</div></div>
+          <div class="metric"><div class="m-lab">terminal v</div><div class="m-val" id="dr2_mvt">10.0 m/s</div></div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn primary" id="dr2_run">&#9654; Run</button>
+          <button class="btn" id="dr2_pause">&#9208; Pause</button>
+          <button class="btn ghost" id="dr2_rst">&#8635; Reset t=0</button>
+        </div>
+      </div>
+    </div>
+
+    <details>
+      <summary>Full worked solution</summary>
+      <p>Shift to the error from terminal, <span class="eqi"><var>e</var>=<var>v</var>&minus;<var>v</var><span class="sub2">t</span></span> with <span class="eqi"><var>v</var><span class="sub2">t</span>=<var>F</var>/<var>b</var></span>. It obeys pure decay <span class="eqi">d<var>e</var>/d<var>t</var>=&minus;(<var>b</var>/<var>m</var>)<var>e</var></span>, so from rest (v0 = 0, e0 = &minus;v<sub>t</sub>):</p>
+      <div class="eq big center" style="background:#f2fbf9;border-color:rgba(34,195,174,.4)"><var>v</var>(<var>t</var>)<span class="op">=</span><span class="frac"><span class="num"><var>F</var></span><span class="den"><var>b</var></span></span><span class="op">(</span>1<span class="op">&minus;</span><var>e</var><span class="sup2">&minus;<var>bt</var>/<var>m</var></span><span class="op">)</span></div>
+      <p class="small muted">Identical shape to the RC charge curve &mdash; a terminal value times (1 &minus; e<sup>&minus;t/&tau;</sup>), with &tau; = m/b. Every domain, one solution.</p>
+    </details>
+  </section>
+
+  <section id="takeaways">
+    <div class="takeaways">
+      <h2>Takeaways</h2>
+      <ul>
+        <li><b>Velocity is the state.</b> The mass stores momentum mv, and the drag law is written in v.</li>
+        <li><b>Newton's law is the balance.</b> m&middot;dv/dt = F &minus; bv &mdash; drive minus a speed-dependent drag.</li>
+        <li><b>Terminal velocity is a force balance.</b> Set acceleration to zero: v<sub>t</sub> = F/b, where drag exactly cancels drive.</li>
+        <li><b>Approach is first-order:</b> v(t) = (F/b)(1 &minus; e<sup>&minus;t/&tau;</sup>) with &tau; = m/b &mdash; heavier mass or lighter drag &rarr; slower.</li>
+      </ul>
+    </div>
+    <details>
+      <summary>Quick check 1 &mdash; where it tops out</summary>
+      <p class="small muted">Drive F = 5 N, drag coefficient b = 0.5. What terminal velocity, and does mass change it?</p>
+      <button class="btn qbtn" onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+      <div style="display:none" class="callout">v<sub>t</sub> = F/b = 5/0.5 = 10 m/s. Mass does <em>not</em> change the terminal value &mdash; only how long it takes to get there (&tau; = m/b). A heavier mass reaches the same top speed, just more slowly.</div>
+    </details>
+    <details>
+      <summary>Quick check 2 &mdash; the RC connection</summary>
+      <p class="small muted">Which RC quantities do m, b, and F correspond to?</p>
+      <button class="btn qbtn" onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+      <div style="display:none" class="callout">Mass m &harr; capacitance C (the storage), drag b &harr; conductance 1/R (the leak), and drive F/b &harr; source V<sub>s</sub> (the target). &tau; = m/b matches &tau; = RC, and both curves are terminal&middot;(1 &minus; e<sup>&minus;t/&tau;</sup>).</div>
+    </details>
+    <details>
+      <summary>Exercise &mdash; sizing for a speed limit</summary>
+      <p class="small muted">You need terminal velocity of exactly 8 m/s with a drive of F = 4 N. What drag coefficient b achieves it, and what's &tau; if m = 6 kg?</p>
+      <button class="btn qbtn" onclick="this.nextElementSibling.style.display='block'">Show solution</button>
+      <div style="display:none" class="callout">v<sub>t</sub> = F/b &rArr; b = F/v<sub>t</sub> = 4/8 = 0.5. Then &tau; = m/b = 6/0.5 = 12 s, so it reaches ~63% of 8 m/s (&asymp;5 m/s) in 12 s and is essentially at terminal by ~60 s.</div>
+    </details>
+  </section>
+
+  <p class="foot">Foundations of Dynamic Systems &middot; self-contained &amp; offline &middot; mechanical first-order response.</p>
+</div>
+<script>
+(function(){
+  "use strict";
+  var DPR=Math.max(1,Math.min(2,window.devicePixelRatio||1));
+  var C={grid:"#16303c",gridSoft:"#12242e",axis:"#3a5b68",txt:"#9db6c0",txtHi:"#dff3ee",amber:"#E8A33D",teal:"#22C3AE"};
+  function setup(cv,w,h){cv.width=w*DPR;cv.height=h*DPR;cv.style.aspectRatio=w+" / "+h;var x=cv.getContext("2d");x.setTransform(DPR,0,0,DPR,0,0);cv._w=w;cv._h=h;return x;}
+  function clear(x,w,h){x.clearRect(0,0,w,h);}
+  function frame(x,b,tMax,yMax,yl){var i;x.fillStyle="#0b1820";x.fillRect(b.x,b.y,b.w,b.h);x.lineWidth=1;
+    for(i=0;i<=10;i++){var gx=b.x+b.w*i/10;x.strokeStyle=(i%5===0)?C.grid:C.gridSoft;x.beginPath();x.moveTo(gx,b.y);x.lineTo(gx,b.y+b.h);x.stroke();}
+    for(i=0;i<=8;i++){var gy=b.y+b.h*i/8;x.strokeStyle=(i%4===0)?C.grid:C.gridSoft;x.beginPath();x.moveTo(b.x,gy);x.lineTo(b.x+b.w,gy);x.stroke();}
+    x.strokeStyle=C.axis;x.lineWidth=1.4;x.beginPath();x.moveTo(b.x,b.y);x.lineTo(b.x,b.y+b.h);x.lineTo(b.x+b.w,b.y+b.h);x.stroke();
+    x.fillStyle=C.txt;x.font="11px ui-monospace,Menlo,Consolas,monospace";x.textAlign="center";x.textBaseline="top";
+    for(i=0;i<=5;i++)x.fillText((tMax*i/5).toFixed(0),b.x+b.w*i/5,b.y+b.h+5);
+    x.fillText("t (s)",b.x+b.w,b.y+b.h+18);
+    x.textAlign="right";x.textBaseline="middle";
+    for(i=0;i<=4;i++)x.fillText((yMax*i/4).toFixed(yMax<2?2:1),b.x-6,b.y+b.h-b.h*i/4);
+    x.save();x.translate(b.x-34,b.y+b.h/2);x.rotate(-Math.PI/2);x.textAlign="center";x.textBaseline="middle";x.fillStyle=C.txt;x.fillText(yl,0,0);x.restore();}
+  function mapX(b,tMax,t){return b.x+b.w*(t/tMax);}
+  function mapY(b,yMax,y){return b.y+b.h-b.h*(y/yMax);}
+  function curve(x,b,tMax,yMax,fn,color,w){x.strokeStyle=color;x.lineWidth=w||2.6;x.lineJoin="round";x.beginPath();var s=false;
+    for(var i=0;i<=240;i++){var t=tMax*i/240,y=fn(t);var px=mapX(b,tMax,t),py=mapY(b,yMax,Math.max(0,Math.min(yMax,y)));if(!s){x.moveTo(px,py);s=true;}else x.lineTo(px,py);}x.stroke();}
+
+  // DEMO 1 - builder (drive F fixed at 5 N)
+  (function(){
+    var Ffix=5;
+    var m=document.getElementById("dr1_m"),b=document.getElementById("dr1_b");
+    var step=0,steps=document.querySelectorAll("#dr1_steps .step");
+    function nums(){var mm=parseFloat(m.value),bb=parseFloat(b.value);
+      document.getElementById("dr1_mv").textContent=mm.toFixed(0)+" kg";
+      document.getElementById("dr1_bv").textContent=bb.toFixed(1);
+      document.getElementById("dr1_k").textContent=(bb/mm).toFixed(3);
+      document.getElementById("dr1_vt").textContent=(Ffix/bb).toFixed(1);
+      document.getElementById("dr1_mtau").textContent=(mm/bb).toFixed(1)+" s";
+      document.getElementById("dr1_mvt").textContent=(Ffix/bb).toFixed(1)+" m/s";}
+    function show(){steps.forEach(function(s,i){s.classList.toggle("on",i<=step);});}
+    document.getElementById("dr1_next").onclick=function(){if(step<steps.length-1){step++;show();}};
+    document.getElementById("dr1_reset").onclick=function(){step=0;show();};
+    m.oninput=nums;b.oninput=nums;nums();show();
+  })();
+
+  // DEMO 2 - velocity response + force arrows
+  var dr2redraw;
+  (function(){
+    var bodyC=document.getElementById("dr2_body"),plotC=document.getElementById("dr2_plot");
+    var bx=setup(bodyC,760,150),px=setup(plotC,760,340);
+    var F=document.getElementById("dr2_F"),b=document.getElementById("dr2_b"),m=document.getElementById("dr2_m");
+    var box={x:56,y:20,w:660,h:260},cursorT=0,playing=false;
+    function P(){return{F:parseFloat(F.value),b:parseFloat(b.value),m:parseFloat(m.value)};}
+    function vt(){var p=P();return p.F/p.b;}
+    function tau(){var p=P();return p.m/p.b;}
+    function vOf(t){return vt()*(1-Math.exp(-t/tau()));}
+    function tMaxOf(){return Math.min(120,Math.max(30,5*tau()));}
+    function drawBody(v){
+      clear(bx,760,150);var p=P(),cx=380,cy=78;
+      // medium tint
+      bx.fillStyle="#0b1820";bx.fillRect(0,0,760,150);
+      // body
+      bx.fillStyle="#0E1B24";bx.strokeStyle=C.teal;bx.lineWidth=2;
+      bx.beginPath();bx.arc(cx,cy,28,0,6.29);bx.fill();bx.stroke();
+      bx.fillStyle="#dff3ee";bx.font="italic 16px Georgia,serif";bx.textAlign="center";bx.textBaseline="middle";bx.fillText("m",cx,cy);
+      // drive arrow (right, constant length)
+      var Fscale=18; // px per N
+      var fLen=Math.min(300,p.F*Fscale);
+      bx.strokeStyle=C.amber;bx.lineWidth=6;bx.beginPath();bx.moveTo(cx+30,cy);bx.lineTo(cx+30+fLen,cy);bx.stroke();
+      // arrowhead
+      bx.fillStyle=C.amber;bx.beginPath();bx.moveTo(cx+30+fLen,cy);bx.lineTo(cx+22+fLen,cy-7);bx.lineTo(cx+22+fLen,cy+7);bx.closePath();bx.fill();
+      bx.font="13px ui-monospace,monospace";bx.textAlign="left";bx.fillText("F = "+p.F.toFixed(1)+" N",cx+34+fLen,cy-12);
+      // drag arrow (left, length prop to b*v, same px scale as force so equal at terminal)
+      var dLen=Math.min(300,p.b*v*Fscale);
+      bx.strokeStyle=C.teal;bx.lineWidth=5;bx.beginPath();bx.moveTo(cx-30,cy);bx.lineTo(cx-30-dLen,cy);bx.stroke();
+      bx.fillStyle=C.teal;bx.beginPath();bx.moveTo(cx-30-dLen,cy);bx.lineTo(cx-22-dLen,cy-7);bx.lineTo(cx-22-dLen,cy+7);bx.closePath();bx.fill();
+      bx.textAlign="right";bx.fillText("bv = "+(p.b*v).toFixed(2)+" N",cx-34-dLen,cy-12);
+      // balance %
+      var bal=p.F>0?Math.round(100*(p.b*v)/p.F):0;
+      document.getElementById("dr2_flab").textContent="balance: "+bal+"%";
+      if(bal>=99){bx.fillStyle="rgba(34,195,174,.9)";bx.font="bold 13px ui-monospace,monospace";bx.textAlign="center";bx.fillText("FORCE BALANCE - TERMINAL VELOCITY",cx,cy+52);}
+    }
+    function drawPlot(){
+      var p=P(),tMax=tMaxOf(),yMax=vt()*1.1;
+      clear(px,760,340);frame(px,box,tMax,yMax,"v  (m/s)");
+      // terminal line
+      var ty=mapY(box,yMax,vt());
+      px.strokeStyle="rgba(127,160,172,.55)";px.setLineDash([5,4]);px.lineWidth=1.4;
+      px.beginPath();px.moveTo(box.x,ty);px.lineTo(box.x+box.w,ty);px.stroke();px.setLineDash([]);
+      px.fillStyle="#7fa0ac";px.font="11px ui-monospace,monospace";px.textAlign="left";px.fillText("v_t = "+vt().toFixed(1),box.x+6,ty-8);
+      // tau line + 63%
+      var tx=mapX(box,tMax,tau());
+      px.strokeStyle="rgba(127,160,172,.4)";px.setLineDash([4,4]);px.beginPath();px.moveTo(tx,box.y);px.lineTo(tx,box.y+box.h);px.stroke();px.setLineDash([]);
+      px.fillText("t = \u03c4",tx+5,box.y+14);
+      curve(px,box,tMax,yMax,vOf,C.teal,2.8);
+      // cursor
+      var vc=vOf(cursorT),ccx=mapX(box,tMax,cursorT),ccy=mapY(box,yMax,vc);
+      px.strokeStyle="rgba(157,182,192,.4)";px.lineWidth=1;px.beginPath();px.moveTo(ccx,box.y);px.lineTo(ccx,box.y+box.h);px.stroke();
+      px.fillStyle=C.teal;px.beginPath();px.arc(ccx,ccy,5,0,6.29);px.fill();px.strokeStyle="#0b1820";px.lineWidth=2;px.stroke();
+      document.getElementById("dr2_cursorlab").textContent="t = "+cursorT.toFixed(1)+" s";
+      document.getElementById("dr2_mv2").textContent=vc.toFixed(2)+" m/s";
+      document.getElementById("dr2_ma").textContent=((p.F-p.b*vc)/p.m).toFixed(2)+" m/s\u00b2";
+      document.getElementById("dr2_mtau").textContent=tau().toFixed(1)+" s";
+      document.getElementById("dr2_mvt").textContent=vt().toFixed(1)+" m/s";
+      drawBody(vc);
+    }
+    dr2redraw=drawPlot;
+    var dragging=false;
+    function tFromEvent(e){var r=plotC.getBoundingClientRect();var xp=((e.touches?e.touches[0].clientX:e.clientX)-r.left)*(plotC._w/r.width);var f=(xp-box.x)/box.w;f=Math.max(0,Math.min(1,f));return f*tMaxOf();}
+    function down(e){dragging=true;cursorT=tFromEvent(e);drawPlot();e.preventDefault();}
+    function move(e){if(dragging){cursorT=tFromEvent(e);drawPlot();e.preventDefault();}}
+    function up(){dragging=false;}
+    plotC.addEventListener("mousedown",down);window.addEventListener("mousemove",move);window.addEventListener("mouseup",up);
+    plotC.addEventListener("touchstart",down,{passive:false});plotC.addEventListener("touchmove",move,{passive:false});plotC.addEventListener("touchend",up);
+    function loop(){if(playing){cursorT+=tMaxOf()/170;if(cursorT>tMaxOf()){cursorT=tMaxOf();playing=false;}drawPlot();}requestAnimationFrame(loop);}
+    document.getElementById("dr2_run").onclick=function(){if(cursorT>=tMaxOf())cursorT=0;playing=true;};
+    document.getElementById("dr2_pause").onclick=function(){playing=false;};
+    document.getElementById("dr2_rst").onclick=function(){playing=false;cursorT=0;drawPlot();};
+    function upd(){document.getElementById("dr2_Fv").textContent=parseFloat(F.value).toFixed(1)+" N";
+      document.getElementById("dr2_bv").textContent=parseFloat(b.value).toFixed(1);
+      document.getElementById("dr2_mv").textContent=parseFloat(m.value).toFixed(0)+" kg";drawPlot();}
+    F.oninput=upd;b.oninput=upd;m.oninput=upd;
+    var revealed=false;
+    document.getElementById("dr2_reveal").onclick=function(){if(revealed)return;revealed=true;
+      document.getElementById("dr2_hidden").outerHTML='<span style="color:#0f7d6e;font-weight:700"><span class="frac"><span class="num"><var>F</var></span><span class="den"><var>b</var></span></span>(1<span class="op">&minus;</span><var>e</var><span class="sup2">&minus;<var>bt</var>/<var>m</var></span>)</span>';};
+    upd();loop();
+  })();
+
+  var rt;window.addEventListener("resize",function(){clearTimeout(rt);rt=setTimeout(function(){if(dr2redraw)dr2redraw();},150);});
+})();
+</script>
+</body>
+</html>

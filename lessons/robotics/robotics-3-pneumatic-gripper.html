@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Pneumatic Gripper Pressure — First-Order System</title><style>
+  :root{--paper:#EEF2F5;--amber:#E8A33D;--teal:#22C3AE;--navy:#0E1B24;--ink:#1c2b33;--muted:#5d6f79;--line:#c9d4da;--grid:#16303c;--grid-soft:#12242e;--axis:#3a5b68;}
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);line-height:1.62;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:900px;margin:0 auto;padding:26px 20px 90px}
+  header.hero{border:1px solid var(--line);border-radius:14px;padding:24px 26px;margin-bottom:22px;background:linear-gradient(180deg,#ffffff,#f5f8fa);}
+  .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  h1{font-size:28px;margin:6px 0 8px;letter-spacing:-.01em}.hero .sub{color:var(--muted);font-size:15.5px;margin:0}
+  nav.toc{position:sticky;top:0;z-index:20;background:rgba(238,242,245,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);margin:0 -20px 22px;padding:9px 20px;display:flex;gap:6px;flex-wrap:wrap;font-size:12.5px}
+  nav.toc a{color:var(--muted);text-decoration:none;border:1px solid var(--line);background:#fff;padding:5px 11px;border-radius:20px;font-weight:600;white-space:nowrap;transition:.15s}
+  nav.toc a:hover{border-color:#a9bcc6;color:var(--ink)}
+  section{margin:34px 0}
+  section>h2{font-size:21px;margin:0 0 4px;display:flex;align-items:center;gap:10px}
+  section>h2 .num{display:inline-flex;width:26px;height:26px;border-radius:8px;background:var(--navy);color:var(--teal);font-size:14px;align-items:center;justify-content:center;flex:0 0 auto}
+  section>.lead{color:var(--muted);font-size:14px;margin:2px 0 14px}
+  p{margin:10px 0}.muted{color:var(--muted)}.small{font-size:13px}
+  figure.viz{margin:16px 0;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#fff,#f7fafb);padding:14px 16px 10px}
+  figure.viz svg{display:block;width:100%;height:auto}figure.viz figcaption{font-size:12.5px;color:var(--muted);margin-top:6px;text-align:center}
+  .demo{border:1px solid var(--line);border-radius:12px;background:#fff;margin:16px 0;overflow:hidden}
+  .demo .demohead{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;background:var(--navy);color:#dff3ee}
+  .demo .demohead .t{font-weight:700;font-size:13.5px}.demo .demohead .tag{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal)}
+  .demo .demobody{padding:16px}
+  .scope{background:var(--navy);border-radius:10px;padding:12px 12px 8px;border:1px solid #0a141b}
+  .scope .scopehead{display:flex;justify-content:space-between;align-items:center;color:#7fa0ac;font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;padding:0 2px}
+  .scope .dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+  canvas{display:block;width:100%;border-radius:8px;touch-action:none}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:12.5px;color:#9db6c0}
+  .legend span{display:inline-flex;align-items:center;gap:7px}.swatch{width:16px;height:3px;border-radius:2px;display:inline-block}
+  .controls{display:grid;gap:13px;margin-top:14px}
+  .ctl{display:grid;grid-template-columns:180px 1fr 110px;align-items:center;gap:12px}
+  .ctl label{font-size:13.5px;font-weight:600}
+  .ctl .val{font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;text-align:right;background:var(--paper);border:1px solid var(--line);border-radius:7px;padding:4px 8px}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:3px;background:linear-gradient(90deg,var(--teal),#7fc9bf);outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid var(--teal);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid var(--teal);cursor:pointer}
+  input[type=range].amber{background:linear-gradient(90deg,#f0c584,var(--amber))}
+  input[type=range].amber::-webkit-slider-thumb{border-color:var(--amber)}input[type=range].amber::-moz-range-thumb{border-color:var(--amber)}
+  .btn{appearance:none;border:1px solid var(--line);background:#fff;color:var(--ink);font-weight:600;font-size:13px;padding:8px 14px;border-radius:9px;cursor:pointer}
+  .btn:hover{border-color:#a9bcc6}.btn.primary{background:var(--navy);color:#eaf6f2;border-color:var(--navy)}.btn.ghost{background:transparent}
+  .eq{font-family:"Cambria Math","Times New Roman",Georgia,serif;font-size:18px;color:var(--ink);display:flex;align-items:center;flex-wrap:wrap;gap:2px;padding:10px 12px;background:var(--paper);border-radius:8px;border:1px solid var(--line);margin:10px 0;line-height:1}
+  .eq.center{justify-content:center}.eq.big{font-size:22px}
+  .eqi{display:inline-flex;font-size:15px;padding:2px 8px;vertical-align:middle}
+  .frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 4px;line-height:1}
+  .frac .num{padding:0 6px 2px;border-bottom:1.4px solid currentColor}.frac .den{padding:2px 6px 0}
+  var,.it{font-style:italic}.sub2{font-size:.7em;vertical-align:sub}.sup2{font-size:.7em;vertical-align:super}.op{margin:0 5px}
+  .steps{display:grid;gap:10px}
+  .step{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:#fff;opacity:.4;filter:grayscale(.35);transition:.3s}
+  .step.on{opacity:1;filter:none;border-color:#bcd0d8;box-shadow:0 1px 0 rgba(34,195,174,.15)}
+  .step .lab{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:4px}
+  .pill{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px;background:rgba(34,195,174,.14);color:#0f7d6e;border:1px solid rgba(34,195,174,.35)}
+  .callout{border-left:3px solid var(--teal);background:#f2fbf9;border-radius:0 8px 8px 0;padding:11px 15px;margin:12px 0;font-size:14px}
+  .callout.amber{border-left-color:var(--amber);background:#fdf7ee}
+  .readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;margin-top:12px}
+  .metric{background:var(--navy);color:#dff3ee;border-radius:10px;padding:10px 12px}
+  .metric .m-lab{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#7fa0ac}
+  .metric .m-val{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:19px;margin-top:2px}
+  .metric .m-val.amber{color:var(--amber)}.metric .m-val.teal{color:var(--teal)}
+  details{border:1px solid var(--line);border-radius:10px;padding:2px 15px;margin:12px 0;background:#fff}
+  summary{cursor:pointer;font-weight:600;padding:11px 0;font-size:14.5px;list-style:none}
+  summary::-webkit-details-marker{display:none}summary::before{content:"\25b8";color:var(--teal);margin-right:8px;display:inline-block;transition:.2s}
+  details[open] summary::before{transform:rotate(90deg)}.qbtn{margin:4px 6px 10px 0}
+  .flexrow{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}.flexrow>.grow{flex:1 1 320px;min-width:270px}
+  .takeaways{border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#0E1B24,#12242e);color:#dff3ee;padding:18px 22px}
+  .takeaways h2{color:#fff;margin-top:0}.takeaways ul{margin:8px 0 0;padding-left:18px}.takeaways li{margin:8px 0}.takeaways b{color:var(--teal)}
+  .foot{color:var(--muted);font-size:12.5px;text-align:center;margin-top:30px}
+  code.tk{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--paper);padding:1px 6px;border-radius:5px;font-size:13px;border:1px solid var(--line)}
+</style></head><body><div class="wrap"><header class="hero"><div class="kicker">Fluid-Powered Physical AI &middot; First-Order Series &middot; Lesson 3 &middot; Pneumatic</div><h1>Pneumatic Gripper Pressure</h1><p class="sub">A robot closes a pneumatic gripper: compressed air fills the chamber and pressure rises toward the supply. Fast at first through the open valve, then easing as chamber pressure approaches the line &mdash; the first fluid-power example, same math as before.</p></header><nav class="toc"><a href="#scene">&#9312; The setup</a><a href="#state">&#9313; The state</a><a href="#build">&#9314; The equation</a><a href="#run">&#9315; The response</a><a href="#take">&#9316; Takeaways</a></nav><section id="scene"><h2><span class="num">1</span> The setup</h2><p class="lead">A robotics system that rises toward a set level.</p><p>A valve opens and compressed air flows into the gripper chamber. Flow is large while the pressure difference to the supply is large, then tapers as the chamber pressure approaches supply pressure and the gripper clamps shut.</p><figure class="viz"><svg viewBox="0 0 640 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pneumatic gripper filling">
+    <rect x="40" y="80" width="60" height="40" rx="6" fill="#eef6f9" stroke="#22C3AE" stroke-width="2"/>
+    <text x="70" y="105" text-anchor="middle" font-family="Georgia,serif" font-size="12" fill="#0f7d6e">P_s</text>
+    <line x1="100" y1="100" x2="170" y2="100" stroke="#31505d" stroke-width="4"/>
+    <path d="M135,90 l0,20 M125,100 l20,0" stroke="#E8A33D" stroke-width="2"/>
+    <rect x="170" y="70" width="90" height="60" rx="8" fill="#22C3AE" opacity="0.35" stroke="#31505d" stroke-width="2"/>
+    <text x="215" y="105" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="14" fill="#0f7d6e">P</text>
+    <path d="M260,84 l40,-14 M260,116 l40,14" stroke="#5b7480" stroke-width="8" stroke-linecap="round"/>
+    <rect x="360" y="60" width="256" height="90" rx="10" fill="#f2fbf9" stroke="#22C3AE"/>
+    <text x="488" y="94" text-anchor="middle" font-family="Georgia,serif" font-size="15" fill="#0f7d6e">dP/dt = k(P_s &minus; P)</text>
+    <text x="488" y="122" text-anchor="middle" font-family="-apple-system,Arial" font-size="12" fill="#5d6f79">inflow falls as P nears supply</text>
+  </svg><figcaption>The physical picture and the first-order law it obeys.</figcaption></figure></section><section id="state"><h2><span class="num">2</span> Choosing the state variable</h2><p class="lead">Track the stored quantity the rate law depends on.</p><p>The stored quantity is air (and thus pressure) in the chamber. Inflow depends on the pressure gap to supply, so chamber pressure <span class="pill">P(t)</span> is the state.</p></section><section id="build"><h2><span class="num">3</span> Building the equation</h2><p class="lead">The gain per step shrinks as the state nears its target &mdash; the signature of first order.</p><div class="demo"><div class="demohead"><span class="t">Interactive &middot; Assemble the law</span><span class="tag">Demo 1</span></div><div class="demobody"><div class="controls" style="margin-bottom:14px"><div class="ctl"><label>Rate <var>k</var></label><input type="range" id="bd_s1" class="amber" min="0.5" max="5" step="0.1" value="2.5"><span class="val" id="bd_s1v"></span></div><div class="ctl"><label>Target P_s</label><input type="range" id="bd_s2" min="3" max="7" step="0.5" value="6"><span class="val" id="bd_s2v"></span></div></div><div class="steps" id="bd_steps"><div class="step on"><div class="lab">Air-mass balance</div><div class="eq big center"><span class="frac"><span class="num">dP</span><span class="den">d<var>t</var></span></span><span class="op">=</span>(net air inflow)</div></div><div class="step"><div class="lab">Rate &prop; distance to P_s</div><div class="eq big center" style="background:#f2fbf9;border-color:rgba(34,195,174,.4)"><span class="frac"><span class="num">dP</span><span class="den">d<var>t</var></span></span><span class="op">=</span><span id="bd_e1">2.5</span>(P_s<span class="op">&minus;</span>P)</div></div><div class="step"><div class="lab">Time-constant form &nbsp; &tau; = 1/k</div><div class="eq big center">&tau;<span class="frac"><span class="num">dP</span><span class="den">d<var>t</var></span></span><span class="op">+</span>P<span class="op">=</span>P_s</div></div></div><div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="bd_next">Reveal next step &#9656;</button><button class="btn ghost" id="bd_reset">Reset</button></div><div class="readout"><div class="metric"><div class="m-lab">Time constant &tau; = 1/k</div><div class="m-val teal" id="bd_tau"></div></div><div class="metric"><div class="m-lab">Steady state</div><div class="m-val amber" id="bd_target"></div></div><div class="metric"><div class="m-lab">Order</div><div class="m-val">1st</div></div></div><div class="callout amber" style="margin-top:14px"><strong>One family, many machines.</strong> This is the same equation as the leaking tank, the RC circuit, and Newton’s cooling &mdash; only the labels change. Learn &tau; once and you read every one of them.</div></div></div></section><section id="run"><h2><span class="num">4</span> The response</h2><p class="lead">Guess the shape, then watch it settle. Tap to reveal the solution:</p><div class="eq big center" id="r_reveal" style="cursor:pointer;user-select:none">P(<var>t</var>)<span class="op">=</span><span id="r_hidden" style="letter-spacing:.15em;color:var(--muted)">tap&nbsp;to&nbsp;reveal</span></div><div class="demo"><div class="demohead"><span class="t">Interactive &middot; Watch it respond</span><span class="tag">Demo 2</span></div><div class="demobody"><div class="flexrow"><div class="grow" style="flex:0 0 150px;min-width:150px"><div class="scope" style="padding-bottom:14px"><div class="scopehead"><span><span class="dot" style="background:var(--teal)"></span>DEVICE</span></div><canvas id="r_dev" width="320" height="300"></canvas></div></div><div class="grow"><div class="scope"><div class="scopehead"><span><span class="dot" style="background:var(--teal)"></span>P (bar) RESPONSE</span><span id="r_cursor">t = 0</span></div><canvas id="r_plot" width="760" height="340"></canvas><div class="legend"><span><span class="swatch" style="background:var(--teal)"></span>P(t)</span><span><span class="swatch" style="background:#7fa0ac"></span>steady state &amp; t = &tau;</span><span><span class="swatch" style="background:#e0b24a"></span>63% level</span></div></div><p class="small muted" style="margin-top:8px">At one time constant the response has covered 63% of its journey to the target; by 3&tau; it is ~95% settled. Drag the plot to move the cursor.</p></div></div><div class="controls"><div class="ctl"><label>Start P<span class="sub2">0</span></label><input type="range" id="r_s1" min="0" max="2" step="0.1" value="0"><span class="val" id="r_s1v"></span></div><div class="ctl"><label>Target P_s</label><input type="range" id="r_s2" class="amber" min="3" max="7" step="0.5" value="6"><span class="val" id="r_s2v"></span></div><div class="ctl"><label>Rate <var>k</var></label><input type="range" id="r_s3" min="0.5" max="5" step="0.1" value="2.5"><span class="val" id="r_s3v"></span></div></div><div class="readout"><div class="metric"><div class="m-lab">P at cursor</div><div class="m-val teal" id="r_val"></div></div><div class="metric"><div class="m-lab">rate dP/dt</div><div class="m-val amber" id="r_rate"></div></div><div class="metric"><div class="m-lab">&tau; = 1/k</div><div class="m-val" id="r_tau"></div></div><div class="metric"><div class="m-lab">steady state</div><div class="m-val" id="r_ss"></div></div></div><div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="r_run">&#9654; Run</button><button class="btn" id="r_pause">&#9208; Pause</button><button class="btn ghost" id="r_rst">&#8635; Reset t=0</button></div></div></div><details><summary>Full solution &amp; interpretation</summary><p>Shift to the gap g = P_s &minus; P; it obeys pure decay dg/dt = &minus;k g, so g(t) = g&#8320;e<sup>&minus;t/&tau;</sup>. Undo the shift:</p><div class="eq big center" style="background:#f2fbf9;border-color:rgba(34,195,174,.4)">P(<var>t</var>)<span class="op">=</span>P_s<span class="op">+</span>(P<span class="sub2">0</span><span class="op">&minus;</span>P_s)<var>e</var><span class="sup2">&minus;<var>t</var>/&tau;</span></div><p class="small muted">The chamber settles at supply pressure P_s, where no more air flows. &tau; is set by the chamber capacitance and the valve/orifice restriction &mdash; a bigger orifice (less restriction) fills faster. Pneumatics are fast, so &tau; here is a fraction of a second.</p></details></section><section id="take"><div class="takeaways"><h2>Takeaways</h2><ul><li><b>Chamber pressure is the state.</b> Stored air sets pressure; inflow depends on the gap to supply.</li><li><b>Charging toward the line.</b> dP/dt = k(P_s &minus; P) &mdash; the pneumatic twin of a charging capacitor.</li><li><b>P(t) = P_s(1 &minus; e<sup>&minus;t/&tau;</sup>)</b> from an empty chamber, &tau; set by chamber size and valve restriction.</li><li><b>Grip timing is a &tau; problem.</b> Sizing the orifice sets how fast the gripper reaches clamping pressure.</li></ul></div><details><summary>Quick check</summary><p class="small muted">To make the gripper close faster without changing supply pressure, what do you change?</p><button class="btn qbtn" onclick="this.nextElementSibling.style.display='block'">Show answer</button><div style="display:none" class="callout">Lower &tau; &mdash; open the orifice (less flow restriction) or shrink the chamber volume. The final pressure stays P_s; only the speed of arrival changes.</div></details></section><p class="foot">Fluid-Powered Physical AI &middot; First-Order Series &middot; Lesson 3 &middot; self-contained &amp; offline</p></div><script>var DEVICE=function(x,W,H,val,frac,rate){x.clearRect(0,0,W,H);var cx=160,cy=118;x.fillStyle="#5b7480";x.fillRect(cx-10,58,20,52);x.beginPath();x.arc(cx,cy,9,0,6.29);x.fill();var open=(1-frac)*0.62+0.12;x.strokeStyle="#22C3AE";x.lineWidth=9;x.lineCap="round";x.lineJoin="round";for(var s=-1;s<=1;s+=2){var a=s*open;var mx=cx+Math.sin(a)*74,my=cy+Math.cos(a)*74;var ex=mx+Math.sin(a-s*0.95)*42,ey=my+Math.cos(a-s*0.95)*42;x.beginPath();x.moveTo(cx,cy);x.lineTo(mx,my);x.lineTo(ex,ey);x.stroke();}x.fillStyle="#dff3ee";x.font="bold 20px ui-monospace,monospace";x.textAlign="center";x.textBaseline="middle";x.fillText(val.toFixed(1)+" bar",cx,244);if(frac>0.9){x.fillStyle="#22C3AE";x.font="12px ui-monospace,monospace";x.fillText("grip closed",cx,270);}};var CFG={unit:"bar",tUnit:"s",kUnit:"/s",dec:1,yMax:7,yLabel:"P (bar)",targetSym:"P_s",revealHTML:"<span style=\"color:#0f7d6e;font-weight:700\">P_s<span class=\"op\">+</span>(P<span class=\"sub2\">0</span><span class=\"op\">&minus;</span>P_s)<var>e</var><span class=\"sup2\">&minus;<var>t</var>/&tau;</span></span>"};
+(function(){
+  "use strict";
+  var DPR=Math.max(1,Math.min(2,window.devicePixelRatio||1));
+  var Cx={grid:"#16303c",gridSoft:"#12242e",axis:"#3a5b68",txt:"#9db6c0",txtHi:"#dff3ee",amber:"#E8A33D",teal:"#22C3AE"};
+  function setup(cv,w,h){cv.width=w*DPR;cv.height=h*DPR;cv.style.aspectRatio=w+" / "+h;var x=cv.getContext("2d");x.setTransform(DPR,0,0,DPR,0,0);cv._w=w;cv._h=h;return x;}
+  function clear(x,w,h){x.clearRect(0,0,w,h);}
+  function ND(v){return Math.abs(v)>=10?0:(Math.abs(v)>=1?1:2);}
+  function frame(x,b,tMax,yMax,yl,tunit){var i;x.fillStyle="#0b1820";x.fillRect(b.x,b.y,b.w,b.h);x.lineWidth=1;
+    for(i=0;i<=10;i++){var gx=b.x+b.w*i/10;x.strokeStyle=(i%5===0)?Cx.grid:Cx.gridSoft;x.beginPath();x.moveTo(gx,b.y);x.lineTo(gx,b.y+b.h);x.stroke();}
+    for(i=0;i<=8;i++){var gy=b.y+b.h*i/8;x.strokeStyle=(i%4===0)?Cx.grid:Cx.gridSoft;x.beginPath();x.moveTo(b.x,gy);x.lineTo(b.x+b.w,gy);x.stroke();}
+    x.strokeStyle=Cx.axis;x.lineWidth=1.4;x.beginPath();x.moveTo(b.x,b.y);x.lineTo(b.x,b.y+b.h);x.lineTo(b.x+b.w,b.y+b.h);x.stroke();
+    x.fillStyle=Cx.txt;x.font="11px ui-monospace,Menlo,Consolas,monospace";x.textAlign="center";x.textBaseline="top";
+    for(i=0;i<=5;i++)x.fillText((tMax*i/5).toFixed(tMax<5?1:0),b.x+b.w*i/5,b.y+b.h+5);
+    x.fillText("t ("+tunit+")",b.x+b.w,b.y+b.h+18);
+    x.textAlign="right";x.textBaseline="middle";
+    for(i=0;i<=4;i++)x.fillText((yMax*i/4).toFixed(yMax<10?1:0),b.x-6,b.y+b.h-b.h*i/4);
+    x.save();x.translate(b.x-34,b.y+b.h/2);x.rotate(-Math.PI/2);x.textAlign="center";x.textBaseline="middle";x.fillStyle=Cx.txt;x.fillText(yl,0,0);x.restore();}
+  function mapX(b,tMax,t){return b.x+b.w*(t/tMax);}
+  function mapY(b,yMax,y){return b.y+b.h-b.h*(y/yMax);}
+  function curve(x,b,tMax,yMax,fn,color,w){x.strokeStyle=color;x.lineWidth=w||2.6;x.lineJoin="round";x.beginPath();var s=false;
+    for(var i=0;i<=240;i++){var t=tMax*i/240,y=fn(t);var px=mapX(b,tMax,t),py=mapY(b,yMax,Math.max(0,Math.min(yMax,y)));if(!s){x.moveTo(px,py);s=true;}else x.lineTo(px,py);}x.stroke();}
+  function setTxt(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+
+  // BUILDER (sliders: k and target)
+  (function(){
+    var s1=document.getElementById("bd_s1"),s2=document.getElementById("bd_s2");
+    var step=0,steps=document.querySelectorAll("#bd_steps .step");
+    function nums(){var k=parseFloat(s1.value),tg=parseFloat(s2.value);
+      setTxt("bd_s1v",(k>=1?k.toFixed(2):k.toFixed(3))+" "+CFG.kUnit);
+      setTxt("bd_s2v",tg.toFixed(CFG.dec)+" "+CFG.unit);
+      setTxt("bd_e1",(k>=1?k.toFixed(2):k.toFixed(3)));
+      setTxt("bd_e2",tg.toFixed(CFG.dec));
+      setTxt("bd_tau",(1/k).toFixed(2)+" "+CFG.tUnit);
+      setTxt("bd_target",tg.toFixed(CFG.dec)+" "+CFG.unit);}
+    function show(){steps.forEach(function(s,i){s.classList.toggle("on",i<=step);});}
+    document.getElementById("bd_next").onclick=function(){if(step<steps.length-1){step++;show();}};
+    document.getElementById("bd_reset").onclick=function(){step=0;show();};
+    s1.oninput=nums;s2.oninput=nums;nums();show();
+  })();
+
+  // RESPONSE (sliders: start, target, k)  x(t)=target+(x0-target)e^{-kt}
+  var redraw;
+  (function(){
+    var devC=document.getElementById("r_dev"),plotC=document.getElementById("r_plot");
+    var dx=setup(devC,320,300),px=setup(plotC,760,340);
+    var s1=document.getElementById("r_s1"),s2=document.getElementById("r_s2"),s3=document.getElementById("r_s3");
+    var box={x:52,y:20,w:664,h:260},cursorT=0,playing=false;
+    function P(){return{x0:parseFloat(s1.value),tg:parseFloat(s2.value),k:parseFloat(s3.value)};}
+    function xOf(t){var p=P();return p.tg+(p.x0-p.tg)*Math.exp(-p.k*t);}
+    function tauOf(){return 1/P().k;}
+    function tMaxOf(){return 5/P().k;}
+    function draw(){
+      var p=P(),tMax=tMaxOf(),yMax=CFG.yMax;
+      clear(px,760,340);frame(px,box,tMax,yMax,CFG.yLabel,CFG.tUnit);
+      // target line
+      var ty=mapY(box,yMax,p.tg);
+      px.strokeStyle="rgba(127,160,172,.55)";px.setLineDash([5,4]);px.lineWidth=1.4;
+      px.beginPath();px.moveTo(box.x,ty);px.lineTo(box.x+box.w,ty);px.stroke();px.setLineDash([]);
+      px.fillStyle="#7fa0ac";px.font="11px ui-monospace,monospace";px.textAlign="left";px.fillText(CFG.targetSym+" = "+p.tg.toFixed(CFG.dec),box.x+6,ty-8);
+      // 63% level
+      var lvl=p.x0+0.632*(p.tg-p.x0),ly=mapY(box,yMax,lvl);
+      px.strokeStyle="rgba(224,178,74,.5)";px.setLineDash([3,3]);px.beginPath();px.moveTo(box.x,ly);px.lineTo(box.x+box.w,ly);px.stroke();px.setLineDash([]);
+      px.fillStyle="#c99a45";px.fillText("63%",box.x+box.w-40,ly-8);
+      // tau line
+      var tx=mapX(box,tMax,tauOf());
+      px.strokeStyle="rgba(127,160,172,.4)";px.setLineDash([4,4]);px.beginPath();px.moveTo(tx,box.y);px.lineTo(tx,box.y+box.h);px.stroke();px.setLineDash([]);
+      px.fillStyle="#7fa0ac";px.fillText("t = \u03c4",tx+5,box.y+14);
+      // curve
+      curve(px,box,tMax,yMax,xOf,Cx.teal,2.8);
+      // cursor
+      var xc=xOf(cursorT),ccx=mapX(box,tMax,cursorT),ccy=mapY(box,yMax,xc);
+      px.strokeStyle="rgba(157,182,192,.4)";px.lineWidth=1;px.beginPath();px.moveTo(ccx,box.y);px.lineTo(ccx,box.y+box.h);px.stroke();
+      px.fillStyle=Cx.teal;px.beginPath();px.arc(ccx,ccy,5,0,6.29);px.fill();px.strokeStyle="#0b1820";px.lineWidth=2;px.stroke();
+      // readouts
+      var rate=p.k*(p.tg-xc);
+      var frac=(p.tg-p.x0)!==0?(xc-p.x0)/(p.tg-p.x0):0;
+      setTxt("r_cursor","t = "+cursorT.toFixed(tMax<5?2:1)+" "+CFG.tUnit);
+      setTxt("r_val",xc.toFixed(CFG.dec)+" "+CFG.unit);
+      setTxt("r_rate",(rate>=0?"+":"")+rate.toFixed(CFG.dec<1?1:CFG.dec)+" "+CFG.unit+"/"+CFG.tUnit);
+      setTxt("r_tau",tauOf().toFixed(2)+" "+CFG.tUnit);
+      setTxt("r_ss",p.tg.toFixed(CFG.dec)+" "+CFG.unit);
+      DEVICE(dx,320,300,xc,Math.max(0,Math.min(1,frac)),rate);
+    }
+    redraw=draw;
+    var dragging=false;
+    function tFromEvent(e){var r=plotC.getBoundingClientRect();var xp=((e.touches?e.touches[0].clientX:e.clientX)-r.left)*(plotC._w/r.width);var f=(xp-box.x)/box.w;f=Math.max(0,Math.min(1,f));return f*tMaxOf();}
+    function down(e){dragging=true;cursorT=tFromEvent(e);draw();e.preventDefault();}
+    function move(e){if(dragging){cursorT=tFromEvent(e);draw();e.preventDefault();}}
+    function up(){dragging=false;}
+    plotC.addEventListener("mousedown",down);window.addEventListener("mousemove",move);window.addEventListener("mouseup",up);
+    plotC.addEventListener("touchstart",down,{passive:false});plotC.addEventListener("touchmove",move,{passive:false});plotC.addEventListener("touchend",up);
+    function loop(){if(playing){cursorT+=tMaxOf()/200;if(cursorT>tMaxOf()){cursorT=tMaxOf();playing=false;}draw();}requestAnimationFrame(loop);}
+    document.getElementById("r_run").onclick=function(){if(cursorT>=tMaxOf())cursorT=0;playing=true;};
+    document.getElementById("r_pause").onclick=function(){playing=false;};
+    document.getElementById("r_rst").onclick=function(){playing=false;cursorT=0;draw();};
+    function upd(){setTxt("r_s1v",parseFloat(s1.value).toFixed(CFG.dec)+" "+CFG.unit);
+      setTxt("r_s2v",parseFloat(s2.value).toFixed(CFG.dec)+" "+CFG.unit);
+      setTxt("r_s3v",(parseFloat(s3.value)>=1?parseFloat(s3.value).toFixed(2):parseFloat(s3.value).toFixed(3))+" "+CFG.kUnit);draw();}
+    s1.oninput=upd;s2.oninput=upd;s3.oninput=upd;
+    var revealed=false;
+    document.getElementById("r_reveal").onclick=function(){if(revealed)return;revealed=true;
+      document.getElementById("r_hidden").outerHTML=CFG.revealHTML;};
+    upd();loop();
+  })();
+  var rt;window.addEventListener("resize",function(){clearTimeout(rt);rt=setTimeout(function(){if(redraw)redraw();},150);});
+})();
+</script></body></html>

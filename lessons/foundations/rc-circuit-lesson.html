@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The RC Circuit — A First-Order System, End to End</title>
+<style>
+  :root{--paper:#EEF2F5;--amber:#E8A33D;--teal:#22C3AE;--navy:#0E1B24;--ink:#1c2b33;--muted:#5d6f79;--line:#c9d4da;--panel:#ffffff;--grid:#16303c;--grid-soft:#12242e;--axis:#3a5b68;}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);line-height:1.62;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:900px;margin:0 auto;padding:26px 20px 90px}
+  header.hero{border:1px solid var(--line);border-radius:14px;padding:24px 26px;margin-bottom:22px;background:linear-gradient(180deg,#ffffff,#f5f8fa);}
+  .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  h1{font-size:28px;margin:6px 0 8px;letter-spacing:-.01em}
+  .hero .sub{color:var(--muted);font-size:15.5px;margin:0}
+  nav.toc{position:sticky;top:0;z-index:20;background:rgba(238,242,245,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);margin:0 -20px 22px;padding:9px 20px;display:flex;gap:6px;flex-wrap:wrap;font-size:12.5px}
+  nav.toc a{color:var(--muted);text-decoration:none;border:1px solid var(--line);background:var(--panel);padding:5px 11px;border-radius:20px;font-weight:600;white-space:nowrap;transition:.15s}
+  nav.toc a:hover{border-color:#a9bcc6;color:var(--ink)}
+  section{margin:34px 0}
+  section>h2{font-size:21px;margin:0 0 4px;display:flex;align-items:center;gap:10px}
+  section>h2 .num{display:inline-flex;width:26px;height:26px;border-radius:8px;background:var(--navy);color:var(--teal);font-size:14px;align-items:center;justify-content:center;flex:0 0 auto}
+  section>.lead{color:var(--muted);font-size:14px;margin:2px 0 14px}
+  p{margin:10px 0}.muted{color:var(--muted)}.small{font-size:13px}
+  .card{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:18px 20px;margin:14px 0}
+  figure.viz{margin:16px 0;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#fff,#f7fafb);padding:14px 16px 10px}
+  figure.viz svg{display:block;width:100%;height:auto}
+  figure.viz figcaption{font-size:12.5px;color:var(--muted);margin-top:6px;text-align:center}
+  .demo{border:1px solid var(--line);border-radius:12px;background:var(--panel);margin:16px 0;overflow:hidden}
+  .demo .demohead{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;background:var(--navy);color:#dff3ee}
+  .demo .demohead .t{font-weight:700;font-size:13.5px}
+  .demo .demohead .tag{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal)}
+  .demo .demobody{padding:16px}
+  .scope{background:var(--navy);border-radius:10px;padding:12px 12px 8px;border:1px solid #0a141b}
+  .scope .scopehead{display:flex;justify-content:space-between;align-items:center;color:#7fa0ac;font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;padding:0 2px}
+  .scope .dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+  canvas{display:block;width:100%;border-radius:8px;touch-action:none}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:12.5px;color:#9db6c0}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .swatch{width:16px;height:3px;border-radius:2px;display:inline-block}
+  .controls{display:grid;gap:13px;margin-top:14px}
+  .ctl{display:grid;grid-template-columns:132px 1fr 96px;align-items:center;gap:12px}
+  .ctl label{font-size:13.5px;font-weight:600}
+  .ctl .val{font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;text-align:right;background:var(--paper);border:1px solid var(--line);border-radius:7px;padding:4px 8px}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:3px;background:linear-gradient(90deg,var(--teal),#7fc9bf);outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid var(--teal);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid var(--teal);cursor:pointer}
+  input[type=range].amber{background:linear-gradient(90deg,#f0c584,var(--amber))}
+  input[type=range].amber::-webkit-slider-thumb{border-color:var(--amber)}
+  input[type=range].amber::-moz-range-thumb{border-color:var(--amber)}
+  .btn{appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-weight:600;font-size:13px;padding:8px 14px;border-radius:9px;cursor:pointer}
+  .btn:hover{border-color:#a9bcc6}
+  .btn.primary{background:var(--navy);color:#eaf6f2;border-color:var(--navy)}
+  .btn.ghost{background:transparent}
+  .btn.sel{background:var(--teal);border-color:var(--teal);color:var(--navy)}
+  .eq{font-family:"Cambria Math","Times New Roman",Georgia,serif;font-size:18px;color:var(--ink);display:flex;align-items:center;flex-wrap:wrap;gap:2px;padding:10px 12px;background:var(--paper);border-radius:8px;border:1px solid var(--line);margin:10px 0;line-height:1}
+  .eq.center{justify-content:center}.eq.big{font-size:22px}
+  .eqi{display:inline-flex;font-size:15px;padding:2px 8px;vertical-align:middle}
+  .frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 4px;line-height:1}
+  .frac .num{padding:0 6px 2px;border-bottom:1.4px solid currentColor}
+  .frac .den{padding:2px 6px 0}
+  var,.it{font-style:italic}
+  .sub2{font-size:.7em;vertical-align:sub}.sup2{font-size:.7em;vertical-align:super}
+  .op{margin:0 5px}
+  .steps{display:grid;gap:10px}
+  .step{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--panel);opacity:.4;filter:grayscale(.35);transition:.3s}
+  .step.on{opacity:1;filter:none;border-color:#bcd0d8;box-shadow:0 1px 0 rgba(34,195,174,.15)}
+  .step .lab{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:4px}
+  .pill{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px;background:rgba(34,195,174,.14);color:#0f7d6e;border:1px solid rgba(34,195,174,.35)}
+  .pill.amber{background:rgba(232,163,61,.16);color:#a56a12;border-color:rgba(232,163,61,.4)}
+  .callout{border-left:3px solid var(--teal);background:#f2fbf9;border-radius:0 8px 8px 0;padding:11px 15px;margin:12px 0;font-size:14px}
+  .callout.amber{border-left-color:var(--amber);background:#fdf7ee}
+  .readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;margin-top:12px}
+  .metric{background:var(--navy);color:#dff3ee;border-radius:10px;padding:10px 12px}
+  .metric .m-lab{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#7fa0ac}
+  .metric .m-val{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:19px;margin-top:2px}
+  .metric .m-val.amber{color:var(--amber)}.metric .m-val.teal{color:var(--teal)}
+  details{border:1px solid var(--line);border-radius:10px;padding:2px 15px;margin:12px 0;background:var(--panel)}
+  summary{cursor:pointer;font-weight:600;padding:11px 0;font-size:14.5px;list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"▸";color:var(--teal);margin-right:8px;display:inline-block;transition:.2s}
+  details[open] summary::before{transform:rotate(90deg)}
+  .qbtn{margin:4px 6px 10px 0}
+  .flexrow{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+  .flexrow>.grow{flex:1 1 320px;min-width:270px}
+  .takeaways{border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#0E1B24,#12242e);color:#dff3ee;padding:18px 22px}
+  .takeaways h2{color:#fff;margin-top:0}.takeaways ul{margin:8px 0 0;padding-left:18px}.takeaways li{margin:8px 0}.takeaways b{color:var(--teal)}
+  .foot{color:var(--muted);font-size:12.5px;text-align:center;margin-top:30px}
+  code.tk{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--paper);padding:1px 6px;border-radius:5px;font-size:13px;border:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="kicker">Foundations of Dynamic Systems · Worked Example · Electrical</div>
+    <h1>The RC Circuit</h1>
+    <p class="sub">A capacitor charges through a resistor toward a source voltage, then bleeds back down when the source is removed. It is the leaking tank in electrical clothing — with one new twist: a <em>driven</em> response that settles to a non-zero steady state.</p>
+  </header>
+
+  <nav class="toc">
+    <a href="#scene">① The circuit</a>
+    <a href="#state">② The state</a>
+    <a href="#build">③ Build the equation</a>
+    <a href="#charge">④ Charge &amp; discharge</a>
+    <a href="#steady">⑤ Steady state &amp; τ</a>
+    <a href="#takeaways">⑥ Takeaways</a>
+  </nav>
+
+  <!-- 1 -->
+  <section id="scene">
+    <h2><span class="num">1</span> The circuit</h2>
+    <p class="lead">A source, a resistor, a capacitor, a switch.</p>
+    <p>Close the switch and a source <span class="eqi"><var>V</var><span class="sub2">s</span></span> drives current through a resistor <var>R</var> into a capacitor <var>C</var>. The capacitor voltage <span class="eqi"><var>v</var><span class="sub2">C</span></span> rises — quickly at first, then slower as it approaches the source. Open the switch (or short the source) and it discharges back down.</p>
+
+    <figure class="viz">
+      <svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="RC circuit schematic">
+        <defs>
+          <marker id="cur" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#E8A33D"/></marker>
+          <marker id="vm" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="#0f7d6e"/></marker>
+        </defs>
+        <!-- ground rail -->
+        <line x1="90" y1="250" x2="540" y2="250" stroke="#31505d" stroke-width="3"/>
+        <!-- source (battery) left branch -->
+        <line x1="90" y1="250" x2="90" y2="150" stroke="#31505d" stroke-width="3"/>
+        <line x1="74" y1="150" x2="106" y2="150" stroke="#31505d" stroke-width="3"/>
+        <line x1="80" y1="138" x2="100" y2="138" stroke="#31505d" stroke-width="5"/>
+        <line x1="74" y1="126" x2="106" y2="126" stroke="#31505d" stroke-width="3"/>
+        <line x1="80" y1="114" x2="100" y2="114" stroke="#31505d" stroke-width="5"/>
+        <line x1="90" y1="114" x2="90" y2="70" stroke="#31505d" stroke-width="3"/>
+        <text x="52" y="130" font-family="Georgia,serif" font-size="15" fill="#1c2b33"><tspan font-style="italic">V</tspan><tspan font-size="10" dy="3">s</tspan></text>
+        <!-- top wire with switch -->
+        <line x1="90" y1="70" x2="170" y2="70" stroke="#31505d" stroke-width="3"/>
+        <circle cx="170" cy="70" r="3.5" fill="#31505d"/>
+        <line x1="170" y1="70" x2="205" y2="52" stroke="#31505d" stroke-width="3"/>
+        <circle cx="212" cy="70" r="3.5" fill="#31505d"/>
+        <text x="168" y="42" font-family="-apple-system,Arial" font-size="11" fill="#8794a0">switch</text>
+        <line x1="212" y1="70" x2="250" y2="70" stroke="#31505d" stroke-width="3"/>
+        <!-- resistor (zigzag) -->
+        <polyline points="250,70 258,58 272,82 286,58 300,82 314,58 328,82 336,70" fill="none" stroke="#31505d" stroke-width="3"/>
+        <text x="293" y="46" text-anchor="middle" font-family="Georgia,serif" font-size="15" fill="#1c2b33"><tspan font-style="italic">R</tspan></text>
+        <!-- wire to capacitor node -->
+        <line x1="336" y1="70" x2="460" y2="70" stroke="#31505d" stroke-width="3"/>
+        <!-- current arrow -->
+        <line x1="370" y1="70" x2="405" y2="70" stroke="#E8A33D" stroke-width="3" marker-end="url(#cur)"/>
+        <text x="388" y="60" text-anchor="middle" font-family="Georgia,serif" font-size="14" fill="#a56a12"><tspan font-style="italic">i</tspan></text>
+        <!-- capacitor -->
+        <line x1="460" y1="70" x2="460" y2="130" stroke="#31505d" stroke-width="3"/>
+        <line x1="430" y1="130" x2="490" y2="130" stroke="#31505d" stroke-width="3"/>
+        <line x1="430" y1="146" x2="490" y2="146" stroke="#31505d" stroke-width="3"/>
+        <line x1="460" y1="146" x2="460" y2="250" stroke="#31505d" stroke-width="3"/>
+        <text x="500" y="143" font-family="Georgia,serif" font-size="15" fill="#1c2b33"><tspan font-style="italic">C</tspan></text>
+        <!-- v_C measurement -->
+        <line x1="545" y1="80" x2="545" y2="240" stroke="#0f7d6e" stroke-width="1.6" marker-start="url(#vm)" marker-end="url(#vm)"/>
+        <rect x="556" y="145" width="66" height="26" rx="6" fill="#f2fbf9" stroke="#22C3AE"/>
+        <text x="589" y="163" text-anchor="middle" font-family="Georgia,serif" font-size="14" fill="#0f7d6e"><tspan font-style="italic">v</tspan><tspan font-size="10" dy="3">C</tspan></text>
+      </svg>
+      <figcaption>Series R–C driven by a source. The state we care about is the capacitor voltage v<sub>C</sub>; the current i is what carries charge onto its plates.</figcaption>
+    </figure>
+  </section>
+
+  <!-- 2 -->
+  <section id="state">
+    <h2><span class="num">2</span> Choosing the state variable</h2>
+    <p class="lead">Same rule as always: track the thing that stores.</p>
+    <p>A capacitor stores <em>charge</em>, and its voltage is <span class="eqi"><var>v</var><span class="sub2">C</span>=<var>q</var>/<var>C</var></span>. Because the resistor's current depends on that voltage, <span class="pill">v<sub>C</sub></span> is the natural state — exactly as height was for the tank. The capacitor plays the role of the tank's cross-section: it sets how much charge (water) a given voltage (height) holds.</p>
+
+    <figure class="viz">
+      <svg viewBox="0 0 640 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tank to circuit analogy">
+        <rect x="16" y="16" width="608" height="178" rx="12" fill="#fbfdfe" stroke="#c9d4da"/>
+        <text x="180" y="44" text-anchor="middle" font-family="-apple-system,Arial" font-size="14" font-weight="700" fill="#0f7d6e">LEAKING TANK</text>
+        <text x="460" y="44" text-anchor="middle" font-family="-apple-system,Arial" font-size="14" font-weight="700" fill="#a56a12">RC CIRCUIT</text>
+        <line x1="320" y1="30" x2="320" y2="180" stroke="#e0e7eb" stroke-width="1.5"/>
+        <g font-family="Georgia,serif" font-size="15" fill="#1c2b33">
+          <text x="120" y="80">height h</text><text x="300" y="80" text-anchor="middle">↔</text><text x="400" y="80">voltage v_C</text>
+          <text x="120" y="112">area A</text><text x="300" y="112" text-anchor="middle">↔</text><text x="400" y="112">capacitance C</text>
+          <text x="120" y="144">leak 1/R_leak</text><text x="300" y="144" text-anchor="middle">↔</text><text x="400" y="144">conductance 1/R</text>
+          <text x="120" y="176">τ = A·R_leak</text><text x="300" y="176" text-anchor="middle">↔</text><text x="400" y="176">τ = R·C</text>
+        </g>
+      </svg>
+      <figcaption>The two systems are the same mathematics with relabeled parts. Learn one time constant and you own both.</figcaption>
+    </figure>
+  </section>
+
+  <!-- 3 -->
+  <section id="build">
+    <h2><span class="num">3</span> Building the equation from Kirchhoff's law</h2>
+    <p class="lead">Conservation of charge around the loop replaces conservation of water.</p>
+    <p>Kirchhoff's voltage law says the source equals the sum of drops: <span class="eqi"><var>V</var><span class="sub2">s</span>=<var>v</var><span class="sub2">R</span>+<var>v</var><span class="sub2">C</span></span>. The resistor drop is <span class="eqi"><var>v</var><span class="sub2">R</span>=<var>iR</var></span>, and the same current fills the capacitor: <span class="eqi"><var>i</var>=<var>C</var>&nbsp;d<var>v</var>/d<var>t</var></span>. Substitute and rearrange.</p>
+
+    <div class="demo">
+      <div class="demohead"><span class="t">Interactive · Assemble the loop equation</span><span class="tag">Demo 1</span></div>
+      <div class="demobody">
+        <div class="controls" style="margin-bottom:14px">
+          <div class="ctl"><label>Resistance <var>R</var></label><input type="range" id="rc1_R" min="1" max="20" step="0.5" value="10"><span class="val" id="rc1_Rv">10 kΩ</span></div>
+          <div class="ctl"><label>Capacitance <var>C</var></label><input type="range" id="rc1_C" class="amber" min="0.2" max="2" step="0.1" value="1"><span class="val" id="rc1_Cv">1.0 mF</span></div>
+        </div>
+        <div class="steps" id="rc1_steps">
+          <div class="step on"><div class="lab">Kirchhoff's voltage law</div><div class="eq big center"><var>V</var><span class="sub2">s</span><span class="op">=</span><var>v</var><span class="sub2">R</span><span class="op">+</span><var>v</var><span class="sub2">C</span></div></div>
+          <div class="step"><div class="lab">Element laws: v_R = iR, i = C dv/dt</div><div class="eq big center"><var>V</var><span class="sub2">s</span><span class="op">=</span><var>R</var><var>C</var><span class="frac"><span class="num">d<var>v</var></span><span class="den">d<var>t</var></span></span><span class="op">+</span><var>v</var></div></div>
+          <div class="step"><div class="lab">Solve for the derivative → state equation</div><div class="eq big center" style="background:#f2fbf9;border-color:rgba(34,195,174,.4)"><span class="frac"><span class="num">d<var>v</var></span><span class="den">d<var>t</var></span></span><span class="op">=</span><span class="frac"><span class="num"><var>V</var><span class="sub2">s</span><span class="op">−</span><var>v</var></span><span class="den"><span id="rc1_tau">10</span></span></span></div></div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn primary" id="rc1_next">Reveal next step ▸</button>
+          <button class="btn ghost" id="rc1_reset">Reset</button>
+        </div>
+        <div class="readout">
+          <div class="metric"><div class="m-lab">Time constant τ = RC</div><div class="m-val teal" id="rc1_mtau">10.0 s</div></div>
+          <div class="metric"><div class="m-lab">Coefficient 1/RC</div><div class="m-val amber" id="rc1_mk">0.100 s⁻¹</div></div>
+          <div class="metric"><div class="m-lab">Order</div><div class="m-val">1st</div></div>
+        </div>
+        <div class="callout amber" style="margin-top:14px"><strong>New vs the tank.</strong> The right side now carries a <em>source term</em> V<sub>s</sub>. That's what makes the response settle to a non-zero value instead of decaying to empty. Set V<sub>s</sub>=0 and the equation becomes dv/dt = −v/RC — the tank exactly.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section id="charge">
+    <h2><span class="num">4</span> Charge and discharge — the step response</h2>
+    <p class="lead">Guess the form, then watch the capacitor fill and empty.</p>
+    <p>Charging from empty, the voltage climbs toward the source; discharging, it falls to zero. Both are exponentials with the same τ = RC — one rising, one falling. Tap to reveal the charging solution:</p>
+    <div class="eq big center" id="rc2_reveal" style="cursor:pointer;user-select:none">
+      <var>v</var>(<var>t</var>)<span class="op">=</span><span id="rc2_hidden" style="letter-spacing:.15em;color:var(--muted)">tap&nbsp;to&nbsp;reveal</span>
+    </div>
+
+    <div class="demo">
+      <div class="demohead"><span class="t">Interactive · Charge / discharge, drag the cursor</span><span class="tag">Demo 2</span></div>
+      <div class="demobody">
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <button class="btn sel" id="rc2_charge">⤴ Charge to Vs</button>
+          <button class="btn" id="rc2_disc">⤵ Discharge to 0</button>
+        </div>
+        <div class="flexrow">
+          <div class="grow" style="flex:0 0 160px;min-width:150px">
+            <div class="scope" style="padding-bottom:14px">
+              <div class="scopehead"><span><span class="dot" style="background:var(--amber)"></span>CAP</span><span id="rc2_caplab">v = 0.00 V</span></div>
+              <canvas id="rc2_cap" width="300" height="440"></canvas>
+            </div>
+          </div>
+          <div class="grow">
+            <div class="scope">
+              <div class="scopehead"><span><span class="dot" style="background:var(--teal)"></span>CAPACITOR VOLTAGE</span><span id="rc2_cursorlab">t = 0.0 s</span></div>
+              <canvas id="rc2_plot" width="760" height="360"></canvas>
+              <div class="legend">
+                <span><span class="swatch" style="background:var(--teal)"></span>v(t)</span>
+                <span><span class="swatch" style="background:#7fa0ac"></span>63% level &amp; t = τ</span>
+              </div>
+            </div>
+            <p class="small muted" style="margin-top:8px">At exactly one time constant, the voltage has covered 63% of its journey to the target — the universal signature of first order. Drag to move the cursor.</p>
+          </div>
+        </div>
+        <div class="controls">
+          <div class="ctl"><label>Source <var>V</var><span class="sub2">s</span></label><input type="range" id="rc2_Vs" min="1" max="10" step="0.5" value="5"><span class="val" id="rc2_Vsv">5.0 V</span></div>
+          <div class="ctl"><label>Resistance <var>R</var></label><input type="range" id="rc2_R" min="2" max="20" step="0.5" value="10"><span class="val" id="rc2_Rv">10 kΩ</span></div>
+          <div class="ctl"><label>Capacitance <var>C</var></label><input type="range" id="rc2_C" class="amber" min="0.2" max="2" step="0.1" value="1"><span class="val" id="rc2_Cv">1.0 mF</span></div>
+        </div>
+        <div class="readout">
+          <div class="metric"><div class="m-lab">v at cursor</div><div class="m-val teal" id="rc2_mv">0.00 V</div></div>
+          <div class="metric"><div class="m-lab">current i</div><div class="m-val amber" id="rc2_mi">0.50 mA</div></div>
+          <div class="metric"><div class="m-lab">τ = RC</div><div class="m-val" id="rc2_mtau">10.0 s</div></div>
+          <div class="metric"><div class="m-lab">steady state</div><div class="m-val" id="rc2_mss">5.00 V</div></div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn primary" id="rc2_run">▶ Run</button>
+          <button class="btn" id="rc2_pause">⏸ Pause</button>
+          <button class="btn ghost" id="rc2_rst">↺ Reset t=0</button>
+        </div>
+      </div>
+    </div>
+
+    <details>
+      <summary>Full worked solution — charging and discharging</summary>
+      <p>The driven equation <span class="eqi"><span class="frac"><span class="num">d<var>v</var></span><span class="den">d<var>t</var></span></span>=(<var>V</var><span class="sub2">s</span>−<var>v</var>)/τ</span> is solved by shifting to the error <span class="eqi"><var>e</var>=<var>v</var>−<var>V</var><span class="sub2">s</span></span>, which obeys the pure-decay law <span class="eqi"><span class="frac"><span class="num">d<var>e</var></span><span class="den">d<var>t</var></span></span>=−<var>e</var>/τ</span>. So <span class="eqi"><var>e</var>(<var>t</var>)=<var>e</var><span class="sub2">0</span><var>e</var><span class="sup2">−<var>t</var>/τ</span></span>, giving:</p>
+      <div class="eq big center" style="background:#f2fbf9;border-color:rgba(34,195,174,.4)"><var>v</var>(<var>t</var>)<span class="op">=</span><var>V</var><span class="sub2">s</span><span class="op">+</span>(<var>v</var><span class="sub2">0</span><span class="op">−</span><var>V</var><span class="sub2">s</span>)<var>e</var><span class="sup2">−<var>t</var>/<var>RC</var></span></div>
+      <p class="small muted">Charging from empty (v₀=0): v = V<sub>s</sub>(1 − e<sup>−t/RC</sup>). Discharging (V<sub>s</sub>=0): v = v₀ e<sup>−t/RC</sup>. This "shift to the equilibrium, decay the error" trick reappears in the cooling and drag lessons.</p>
+    </details>
+  </section>
+
+  <!-- 5 -->
+  <section id="steady">
+    <h2><span class="num">5</span> Steady state and the time constant</h2>
+    <p class="lead">Where it ends up, and how fast it gets there.</p>
+    <p>Set <span class="eqi">d<var>v</var>/d<var>t</var>=0</span> in the equation and the steady state pops out: <span class="eqi"><var>v</var><span class="sub2">∞</span>=<var>V</var><span class="sub2">s</span></span>. The capacitor eventually matches the source and no more current flows. The <em>speed</em> of arrival is set entirely by <span class="eqi">τ=<var>RC</var></span>: after 1τ it's 63% there, after 3τ about 95%, after 5τ effectively done. Bigger R or C ⟶ slower.</p>
+    <div class="callout"><strong>Design reading.</strong> Want a slow, smooth filter? Increase RC. Want a snappy response? Shrink it. Every first-order choice in electronics — debounce timers, smoothing filters, sample-and-hold — is really a choice of this one number.</div>
+  </section>
+
+  <!-- 6 -->
+  <section id="takeaways">
+    <div class="takeaways">
+      <h2>Takeaways</h2>
+      <ul>
+        <li><b>The stored quantity is the state.</b> A capacitor stores charge, so its voltage v<sub>C</sub> is the state — the electrical analog of water height.</li>
+        <li><b>KVL is the conservation law.</b> Source = resistor drop + capacitor voltage, with i = C dv/dt closing the loop.</li>
+        <li><b>A source term shifts the equilibrium.</b> Unlike the tank, the RC settles to v<sub>∞</sub> = V<sub>s</sub>, not zero. Shift to the error and it's pure decay again.</li>
+        <li><b>One number governs the timing.</b> τ = RC: 63% at 1τ, ~95% at 3τ, done by 5τ.</li>
+      </ul>
+    </div>
+    <details>
+      <summary>Quick check 1 — reading τ</summary>
+      <p class="small muted">R = 10 kΩ, C = 1 mF, charging from empty toward 5 V. What's v at t = 10 s?</p>
+      <button class="btn qbtn" onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+      <div style="display:none" class="callout">τ = RC = 10 s, so t = 10 s is exactly one time constant: v = 5(1 − e⁻¹) ≈ 5 × 0.632 = 3.16 V.</div>
+    </details>
+    <details>
+      <summary>Quick check 2 — the tank connection</summary>
+      <p class="small muted">What must you set so the RC equation becomes identical to the leaking tank's dv/dt = −v/τ?</p>
+      <button class="btn qbtn" onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+      <div style="display:none" class="callout">Set the source V<sub>s</sub> = 0 (discharge). With no drive, the capacitor simply bleeds through R — the exact electrical twin of water leaking from a tank.</div>
+    </details>
+    <details>
+      <summary>Exercise — a 3-bit settling spec</summary>
+      <p class="small muted">A sample-and-hold must settle to within 1% of the source before reading. In units of τ, how long must you wait?</p>
+      <button class="btn qbtn" onclick="this.nextElementSibling.style.display='block'">Show solution</button>
+      <div style="display:none" class="callout">Remaining error is e<sup>−t/τ</sup>. Set e<sup>−t/τ</sup> = 0.01 ⟶ t/τ = ln(100) ≈ 4.6. So wait ≈ 4.6τ (people often round to 5τ for the ~99.3% it gives).</div>
+    </details>
+  </section>
+
+  <p class="foot">Foundations of Dynamic Systems · self-contained &amp; offline · electrical first-order response.</p>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var DPR=Math.max(1,Math.min(2,window.devicePixelRatio||1));
+  var C={grid:"#16303c",gridSoft:"#12242e",axis:"#3a5b68",txt:"#9db6c0",txtHi:"#dff3ee",amber:"#E8A33D",teal:"#22C3AE"};
+  function setup(cv,w,h){cv.width=w*DPR;cv.height=h*DPR;cv.style.aspectRatio=w+" / "+h;var x=cv.getContext("2d");x.setTransform(DPR,0,0,DPR,0,0);cv._w=w;cv._h=h;return x;}
+  function clear(x,w,h){x.clearRect(0,0,w,h);}
+  function frame(x,b,tMax,yMax,yl){var i;x.fillStyle="#0b1820";x.fillRect(b.x,b.y,b.w,b.h);x.lineWidth=1;
+    for(i=0;i<=10;i++){var gx=b.x+b.w*i/10;x.strokeStyle=(i%5===0)?C.grid:C.gridSoft;x.beginPath();x.moveTo(gx,b.y);x.lineTo(gx,b.y+b.h);x.stroke();}
+    for(i=0;i<=8;i++){var gy=b.y+b.h*i/8;x.strokeStyle=(i%4===0)?C.grid:C.gridSoft;x.beginPath();x.moveTo(b.x,gy);x.lineTo(b.x+b.w,gy);x.stroke();}
+    x.strokeStyle=C.axis;x.lineWidth=1.4;x.beginPath();x.moveTo(b.x,b.y);x.lineTo(b.x,b.y+b.h);x.lineTo(b.x+b.w,b.y+b.h);x.stroke();
+    x.fillStyle=C.txt;x.font="11px ui-monospace,Menlo,Consolas,monospace";x.textAlign="center";x.textBaseline="top";
+    for(i=0;i<=5;i++)x.fillText((tMax*i/5).toFixed(0),b.x+b.w*i/5,b.y+b.h+5);
+    x.fillText("t (s)",b.x+b.w,b.y+b.h+18);
+    x.textAlign="right";x.textBaseline="middle";
+    for(i=0;i<=4;i++)x.fillText((yMax*i/4).toFixed(yMax<2?2:1),b.x-6,b.y+b.h-b.h*i/4);
+    x.save();x.translate(b.x-32,b.y+b.h/2);x.rotate(-Math.PI/2);x.textAlign="center";x.textBaseline="middle";x.fillStyle=C.txt;x.fillText(yl,0,0);x.restore();}
+  function mapX(b,tMax,t){return b.x+b.w*(t/tMax);}
+  function mapY(b,yMax,y){return b.y+b.h-b.h*(y/yMax);}
+  function curve(x,b,tMax,yMax,fn,color,w){x.strokeStyle=color;x.lineWidth=w||2.6;x.lineJoin="round";x.beginPath();var s=false;
+    for(var i=0;i<=240;i++){var t=tMax*i/240,y=fn(t);if(y<-yMax*0.05)continue;var px=mapX(b,tMax,t),py=mapY(b,yMax,Math.max(0,Math.min(yMax,y)));if(!s){x.moveTo(px,py);s=true;}else x.lineTo(px,py);}x.stroke();}
+
+  // DEMO 1
+  (function(){
+    var R=document.getElementById("rc1_R"),Cc=document.getElementById("rc1_C");
+    var step=0,steps=document.querySelectorAll("#rc1_steps .step");
+    function nums(){var r=parseFloat(R.value),c=parseFloat(Cc.value),tau=r*c;
+      document.getElementById("rc1_Rv").textContent=r.toFixed(1)+" kΩ";
+      document.getElementById("rc1_Cv").textContent=c.toFixed(1)+" mF";
+      document.getElementById("rc1_tau").textContent=tau.toFixed(1);
+      document.getElementById("rc1_mtau").textContent=tau.toFixed(1)+" s";
+      document.getElementById("rc1_mk").textContent=(1/tau).toFixed(3)+" s⁻¹";}
+    function show(){steps.forEach(function(s,i){s.classList.toggle("on",i<=step);});}
+    document.getElementById("rc1_next").onclick=function(){if(step<steps.length-1){step++;show();}};
+    document.getElementById("rc1_reset").onclick=function(){step=0;show();};
+    R.oninput=nums;Cc.oninput=nums;nums();show();
+  })();
+
+  // DEMO 2
+  var rc2redraw;
+  (function(){
+    var capC=document.getElementById("rc2_cap"),plotC=document.getElementById("rc2_plot");
+    var cx=setup(capC,300,440),px=setup(plotC,760,360);
+    var Vs=document.getElementById("rc2_Vs"),R=document.getElementById("rc2_R"),Cc=document.getElementById("rc2_C");
+    var box={x:58,y:20,w:658,h:280},cursorT=0,playing=false,animT=0,mode="charge";
+    function P(){var vs=parseFloat(Vs.value),r=parseFloat(R.value),c=parseFloat(Cc.value);return{vs:vs,r:r,c:c,tau:r*c};}
+    function tMaxOf(){var t=P().tau;return Math.min(90,Math.max(25,5*t));}
+    function vOf(t){var p=P();return mode==="charge"?p.vs*(1-Math.exp(-t/p.tau)):p.vs*Math.exp(-t/p.tau);}
+    function iOf(t){var p=P();return (p.vs/p.r)*Math.exp(-t/p.tau);} // mA (V/kΩ = mA)
+    function drawCap(v){
+      clear(cx,300,440);var p=P();
+      var px0=90,pw=120,topP=120,botP=300;
+      // plates
+      cx.strokeStyle="#5b7480";cx.lineWidth=5;
+      cx.beginPath();cx.moveTo(px0,topP);cx.lineTo(px0+pw,topP);cx.stroke();
+      cx.beginPath();cx.moveTo(px0,botP);cx.lineTo(px0+pw,botP);cx.stroke();
+      // leads
+      cx.lineWidth=3;cx.strokeStyle="#31505d";
+      cx.beginPath();cx.moveTo(px0+pw/2,60);cx.lineTo(px0+pw/2,topP);cx.stroke();
+      cx.beginPath();cx.moveTo(px0+pw/2,botP);cx.lineTo(px0+pw/2,380);cx.stroke();
+      // charge fill (field lines intensity by v/vs)
+      var frac=p.vs>0?Math.max(0,Math.min(1,v/p.vs)):0;
+      cx.fillStyle="rgba(34,195,174,"+(0.15+0.55*frac)+")";
+      cx.fillRect(px0+6,topP+6,pw-12,botP-topP-12);
+      // + / - charges
+      cx.fillStyle="#E8A33D";cx.font="16px ui-monospace,monospace";cx.textAlign="center";
+      var n=Math.round(frac*6);
+      for(var q=0;q<n;q++){cx.fillText("+",px0+22+q*15,topP+22);cx.fillText("–",px0+22+q*15,botP-14);}
+      cx.fillStyle=C.txt;cx.font="13px ui-monospace,monospace";cx.textBaseline="middle";cx.textAlign="center";
+      cx.fillText(v.toFixed(2)+" V",px0+pw/2,(topP+botP)/2);
+      document.getElementById("rc2_caplab").textContent="v = "+v.toFixed(2)+" V";
+    }
+    function drawPlot(){
+      var p=P(),tMax=tMaxOf(),yMax=p.vs*1.08;
+      clear(px,760,360);frame(px,box,tMax,yMax,"v  (V)");
+      curve(px,box,tMax,yMax,vOf,C.teal,2.8);
+      // tau marker + 63% level
+      var lvl=mode==="charge"?0.632*p.vs:0.368*p.vs;
+      var ly=mapY(box,yMax,lvl),tx=mapX(box,tMax,p.tau);
+      px.strokeStyle="rgba(127,160,172,.6)";px.setLineDash([4,4]);px.lineWidth=1.3;
+      px.beginPath();px.moveTo(box.x,ly);px.lineTo(box.x+box.w,ly);px.stroke();
+      px.beginPath();px.moveTo(tx,box.y);px.lineTo(tx,box.y+box.h);px.stroke();px.setLineDash([]);
+      px.fillStyle="#7fa0ac";px.font="11px ui-monospace,monospace";px.textAlign="left";
+      px.fillText("t = τ",tx+5,box.y+14);px.fillText((mode==="charge"?"63%":"37%"),box.x+6,ly-8);
+      // cursor
+      var vc=vOf(cursorT),ccx=mapX(box,tMax,cursorT),ccy=mapY(box,yMax,vc);
+      px.strokeStyle="rgba(157,182,192,.4)";px.lineWidth=1;px.beginPath();px.moveTo(ccx,box.y);px.lineTo(ccx,box.y+box.h);px.stroke();
+      px.fillStyle=C.teal;px.beginPath();px.arc(ccx,ccy,5,0,6.29);px.fill();px.strokeStyle="#0b1820";px.lineWidth=2;px.stroke();
+      document.getElementById("rc2_cursorlab").textContent="t = "+cursorT.toFixed(1)+" s";
+      document.getElementById("rc2_mv").textContent=vc.toFixed(2)+" V";
+      document.getElementById("rc2_mi").textContent=iOf(cursorT).toFixed(3)+" mA";
+      document.getElementById("rc2_mtau").textContent=p.tau.toFixed(1)+" s";
+      document.getElementById("rc2_mss").textContent=(mode==="charge"?p.vs:0).toFixed(2)+" V";
+      drawCap(vc);
+    }
+    rc2redraw=drawPlot;
+    var dragging=false;
+    function tFromEvent(e){var r=plotC.getBoundingClientRect();var xp=((e.touches?e.touches[0].clientX:e.clientX)-r.left)*(plotC._w/r.width);var f=(xp-box.x)/box.w;f=Math.max(0,Math.min(1,f));return f*tMaxOf();}
+    function down(e){dragging=true;cursorT=tFromEvent(e);drawPlot();e.preventDefault();}
+    function move(e){if(dragging){cursorT=tFromEvent(e);drawPlot();e.preventDefault();}}
+    function up(){dragging=false;}
+    plotC.addEventListener("mousedown",down);window.addEventListener("mousemove",move);window.addEventListener("mouseup",up);
+    plotC.addEventListener("touchstart",down,{passive:false});plotC.addEventListener("touchmove",move,{passive:false});plotC.addEventListener("touchend",up);
+    function loop(){if(playing){cursorT+=tMaxOf()/160;animT+=0.016;if(cursorT>tMaxOf()){cursorT=tMaxOf();playing=false;}drawPlot();}requestAnimationFrame(loop);}
+    document.getElementById("rc2_run").onclick=function(){if(cursorT>=tMaxOf())cursorT=0;playing=true;};
+    document.getElementById("rc2_pause").onclick=function(){playing=false;};
+    document.getElementById("rc2_rst").onclick=function(){playing=false;cursorT=0;drawPlot();};
+    var bC=document.getElementById("rc2_charge"),bD=document.getElementById("rc2_disc");
+    bC.onclick=function(){mode="charge";bC.classList.add("sel");bD.classList.remove("sel");cursorT=0;playing=false;drawPlot();};
+    bD.onclick=function(){mode="discharge";bD.classList.add("sel");bC.classList.remove("sel");cursorT=0;playing=false;drawPlot();};
+    function upd(){document.getElementById("rc2_Vsv").textContent=parseFloat(Vs.value).toFixed(1)+" V";
+      document.getElementById("rc2_Rv").textContent=parseFloat(R.value).toFixed(1)+" kΩ";
+      document.getElementById("rc2_Cv").textContent=parseFloat(Cc.value).toFixed(1)+" mF";drawPlot();}
+    Vs.oninput=upd;R.oninput=upd;Cc.oninput=upd;
+    var revealed=false;
+    document.getElementById("rc2_reveal").onclick=function(){if(revealed)return;revealed=true;
+      document.getElementById("rc2_hidden").outerHTML='<span style="color:#0f7d6e;font-weight:700"><var>V</var><span class="sub2">s</span>(1<span class="op">−</span><var>e</var><span class="sup2">−<var>t</var>/<var>RC</var></span>)</span>';};
+    upd();loop();
+  })();
+
+  var rt;window.addEventListener("resize",function(){clearTimeout(rt);rt=setTimeout(function(){if(rc2redraw)rc2redraw();},150);});
+})();
+</script>
+</body>
+</html>

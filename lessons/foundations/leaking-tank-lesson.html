@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Leaking Tank — A First-Order System, End to End</title>
+<style>
+  :root{
+    --paper:#EEF2F5; --amber:#E8A33D; --teal:#22C3AE; --navy:#0E1B24;
+    --ink:#1c2b33; --muted:#5d6f79; --line:#c9d4da; --panel:#ffffff;
+    --grid:#16303c; --grid-soft:#12242e; --axis:#3a5b68;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);line-height:1.62;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:900px;margin:0 auto;padding:26px 20px 90px}
+
+  header.hero{border:1px solid var(--line);border-radius:14px;padding:24px 26px;margin-bottom:22px;
+    background:linear-gradient(180deg,#ffffff,#f5f8fa);}
+  .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  h1{font-size:28px;margin:6px 0 8px;letter-spacing:-.01em}
+  .hero .sub{color:var(--muted);font-size:15.5px;margin:0}
+
+  /* sticky mini-contents */
+  nav.toc{position:sticky;top:0;z-index:20;background:rgba(238,242,245,.92);backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line);margin:0 -20px 22px;padding:9px 20px;
+    display:flex;gap:6px;flex-wrap:wrap;font-size:12.5px}
+  nav.toc a{color:var(--muted);text-decoration:none;border:1px solid var(--line);background:var(--panel);
+    padding:5px 11px;border-radius:20px;font-weight:600;white-space:nowrap;transition:.15s}
+  nav.toc a:hover{border-color:#a9bcc6;color:var(--ink)}
+
+  section{margin:34px 0}
+  section > h2{font-size:21px;margin:0 0 4px;display:flex;align-items:center;gap:10px}
+  section > h2 .num{display:inline-flex;width:26px;height:26px;border-radius:8px;background:var(--navy);
+    color:var(--teal);font-size:14px;align-items:center;justify-content:center;flex:0 0 auto}
+  section > .lead{color:var(--muted);font-size:14px;margin:2px 0 14px}
+  p{margin:10px 0}
+  .muted{color:var(--muted)} .small{font-size:13px}
+
+  .card{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:18px 20px;margin:14px 0}
+  .card h3{font-size:14.5px;margin:14px 0 6px}
+
+  figure.viz{margin:16px 0;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#fff,#f7fafb);
+    padding:14px 16px 10px}
+  figure.viz svg{display:block;width:100%;height:auto}
+  figure.viz figcaption{font-size:12.5px;color:var(--muted);margin-top:6px;text-align:center}
+
+  /* scope panels for the interactive canvases */
+  .demo{border:1px solid var(--line);border-radius:12px;background:var(--panel);margin:16px 0;overflow:hidden}
+  .demo .demohead{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;
+    background:var(--navy);color:#dff3ee}
+  .demo .demohead .t{font-weight:700;font-size:13.5px;letter-spacing:.02em}
+  .demo .demohead .tag{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal)}
+  .demo .demobody{padding:16px}
+  .scope{background:var(--navy);border-radius:10px;padding:12px 12px 8px;border:1px solid #0a141b}
+  .scope .scopehead{display:flex;justify-content:space-between;align-items:center;color:#7fa0ac;
+    font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;padding:0 2px}
+  .scope .dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+  canvas{display:block;width:100%;border-radius:8px;touch-action:none}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:12.5px;color:#9db6c0}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .swatch{width:16px;height:3px;border-radius:2px;display:inline-block}
+
+  .controls{display:grid;gap:13px;margin-top:14px}
+  .ctl{display:grid;grid-template-columns:132px 1fr 96px;align-items:center;gap:12px}
+  .ctl label{font-size:13.5px;font-weight:600}
+  .ctl .val{font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,Consolas,monospace;
+    font-size:13px;text-align:right;background:var(--paper);border:1px solid var(--line);border-radius:7px;padding:4px 8px}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:3px;
+    background:linear-gradient(90deg,var(--teal),#7fc9bf);outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;
+    background:#fff;border:2px solid var(--teal);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid var(--teal);cursor:pointer}
+  input[type=range].amber{background:linear-gradient(90deg,#f0c584,var(--amber))}
+  input[type=range].amber::-webkit-slider-thumb{border-color:var(--amber)}
+  input[type=range].amber::-moz-range-thumb{border-color:var(--amber)}
+
+  .btn{appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--ink);
+    font-weight:600;font-size:13px;padding:8px 14px;border-radius:9px;cursor:pointer}
+  .btn:hover{border-color:#a9bcc6}
+  .btn.primary{background:var(--navy);color:#eaf6f2;border-color:var(--navy)}
+  .btn.ghost{background:transparent}
+
+  .eq{font-family:"Cambria Math","Times New Roman",Georgia,serif;font-size:18px;color:var(--ink);
+    display:flex;align-items:center;flex-wrap:wrap;gap:2px;padding:10px 12px;background:var(--paper);
+    border-radius:8px;border:1px solid var(--line);margin:10px 0;line-height:1}
+  .eq.center{justify-content:center} .eq.big{font-size:22px}
+  .eqi{display:inline-flex;font-size:15px;padding:2px 8px;vertical-align:middle}
+  .frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 4px;line-height:1}
+  .frac .num{padding:0 6px 2px;border-bottom:1.4px solid currentColor}
+  .frac .den{padding:2px 6px 0}
+  var,.it{font-style:italic}
+  .sub2{font-size:.7em;vertical-align:sub} .sup2{font-size:.7em;vertical-align:super}
+  .op{margin:0 5px}
+
+  .steps{display:grid;gap:10px}
+  .step{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--panel);
+    opacity:.4;filter:grayscale(.35);transition:.3s}
+  .step.on{opacity:1;filter:none;border-color:#bcd0d8;box-shadow:0 1px 0 rgba(34,195,174,.15)}
+  .step .lab{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:4px}
+
+  .pill{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px;
+    background:rgba(34,195,174,.14);color:#0f7d6e;border:1px solid rgba(34,195,174,.35)}
+  .pill.amber{background:rgba(232,163,61,.16);color:#a56a12;border-color:rgba(232,163,61,.4)}
+  .pill.warn{background:rgba(200,80,60,.12);color:#b23a26;border-color:rgba(200,80,60,.35)}
+
+  .callout{border-left:3px solid var(--teal);background:#f2fbf9;border-radius:0 8px 8px 0;padding:11px 15px;margin:12px 0;font-size:14px}
+  .callout.amber{border-left-color:var(--amber);background:#fdf7ee}
+  .callout.warn{border-left-color:#c8503c;background:#fdf2f0}
+
+  .readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;margin-top:12px}
+  .metric{background:var(--navy);color:#dff3ee;border-radius:10px;padding:10px 12px}
+  .metric .m-lab{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#7fa0ac}
+  .metric .m-val{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:19px;margin-top:2px}
+  .metric .m-val.amber{color:var(--amber)} .metric .m-val.teal{color:var(--teal)}
+
+  details{border:1px solid var(--line);border-radius:10px;padding:2px 15px;margin:12px 0;background:var(--panel)}
+  summary{cursor:pointer;font-weight:600;padding:11px 0;font-size:14.5px;list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"▸";color:var(--teal);margin-right:8px;display:inline-block;transition:.2s}
+  details[open] summary::before{transform:rotate(90deg)}
+  .qbtn{margin:4px 6px 10px 0}
+
+  .flexrow{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+  .flexrow>.grow{flex:1 1 320px;min-width:270px}
+
+  .takeaways{border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#0E1B24,#12242e);
+    color:#dff3ee;padding:18px 22px}
+  .takeaways h2{color:#fff;margin-top:0}
+  .takeaways ul{margin:8px 0 0;padding-left:18px}
+  .takeaways li{margin:8px 0}
+  .takeaways b{color:var(--teal)}
+
+  .foot{color:var(--muted);font-size:12.5px;text-align:center;margin-top:30px}
+  code.tk{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--paper);padding:1px 6px;border-radius:5px;font-size:13px;border:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="kicker">Foundations of Dynamic Systems · Worked Example</div>
+    <h1>The Leaking Tank</h1>
+    <p class="sub">A tank drains at a rate proportional to its water height. We follow one path — <em>phenomenon → intuition → equation → solution → interpretation</em> — with the schematic and the live response sitting right beside the algebra at every step.</p>
+  </header>
+
+  <nav class="toc">
+    <a href="#scene">① The scenario</a>
+    <a href="#state">② The state</a>
+    <a href="#build">③ Build the equation</a>
+    <a href="#why">④ Why exponential</a>
+    <a href="#solve">⑤ Solve &amp; verify</a>
+    <a href="#volume">⑥ Height ↔ volume</a>
+    <a href="#takeaways">⑦ Takeaways</a>
+  </nav>
+
+  <!-- ============ 1. SCENARIO ============ -->
+  <section id="scene">
+    <h2><span class="num">1</span> The scenario</h2>
+    <p class="lead">A phenomenon you can picture before any math appears.</p>
+    <p>A water tank of cross-sectional area <span class="eqi"><var>A</var>=5&nbsp;m²</span> sits with a leak at the bottom. Nothing is being pumped in — the tank is only emptying. The single rule we're given is that the outflow is <strong>proportional to the water height</strong>: taller column, faster leak.</p>
+
+    <figure class="viz">
+      <!-- TANK SCHEMATIC -->
+      <svg viewBox="0 0 640 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cross-section of a leaking tank">
+        <defs>
+          <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#22C3AE" stop-opacity="0.85"/>
+            <stop offset="1" stop-color="#22C3AE" stop-opacity="0.42"/>
+          </linearGradient>
+          <marker id="arw" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+            <path d="M0,0 L9,4.5 L0,9 Z" fill="#3a5b68"/>
+          </marker>
+          <marker id="arwA" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+            <path d="M0,0 L9,4.5 L0,9 Z" fill="#a56a12"/>
+          </marker>
+        </defs>
+
+        <!-- no-inflow indicator -->
+        <g>
+          <path d="M300,20 L300,58" stroke="#b0bcc4" stroke-width="6" fill="none"/>
+          <path d="M280,32 h40" stroke="#b0bcc4" stroke-width="6"/>
+          <line x1="272" y1="20" x2="332" y2="56" stroke="#c8503c" stroke-width="4"/>
+          <text x="345" y="40" font-family="ui-monospace,Menlo,monospace" font-size="15" fill="#b23a26">inflow = 0</text>
+        </g>
+
+        <!-- tank walls -->
+        <path d="M200,72 L200,340 L400,340 L400,72" fill="none" stroke="#31505d" stroke-width="4"/>
+        <!-- water -->
+        <rect x="203" y="180" width="194" height="158" fill="url(#water)"/>
+        <line x1="203" y1="180" x2="397" y2="180" stroke="#22C3AE" stroke-width="2.5"/>
+
+        <!-- area A indicator (top width) -->
+        <line x1="200" y1="92" x2="400" y2="92" stroke="#3a5b68" stroke-width="1.5" marker-start="url(#arw)" marker-end="url(#arw)"/>
+        <rect x="255" y="80" width="92" height="22" rx="5" fill="#fff" stroke="#c9d4da"/>
+        <text x="301" y="96" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="14" fill="#1c2b33">A = 5 m²</text>
+
+        <!-- height h dimension -->
+        <line x1="168" y1="180" x2="168" y2="340" stroke="#0f7d6e" stroke-width="1.8" marker-start="url(#arw)" marker-end="url(#arw)"/>
+        <rect x="120" y="248" width="70" height="24" rx="6" fill="#f2fbf9" stroke="#22C3AE"/>
+        <text x="155" y="265" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="16" fill="#0f7d6e">h(t)</text>
+
+        <!-- leak nozzle + stream -->
+        <rect x="400" y="318" width="20" height="16" fill="#31505d"/>
+        <path d="M420,326 q30,4 42,44 q8,26 8,40" fill="none" stroke="#E8A33D" stroke-width="7" stroke-linecap="round" opacity="0.9"/>
+        <circle cx="472" cy="356" r="4" fill="#E8A33D"/>
+        <circle cx="466" cy="386" r="3.4" fill="#E8A33D" opacity="0.8"/>
+        <!-- outflow label -->
+        <line x1="470" y1="300" x2="470" y2="326" stroke="#a56a12" stroke-width="1.4" marker-end="url(#arwA)"/>
+        <rect x="440" y="272" width="150" height="26" rx="6" fill="#fdf7ee" stroke="#E8A33D"/>
+        <text x="515" y="290" text-anchor="middle" font-family="Georgia,serif" font-size="15" fill="#a56a12"><tspan font-style="italic">Q</tspan><tspan font-size="10" dy="4">out</tspan><tspan dy="-4"> = 0.2·</tspan><tspan font-style="italic">h</tspan></text>
+
+        <!-- ground -->
+        <line x1="150" y1="340" x2="470" y2="340" stroke="#8fa2ab" stroke-width="2"/>
+      </svg>
+      <figcaption>The physical setup: area <em>A</em>, water height <em>h(t)</em>, a leak whose rate rises and falls with the height. No pump feeds the tank.</figcaption>
+    </figure>
+  </section>
+
+  <!-- ============ 2. STATE ============ -->
+  <section id="state">
+    <h2><span class="num">2</span> Choosing the state variable</h2>
+    <p class="lead">The first modeling decision — and the one most people get subtly wrong.</p>
+    <p>A dynamic model needs a <em>state</em>: the quantity whose rate of change we'll track. Here the tempting choice is volume, but there's a better one. The leak law is written in terms of <strong>height</strong>, so height is the variable the physics already speaks. Choose <span class="pill">h(t)</span> and the equation writes itself; choose volume and you owe an extra conversion.</p>
+
+    <figure class="viz">
+      <!-- STATE CHOICE COMPARISON -->
+      <svg viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Choosing height vs volume as the state">
+        <!-- left card: h -->
+        <rect x="16" y="20" width="288" height="210" rx="12" fill="#f2fbf9" stroke="#22C3AE" stroke-width="1.5"/>
+        <circle cx="46" cy="52" r="13" fill="#22C3AE"/>
+        <path d="M40,52 l5,5 l9,-11" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="70" y="57" font-family="Georgia,serif" font-size="18" fill="#0f7d6e">state = <tspan font-style="italic">h(t)</tspan></text>
+        <text x="34" y="96" font-family="-apple-system,Arial" font-size="13" fill="#3a5b68">Leak law is already in h —</text>
+        <text x="34" y="116" font-family="-apple-system,Arial" font-size="13" fill="#3a5b68">no conversion needed.</text>
+        <rect x="40" y="140" width="238" height="66" rx="8" fill="#fff" stroke="#bfe6df"/>
+        <text x="159" y="180" text-anchor="middle" font-family="Georgia,serif" font-size="19" fill="#0f7d6e"><tspan>dh/dt = −0.04 </tspan><tspan font-style="italic">h</tspan></text>
+        <text x="159" y="200" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#5d6f79">one step · direct</text>
+
+        <!-- right card: V -->
+        <rect x="336" y="20" width="288" height="210" rx="12" fill="#fdf7ee" stroke="#E8A33D" stroke-width="1.5"/>
+        <circle cx="366" cy="52" r="13" fill="#E8A33D"/>
+        <text x="366" y="58" text-anchor="middle" font-family="ui-monospace,monospace" font-size="16" fill="#fff">!</text>
+        <text x="390" y="57" font-family="Georgia,serif" font-size="18" fill="#a56a12">state = <tspan font-style="italic">V(t)</tspan></text>
+        <text x="354" y="96" font-family="-apple-system,Arial" font-size="13" fill="#7a5a1e">Must first insert the</text>
+        <text x="354" y="116" font-family="-apple-system,Arial" font-size="13" fill="#7a5a1e">geometry link V = A·h.</text>
+        <rect x="360" y="132" width="238" height="34" rx="7" fill="#fff" stroke="#f0d5a8"/>
+        <text x="479" y="154" text-anchor="middle" font-family="Georgia,serif" font-size="15" fill="#a56a12">h = V / A &nbsp;⟶&nbsp; substitute</text>
+        <rect x="360" y="174" width="238" height="34" rx="7" fill="#fff" stroke="#f0d5a8"/>
+        <text x="479" y="196" text-anchor="middle" font-family="Georgia,serif" font-size="16" fill="#a56a12">dV/dt = −0.04 <tspan font-style="italic">V</tspan></text>
+      </svg>
+      <figcaption>Both states describe the same tank, but height gets you to the equation in one move. Volume works — it just costs a conversion (we do it in §6).</figcaption>
+    </figure>
+
+    <div class="callout warn"><strong>The classic trap.</strong> Writing <span class="eqi"><span class="frac"><span class="num">d<var>V</var></span><span class="den">d<var>t</var></span></span>=<var>V</var><span class="sub2">0</span>−0.2<var>V</var></span> makes two errors at once: <var>V</var><span class="sub2">0</span> is a <em>starting amount</em>, not an inflow rate (a sealed leaking tank has inflow&nbsp;=&nbsp;0), and the leak is tied to <em>height</em>, not volume. Initial conditions never live inside the balance — they're applied afterward.</div>
+  </section>
+
+  <!-- ============ 3. BUILD EQUATION ============ -->
+  <section id="build">
+    <h2><span class="num">3</span> Building the equation from conservation</h2>
+    <p class="lead">Every lumped model in this course grows from the same three-word skeleton.</p>
+
+    <figure class="viz">
+      <!-- CONSERVATION FLOW DIAGRAM -->
+      <svg viewBox="0 0 640 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Conservation balance flow">
+        <defs>
+          <marker id="farw" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+            <path d="M0,0 L10,5 L0,10 Z" fill="#5d6f79"/>
+          </marker>
+        </defs>
+        <!-- inflow box (zero) -->
+        <rect x="14" y="46" width="150" height="70" rx="10" fill="#f3f5f7" stroke="#c9d4da" stroke-dasharray="5 4"/>
+        <text x="89" y="76" text-anchor="middle" font-family="-apple-system,Arial" font-size="12" fill="#8794a0">INFLOW</text>
+        <text x="89" y="100" text-anchor="middle" font-family="Georgia,serif" font-size="20" fill="#8794a0">0</text>
+
+        <line x1="166" y1="81" x2="232" y2="81" stroke="#5d6f79" stroke-width="2" marker-end="url(#farw)"/>
+
+        <!-- storage box -->
+        <rect x="236" y="40" width="168" height="82" rx="10" fill="#f2fbf9" stroke="#22C3AE" stroke-width="1.6"/>
+        <text x="320" y="68" text-anchor="middle" font-family="-apple-system,Arial" font-size="12" fill="#0f7d6e">STORAGE</text>
+        <text x="320" y="98" text-anchor="middle" font-family="Georgia,serif" font-size="20" fill="#0f7d6e">A · dh/dt</text>
+
+        <line x1="406" y1="81" x2="472" y2="81" stroke="#5d6f79" stroke-width="2" marker-end="url(#farw)"/>
+
+        <!-- outflow box -->
+        <rect x="476" y="46" width="150" height="70" rx="10" fill="#fdf7ee" stroke="#E8A33D" stroke-width="1.6"/>
+        <text x="551" y="72" text-anchor="middle" font-family="-apple-system,Arial" font-size="12" fill="#a56a12">OUTFLOW</text>
+        <text x="551" y="98" text-anchor="middle" font-family="Georgia,serif" font-size="17" fill="#a56a12">0.2 · h</text>
+
+        <!-- assembled balance -->
+        <text x="320" y="168" text-anchor="middle" font-family="Georgia,serif" font-size="18" fill="#1c2b33">A · dh/dt &nbsp;=&nbsp; 0 &nbsp;−&nbsp; 0.2·h</text>
+        <text x="320" y="194" text-anchor="middle" font-family="Georgia,serif" font-size="15" fill="#5d6f79">divide by A = 5 &nbsp;⟶&nbsp; <tspan fill="#0f7d6e" font-size="17">dh/dt = −0.04 h</tspan></text>
+      </svg>
+      <figcaption>Accumulation = inflow − outflow. With no inflow and the leak law substituted, dividing by the area folds the geometry into the rate.</figcaption>
+    </figure>
+
+    <p>Follow the balance term by term below, and watch how the coefficient <span class="eqi"><var>c</var>/<var>A</var></span> emerges. Slide the area and leak coefficient to feel why a wider tank drains slower.</p>
+
+    <!-- DEMO 1: equation builder -->
+    <div class="demo">
+      <div class="demohead"><span class="t">Interactive · Assemble the balance</span><span class="tag">Demo 1</span></div>
+      <div class="demobody">
+        <div class="controls" style="margin-bottom:14px">
+          <div class="ctl"><label>Tank area <var>A</var></label><input type="range" id="t1_A" min="1" max="10" step="0.5" value="5"><span class="val" id="t1_Av">5.0 m²</span></div>
+          <div class="ctl"><label>Leak coeff. <var>c</var></label><input type="range" id="t1_c" class="amber" min="0.05" max="1" step="0.05" value="0.2"><span class="val" id="t1_cv">0.20</span></div>
+        </div>
+        <div class="steps" id="t1_steps">
+          <div class="step on" data-s="0"><div class="lab">Conservation law</div>
+            <div class="eq big center">Accumulation<span class="op">=</span>Inflow<span class="op">−</span>Outflow</div></div>
+          <div class="step" data-s="1"><div class="lab">No inflow — tank only leaks</div>
+            <div class="eq big center"><var>A</var><span class="frac"><span class="num">d<var>h</var></span><span class="den">d<var>t</var></span></span><span class="op">=</span>0<span class="op">−</span><var>Q</var><span class="sub2">out</span></div></div>
+          <div class="step" data-s="2"><div class="lab">Substitute the leak law <span id="t1_law" class="pill amber" style="margin-left:6px">Q = 0.20 h</span></div>
+            <div class="eq big center"><span id="t1_Aeq">5.0</span><span class="frac"><span class="num">d<var>h</var></span><span class="den">d<var>t</var></span></span><span class="op">=</span><span class="op">−</span><span id="t1_ceq">0.20</span><var>h</var></div></div>
+          <div class="step" data-s="3"><div class="lab">Divide by <var>A</var> → the state equation</div>
+            <div class="eq big center" style="background:#f2fbf9;border-color:rgba(34,195,174,.4)"><span class="frac"><span class="num">d<var>h</var></span><span class="den">d<var>t</var></span></span><span class="op">=</span><span class="op">−</span><span id="t1_k" style="color:#0f7d6e;font-weight:700">0.040</span><var>h</var></div></div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn primary" id="t1_next">Reveal next step ▸</button>
+          <button class="btn ghost" id="t1_reset">Reset</button>
+        </div>
+        <div class="readout">
+          <div class="metric"><div class="m-lab">Coefficient c / A</div><div class="m-val teal" id="t1_mk">0.040 s⁻¹</div></div>
+          <div class="metric"><div class="m-lab">Time constant τ = A/c</div><div class="m-val amber" id="t1_mtau">25.0 s</div></div>
+          <div class="metric"><div class="m-lab">Order</div><div class="m-val">1st</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 4. WHY EXPONENTIAL ============ -->
+  <section id="why">
+    <h2><span class="num">4</span> Why the response is exponential</h2>
+    <p class="lead">Not "because of the minus sign" — the sign only picks the direction.</p>
+    <p>The equation <span class="eqi"><span class="frac"><span class="num">d<var>h</var></span><span class="den">d<var>t</var></span></span>=−0.04<var>h</var></span> has the right-hand side proportional to the state itself. <strong>That proportionality is what creates the exponential.</strong> The general law is <span class="eqi"><span class="frac"><span class="num">d<var>y</var></span><span class="den">d<var>t</var></span></span>=<var>k</var><var>y</var></span>, and the sign of <var>k</var> alone decides the fate: grow, hold, or decay.</p>
+
+    <!-- DEMO 2: growth vs decay -->
+    <div class="demo">
+      <div class="demohead"><span class="t">Interactive · Sweep k through zero</span><span class="tag">Demo 2</span></div>
+      <div class="demobody">
+        <div class="scope">
+          <div class="scopehead"><span>y(t) = y₀·e^(kt)</span><span id="t4_regime">DECAY</span></div>
+          <canvas id="t4_plot" width="760" height="380"></canvas>
+        </div>
+        <div class="controls">
+          <div class="ctl"><label>Rate <var>k</var></label><input type="range" id="t4_k" class="amber" min="-0.1" max="0.1" step="0.005" value="-0.04"><span class="val" id="t4_kv">−0.040</span></div>
+          <div class="ctl"><label>Start <var>y</var><span class="sub2">0</span></label><input type="range" id="t4_y0" min="0.5" max="4" step="0.1" value="2"><span class="val" id="t4_y0v">2.0</span></div>
+        </div>
+        <div class="readout">
+          <div class="metric"><div class="m-lab">Regime</div><div class="m-val" id="t4_mreg">decay</div></div>
+          <div class="metric"><div class="m-lab" id="t4_mtlab">Half-life</div><div class="m-val teal" id="t4_mt">17.3 s</div></div>
+          <div class="metric"><div class="m-lab">y at t = 30 s</div><div class="m-val amber" id="t4_my30">0.60</div></div>
+        </div>
+        <div class="flexrow" style="margin-top:14px">
+          <div class="grow"><div class="callout warn"><span class="pill warn">k &gt; 0</span> runaway — <strong>growth</strong> (unstable pole).</div></div>
+          <div class="grow"><div class="callout amber"><span class="pill amber">k = 0</span> <strong>constant</strong> — the state just sits.</div></div>
+          <div class="grow"><div class="callout"><span class="pill">k &lt; 0</span> self-limiting — <strong>decay</strong> (our tank).</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 5. SOLVE ============ -->
+  <section id="solve">
+    <h2><span class="num">5</span> Predict, solve, and verify</h2>
+    <p class="lead">Guess the form from the pattern, then check it against the tank itself.</p>
+    <p>Since equations of the form <span class="eqi"><span class="frac"><span class="num">d<var>y</var></span><span class="den">d<var>t</var></span></span>=<var>k</var><var>y</var></span> give exponentials, and the tank starts at height <var>h</var><span class="sub2">0</span>, the solution should collapse to <var>h</var><span class="sub2">0</span> at <var>t</var>=0. Tap to reveal:</p>
+    <div class="eq big center" id="t2_reveal" style="cursor:pointer;user-select:none">
+      <var>h</var>(<var>t</var>)<span class="op">=</span><span id="t2_hidden" style="letter-spacing:.15em;color:var(--muted)">tap&nbsp;to&nbsp;reveal</span>
+    </div>
+
+    <!-- DEMO 3: drain + tangent -->
+    <div class="demo">
+      <div class="demohead"><span class="t">Interactive · Watch it drain, check the slope</span><span class="tag">Demo 3</span></div>
+      <div class="demobody">
+        <div class="flexrow">
+          <div class="grow" style="flex:0 0 190px;min-width:170px">
+            <div class="scope" style="padding-bottom:14px">
+              <div class="scopehead"><span><span class="dot" style="background:var(--amber)"></span>TANK</span><span id="t2_tanklab">h = 3.00 m</span></div>
+              <canvas id="t2_tank" width="360" height="440"></canvas>
+            </div>
+          </div>
+          <div class="grow">
+            <div class="scope">
+              <div class="scopehead"><span><span class="dot" style="background:var(--teal)"></span>HEIGHT RESPONSE</span><span id="t2_cursorlab">t = 0.0 s</span></div>
+              <canvas id="t2_plot" width="760" height="360"></canvas>
+              <div class="legend">
+                <span><span class="swatch" style="background:var(--teal)"></span>h(t) = h₀e^(−0.04t)</span>
+                <span><span class="swatch" style="background:var(--amber)"></span>tangent: slope = −0.04·h</span>
+              </div>
+            </div>
+            <p class="small muted" style="margin-top:8px">Drag on the plot to move the cursor. The amber tangent's measured slope is compared live to <span class="eqi" style="font-size:14px">−0.04<var>h</var></span> — equal at every point, which <em>is</em> the differential equation.</p>
+          </div>
+        </div>
+        <div class="controls">
+          <div class="ctl"><label>Initial height <var>h</var><span class="sub2">0</span></label><input type="range" id="t2_h0" min="0.5" max="5" step="0.1" value="3"><span class="val" id="t2_h0v">3.0 m</span></div>
+          <div class="ctl"><label>Coefficient <var>k</var></label><input type="range" id="t2_k" class="amber" min="0.01" max="0.12" step="0.005" value="0.04"><span class="val" id="t2_kv">0.040</span></div>
+        </div>
+        <div class="readout">
+          <div class="metric"><div class="m-lab">h at cursor</div><div class="m-val teal" id="t2_mh">3.00 m</div></div>
+          <div class="metric"><div class="m-lab">dh/dt (measured)</div><div class="m-val amber" id="t2_mslope">−0.120 m/s</div></div>
+          <div class="metric"><div class="m-lab">−k·h (predicted)</div><div class="m-val" id="t2_mpred">−0.120 m/s</div></div>
+          <div class="metric"><div class="m-lab">Half-life ln2/k</div><div class="m-val" id="t2_mhalf">17.3 s</div></div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn primary" id="t2_run">▶ Run drain</button>
+          <button class="btn" id="t2_pause">⏸ Pause</button>
+          <button class="btn ghost" id="t2_rst">↺ Reset t=0</button>
+        </div>
+      </div>
+    </div>
+
+    <details>
+      <summary>Full worked solution — separation of variables (and the Laplace route)</summary>
+      <p>From <span class="eqi"><span class="frac"><span class="num">d<var>h</var></span><span class="den">d<var>t</var></span></span>=−<var>k</var><var>h</var></span>, gather like variables and integrate:</p>
+      <div class="eq center"><span class="frac"><span class="num">d<var>h</var></span><span class="den"><var>h</var></span></span><span class="op">=</span><span class="op">−</span><var>k</var>&nbsp;d<var>t</var><span class="op" style="margin:0 16px">⟶</span>ln<var>h</var><span class="op">=</span><span class="op">−</span><var>k</var><var>t</var><span class="op">+</span><var>C</var></div>
+      <p>Exponentiate and fix the constant with <span class="eqi"><var>h</var>(0)=<var>h</var><span class="sub2">0</span></span>:</p>
+      <div class="eq big center" style="background:#f2fbf9;border-color:rgba(34,195,174,.4)"><var>h</var>(<var>t</var>)<span class="op">=</span><var>h</var><span class="sub2">0</span><var>e</var><span class="sup2">−<var>k</var><var>t</var></span></div>
+      <p class="small muted">Laplace: <span class="eqi" style="font-size:14px"><var>sH</var>−<var>h</var><span class="sub2">0</span>=−<var>kH</var></span> ⇒ <span class="eqi" style="font-size:14px"><var>H</var>(<var>s</var>)=<var>h</var><span class="sub2">0</span>/(<var>s</var>+<var>k</var>)</span>, whose inverse is the same exponential. Both roads meet.</p>
+    </details>
+  </section>
+
+  <!-- ============ 6. VOLUME ============ -->
+  <section id="volume">
+    <h2><span class="num">6</span> Height ↔ volume: the same system twice</h2>
+    <p class="lead">If you insist on volume, the geometry link converts the coefficient — but not the time constant.</p>
+    <p>Using <span class="eqi"><var>V</var>=<var>A</var><var>h</var></span>, substituting <span class="eqi"><var>h</var>=<var>V</var>/<var>A</var></span> gives <span class="eqi"><span class="frac"><span class="num">d<var>V</var></span><span class="den">d<var>t</var></span></span>=−0.2<span class="frac"><span class="num"><var>V</var></span><span class="den"><var>A</var></span></span>=−0.04<var>V</var></span>. Same coefficient — because a linear rescale can't change how fast the system settles. Only the vertical scale differs.</p>
+
+    <!-- DEMO 4: h vs V overlay -->
+    <div class="demo">
+      <div class="demohead"><span class="t">Interactive · Overlay height and volume</span><span class="tag">Demo 4</span></div>
+      <div class="demobody">
+        <div class="scope">
+          <div class="scopehead"><span>HEIGHT vs VOLUME — SHARED TIME CONSTANT</span><span id="t3_taulab">τ = 25.0 s</span></div>
+          <canvas id="t3_plot" width="760" height="380"></canvas>
+          <div class="legend">
+            <span><span class="swatch" style="background:var(--teal)"></span>h(t) [m]</span>
+            <span><span class="swatch" style="background:var(--amber)"></span>V(t) = A·h(t) [m³]</span>
+            <span><span class="swatch" style="background:#7fa0ac"></span>τ marker</span>
+          </div>
+        </div>
+        <div class="controls">
+          <div class="ctl"><label>Tank area <var>A</var></label><input type="range" id="t3_A" min="1" max="10" step="0.5" value="5"><span class="val" id="t3_Av">5.0 m²</span></div>
+          <div class="ctl"><label>Initial height <var>h</var><span class="sub2">0</span></label><input type="range" id="t3_h0" min="0.5" max="5" step="0.1" value="3"><span class="val" id="t3_h0v">3.0 m</span></div>
+          <div class="ctl"><label>Y-axis</label><input type="range" id="t3_norm" min="0" max="1" step="1" value="0"><span class="val" id="t3_normv">true scale</span></div>
+        </div>
+        <div class="readout">
+          <div class="metric"><div class="m-lab">h₀</div><div class="m-val teal" id="t3_mh0">3.00 m</div></div>
+          <div class="metric"><div class="m-lab">V₀ = A·h₀</div><div class="m-val amber" id="t3_mv0">15.0 m³</div></div>
+          <div class="metric"><div class="m-lab">τ (both)</div><div class="m-val" id="t3_mtau">25.0 s</div></div>
+        </div>
+        <p class="small muted" style="margin-top:10px">Flip <em>Y-axis</em> to <code class="tk">normalized</code> and the two curves land exactly on top of each other — proof they're one system. Amplitude is bookkeeping; the time constant is physics.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 7. TAKEAWAYS ============ -->
+  <section id="takeaways">
+    <div class="takeaways">
+      <h2>Takeaways</h2>
+      <ul>
+        <li><b>State follows the physics.</b> The leak law was written in height, so <var>h</var> is the state; volume forces an avoidable conversion.</li>
+        <li><b>Balance, then simplify.</b> Accumulation = inflow − outflow. Dividing by <var>A</var> folds geometry into the coefficient <span class="eqi" style="font-size:13px;background:#12242e;border-color:#2a4652;color:#dff3ee"><var>c</var>/<var>A</var></span>.</li>
+        <li><b>Proportionality makes the exponential; the sign chooses growth or decay.</b> <span class="eqi" style="font-size:13px;background:#12242e;border-color:#2a4652;color:#dff3ee"><span class="frac"><span class="num">d<var>y</var></span><span class="den">d<var>t</var></span></span>=<var>ky</var></span> ⟶ <span class="eqi" style="font-size:13px;background:#12242e;border-color:#2a4652;color:#dff3ee"><var>y</var><span class="sub2">0</span><var>e</var><span class="sup2"><var>kt</var></span></span>.</li>
+        <li><b>The time constant is invariant.</b> τ = <var>A</var>/<var>c</var> = 25&nbsp;s whether you track height or volume — a property of the system, not the yardstick.</li>
+      </ul>
+    </div>
+
+    <details>
+      <summary>Quick check 1 — reading the rate</summary>
+      <p class="small muted">With <var>k</var> = 0.04 s⁻¹, about how long until the height falls to roughly a third of its start?</p>
+      <button class="btn qbtn" onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+      <div style="display:none" class="callout">One time constant, τ = 1/k = 25 s, brings h to 1/e ≈ 37% of h₀ — roughly a third. Half is reached earlier, at the half-life ln2/k ≈ 17.3 s.</div>
+    </details>
+    <details>
+      <summary>Quick check 2 — spotting the error</summary>
+      <p class="small muted">A student writes dV/dt = V₀ − 0.2V. Name the two mistakes.</p>
+      <button class="btn qbtn" onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+      <div style="display:none" class="callout">(1) V₀ is an initial condition, not an inflow — the sealed leaking tank has inflow = 0. (2) The leak is 0.2·h, not 0.2·V; in volume coordinates it becomes 0.2·V/A = 0.04·V.</div>
+    </details>
+    <details>
+      <summary>Exercise — a tank with inflow</summary>
+      <p class="small muted">Now a pump adds a constant <var>Q</var><span class="sub2">in</span> = 0.1 m³/s while the same leak drains it. Write the ODE for h and find the steady-state height.</p>
+      <button class="btn qbtn" onclick="this.nextElementSibling.style.display='block'">Show solution</button>
+      <div style="display:none" class="callout">Balance: A·dh/dt = Q<sub>in</sub> − 0.2h ⟶ 5·dh/dt = 0.1 − 0.2h ⟶ dh/dt = 0.02 − 0.04h. Steady state sets dh/dt = 0: h<sub>ss</sub> = 0.02/0.04 = 0.5 m. The response is still first-order with τ = 25 s, now settling toward 0.5 m instead of 0.</div>
+    </details>
+  </section>
+
+  <p class="foot">Foundations of Dynamic Systems · self-contained &amp; offline · embedded schematics + four live demos · drag the plots, run the drain, sweep the rate.</p>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  var C = { grid:"#16303c", gridSoft:"#12242e", axis:"#3a5b68", txt:"#9db6c0", txtHi:"#dff3ee",
+            amber:"#E8A33D", teal:"#22C3AE" };
+
+  function setup(canvas, w, h){
+    canvas.width = w*DPR; canvas.height = h*DPR;
+    canvas.style.aspectRatio = w+" / "+h;
+    var ctx = canvas.getContext("2d");
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    canvas._w=w; canvas._h=h; return ctx;
+  }
+  function clear(ctx,w,h){ ctx.clearRect(0,0,w,h); }
+
+  function frame(ctx, box, tMax, yMax, yLabel){
+    var x0=box.x,y0=box.y,w=box.w,h=box.h,i;
+    ctx.fillStyle="#0b1820"; ctx.fillRect(x0,y0,w,h);
+    ctx.lineWidth=1;
+    for(i=0;i<=10;i++){var gx=x0+w*i/10;ctx.strokeStyle=(i%5===0)?C.grid:C.gridSoft;ctx.beginPath();ctx.moveTo(gx,y0);ctx.lineTo(gx,y0+h);ctx.stroke();}
+    for(i=0;i<=8;i++){var gy=y0+h*i/8;ctx.strokeStyle=(i%4===0)?C.grid:C.gridSoft;ctx.beginPath();ctx.moveTo(x0,gy);ctx.lineTo(x0+w,gy);ctx.stroke();}
+    ctx.strokeStyle=C.axis;ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x0,y0+h);ctx.lineTo(x0+w,y0+h);ctx.stroke();
+    ctx.fillStyle=C.txt;ctx.font="11px ui-monospace,Menlo,Consolas,monospace";ctx.textAlign="center";ctx.textBaseline="top";
+    for(i=0;i<=5;i++){ctx.fillText((tMax*i/5).toFixed(0), x0+w*i/5, y0+h+5);}
+    ctx.fillText("t (s)", x0+w, y0+h+18);
+    ctx.textAlign="right";ctx.textBaseline="middle";
+    for(i=0;i<=4;i++){ctx.fillText((yMax*i/4).toFixed(yMax<2?2:1), x0-6, y0+h-h*i/4);}
+    ctx.save();ctx.translate(x0-30,y0+h/2);ctx.rotate(-Math.PI/2);ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle=C.txt;ctx.fillText(yLabel,0,0);ctx.restore();
+  }
+  function mapX(box,tMax,t){return box.x+box.w*(t/tMax);}
+  function mapY(box,yMax,y){return box.y+box.h-box.h*(y/yMax);}
+  function curve(ctx,box,tMax,yMax,fn,color,width){
+    ctx.strokeStyle=color;ctx.lineWidth=width||2.4;ctx.lineJoin="round";ctx.beginPath();
+    var N=240,started=false;
+    for(var i=0;i<=N;i++){var t=tMax*i/N,y=fn(t);if(y<-yMax*0.05)continue;
+      var px=mapX(box,tMax,t),py=mapY(box,yMax,Math.max(0,Math.min(yMax,y)));
+      if(!started){ctx.moveTo(px,py);started=true;}else ctx.lineTo(px,py);}
+    ctx.stroke();
+  }
+
+  // ---- DEMO 1: equation builder ----
+  (function(){
+    var A=document.getElementById("t1_A"),c=document.getElementById("t1_c");
+    var step=0,steps=document.querySelectorAll("#t1_steps .step");
+    function nums(){
+      var a=parseFloat(A.value),cc=parseFloat(c.value),k=cc/a;
+      document.getElementById("t1_Av").textContent=a.toFixed(1)+" m²";
+      document.getElementById("t1_cv").textContent=cc.toFixed(2);
+      document.getElementById("t1_law").textContent="Q = "+cc.toFixed(2)+" h";
+      document.getElementById("t1_Aeq").textContent=a.toFixed(1);
+      document.getElementById("t1_ceq").textContent=cc.toFixed(2);
+      document.getElementById("t1_k").textContent=k.toFixed(3);
+      document.getElementById("t1_mk").textContent=k.toFixed(3)+" s⁻¹";
+      document.getElementById("t1_mtau").textContent=(1/k).toFixed(1)+" s";
+    }
+    function show(){steps.forEach(function(s,i){s.classList.toggle("on",i<=step);});}
+    document.getElementById("t1_next").onclick=function(){if(step<steps.length-1){step++;show();}};
+    document.getElementById("t1_reset").onclick=function(){step=0;show();};
+    A.oninput=nums;c.oninput=nums;nums();show();
+  })();
+
+  // ---- DEMO 3: drain + cursor ----
+  var t2redraw;
+  (function(){
+    var tankC=document.getElementById("t2_tank"),plotC=document.getElementById("t2_plot");
+    var tctx=setup(tankC,360,440),pctx=setup(plotC,760,360);
+    var h0=document.getElementById("t2_h0"),kIn=document.getElementById("t2_k");
+    var box={x:56,y:20,w:660,h:280},tMax=100,cursorT=0,playing=false,animT=0;
+    function params(){return{h0:parseFloat(h0.value),k:parseFloat(kIn.value)};}
+    function hOf(t){var p=params();return p.h0*Math.exp(-p.k*t);}
+    function drawTank(hNow){
+      clear(tctx,360,440);
+      var tx=90,tw=180,top=30,bot=400,th=bot-top;
+      tctx.strokeStyle="#31505d";tctx.lineWidth=3;
+      tctx.beginPath();tctx.moveTo(tx,top);tctx.lineTo(tx,bot);tctx.lineTo(tx+tw,bot);tctx.lineTo(tx+tw,top);tctx.stroke();
+      var frac=Math.max(0,Math.min(1,hNow/5)),wtop=bot-th*frac;
+      var grad=tctx.createLinearGradient(0,wtop,0,bot);
+      grad.addColorStop(0,"rgba(34,195,174,.85)");grad.addColorStop(1,"rgba(34,195,174,.45)");
+      tctx.fillStyle=grad;tctx.fillRect(tx+2,wtop,tw-4,bot-wtop-2);
+      tctx.strokeStyle=C.teal;tctx.lineWidth=2;tctx.beginPath();tctx.moveTo(tx+2,wtop);tctx.lineTo(tx+tw-2,wtop);tctx.stroke();
+      tctx.fillStyle=C.txt;tctx.font="12px ui-monospace,Menlo,Consolas,monospace";tctx.textAlign="left";tctx.textBaseline="middle";
+      for(var m=0;m<=5;m++){var yy=bot-th*(m/5);tctx.fillText(m+"m",tx+tw+8,yy);
+        tctx.strokeStyle="#274552";tctx.beginPath();tctx.moveTo(tx+tw,yy);tctx.lineTo(tx+tw+5,yy);tctx.stroke();}
+      var p=params(),q=p.k*hNow,streamW=Math.max(1,Math.min(9,q*40));
+      tctx.fillStyle="rgba(232,163,61,.9)";tctx.fillRect(tx+tw-2,bot-4,30,Math.max(3,streamW*0.6));
+      for(var d=0;d<Math.round(streamW);d++){var dy=((animT*120+d*22)%80);
+        tctx.beginPath();tctx.arc(tx+tw+30,bot+dy,Math.max(1.5,streamW*0.35),0,6.29);tctx.fill();}
+      document.getElementById("t2_tanklab").textContent="h = "+hNow.toFixed(2)+" m";
+    }
+    function drawPlot(){
+      clear(pctx,760,360);frame(pctx,box,tMax,5,"h  (m)");
+      var p=params();curve(pctx,box,tMax,5,hOf,C.teal,2.6);
+      var hc=hOf(cursorT),slope=-p.k*hc,cx=mapX(box,tMax,cursorT),cy=mapY(box,5,hc);
+      var dtw=18,tA=Math.max(0,cursorT-dtw),tB=Math.min(tMax,cursorT+dtw);
+      var yA=hc+slope*(tA-cursorT),yB=hc+slope*(tB-cursorT);
+      pctx.strokeStyle=C.amber;pctx.lineWidth=2;pctx.setLineDash([5,4]);pctx.beginPath();
+      pctx.moveTo(mapX(box,tMax,tA),mapY(box,5,Math.max(0,Math.min(5,yA))));
+      pctx.lineTo(mapX(box,tMax,tB),mapY(box,5,Math.max(0,Math.min(5,yB))));pctx.stroke();pctx.setLineDash([]);
+      pctx.strokeStyle="rgba(157,182,192,.4)";pctx.lineWidth=1;pctx.beginPath();pctx.moveTo(cx,box.y);pctx.lineTo(cx,box.y+box.h);pctx.stroke();
+      pctx.fillStyle=C.teal;pctx.beginPath();pctx.arc(cx,cy,5,0,6.29);pctx.fill();pctx.strokeStyle="#0b1820";pctx.lineWidth=2;pctx.stroke();
+      document.getElementById("t2_cursorlab").textContent="t = "+cursorT.toFixed(1)+" s";
+      document.getElementById("t2_mh").textContent=hc.toFixed(2)+" m";
+      document.getElementById("t2_mslope").textContent=slope.toFixed(3)+" m/s";
+      document.getElementById("t2_mpred").textContent=(-p.k*hc).toFixed(3)+" m/s";
+      document.getElementById("t2_mhalf").textContent=(Math.LN2/p.k).toFixed(1)+" s";
+      drawTank(hc);
+    }
+    t2redraw=drawPlot;
+    var dragging=false;
+    function tFromEvent(e){var r=plotC.getBoundingClientRect();
+      var xpix=((e.touches?e.touches[0].clientX:e.clientX)-r.left)*(plotC._w/r.width);
+      var frac=(xpix-box.x)/box.w;frac=Math.max(0,Math.min(1,frac));return frac*tMax;}
+    function down(e){dragging=true;cursorT=tFromEvent(e);drawPlot();e.preventDefault();}
+    function move(e){if(dragging){cursorT=tFromEvent(e);drawPlot();e.preventDefault();}}
+    function up(){dragging=false;}
+    plotC.addEventListener("mousedown",down);window.addEventListener("mousemove",move);window.addEventListener("mouseup",up);
+    plotC.addEventListener("touchstart",down,{passive:false});plotC.addEventListener("touchmove",move,{passive:false});plotC.addEventListener("touchend",up);
+    function loop(){if(playing){cursorT+=0.6;animT+=0.016;if(cursorT>tMax){cursorT=tMax;playing=false;}drawPlot();}requestAnimationFrame(loop);}
+    document.getElementById("t2_run").onclick=function(){if(cursorT>=tMax)cursorT=0;playing=true;};
+    document.getElementById("t2_pause").onclick=function(){playing=false;};
+    document.getElementById("t2_rst").onclick=function(){playing=false;cursorT=0;drawPlot();};
+    function upd(){document.getElementById("t2_h0v").textContent=parseFloat(h0.value).toFixed(1)+" m";
+      document.getElementById("t2_kv").textContent=parseFloat(kIn.value).toFixed(3);drawPlot();}
+    h0.oninput=upd;kIn.oninput=upd;
+    var revealed=false;
+    document.getElementById("t2_reveal").onclick=function(){if(revealed)return;revealed=true;
+      document.getElementById("t2_hidden").outerHTML='<span style="color:#0f7d6e;font-weight:700"><var>h</var><span class="sub2">0</span><var>e</var><span class="sup2">−0.04<var>t</var></span></span>';};
+    upd();loop();
+  })();
+
+  // ---- DEMO 4: h vs V ----
+  var t3redraw;
+  (function(){
+    var plotC=document.getElementById("t3_plot"),ctx=setup(plotC,760,380);
+    var A=document.getElementById("t3_A"),h0=document.getElementById("t3_h0"),norm=document.getElementById("t3_norm");
+    var box={x:56,y:20,w:660,h:300},tMax=100,k=0.04;
+    function draw(){
+      var a=parseFloat(A.value),H0=parseFloat(h0.value),normalized=(norm.value==="1"),V0=a*H0;
+      clear(ctx,760,380);
+      if(normalized){
+        frame(ctx,box,tMax,1.05,"normalized");
+        curve(ctx,box,tMax,1.05,function(t){return Math.exp(-k*t);},C.teal,3.2);
+        curve(ctx,box,tMax,1.05,function(t){return Math.exp(-k*t);},C.amber,1.6);
+        ctx.fillStyle=C.txtHi;ctx.font="12px ui-monospace,Menlo,Consolas,monospace";ctx.textAlign="center";
+        ctx.fillText("h/h₀ and V/V₀ coincide — one system",box.x+box.w/2,box.y+16);
+      }else{
+        var yMax=Math.max(H0*1.05,V0*1.05);
+        frame(ctx,box,tMax,yMax,"h [m] · V [m³]");
+        curve(ctx,box,tMax,yMax,function(t){return H0*Math.exp(-k*t);},C.teal,2.8);
+        curve(ctx,box,tMax,yMax,function(t){return V0*Math.exp(-k*t);},C.amber,2.8);
+      }
+      var tauX=mapX(box,tMax,1/k);
+      ctx.strokeStyle="rgba(127,160,172,.7)";ctx.setLineDash([4,4]);ctx.lineWidth=1.4;
+      ctx.beginPath();ctx.moveTo(tauX,box.y);ctx.lineTo(tauX,box.y+box.h);ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle="#7fa0ac";ctx.font="11px ui-monospace,Menlo,Consolas,monospace";ctx.textAlign="left";ctx.fillText("τ = 25 s",tauX+5,box.y+14);
+      document.getElementById("t3_Av").textContent=a.toFixed(1)+" m²";
+      document.getElementById("t3_h0v").textContent=H0.toFixed(1)+" m";
+      document.getElementById("t3_normv").textContent=normalized?"normalized":"true scale";
+      document.getElementById("t3_mh0").textContent=H0.toFixed(2)+" m";
+      document.getElementById("t3_mv0").textContent=V0.toFixed(1)+" m³";
+      document.getElementById("t3_mtau").textContent=(1/k).toFixed(1)+" s";
+      document.getElementById("t3_taulab").textContent="τ = "+(1/k).toFixed(1)+" s";
+    }
+    t3redraw=draw;A.oninput=draw;h0.oninput=draw;norm.oninput=draw;draw();
+  })();
+
+  // ---- DEMO 2: growth vs decay ----
+  var t4redraw;
+  (function(){
+    var plotC=document.getElementById("t4_plot"),ctx=setup(plotC,760,380);
+    var kIn=document.getElementById("t4_k"),y0In=document.getElementById("t4_y0");
+    var box={x:56,y:20,w:660,h:300},tMax=40;
+    function draw(){
+      var k=parseFloat(kIn.value),y0=parseFloat(y0In.value);
+      var yMax=k>0?Math.min(10,y0*Math.exp(k*tMax)):y0*1.15;if(k<=0)yMax=Math.max(y0*1.15,0.5);
+      clear(ctx,760,380);frame(ctx,box,tMax,yMax,"y");
+      var col=k>0.001?"#E86A4D":(k<-0.001?C.teal:C.amber);
+      curve(ctx,box,tMax,yMax,function(t){return y0*Math.exp(k*t);},col,3);
+      var y0y=mapY(box,yMax,y0);
+      ctx.strokeStyle="rgba(127,160,172,.4)";ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(box.x,y0y);ctx.lineTo(box.x+box.w,y0y);ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle="#7fa0ac";ctx.font="11px ui-monospace,Menlo,Consolas,monospace";ctx.textAlign="left";ctx.textBaseline="bottom";ctx.fillText("y₀",box.x+6,y0y-3);
+      var regime=k>0.001?"growth":(k<-0.001?"decay":"steady");
+      document.getElementById("t4_kv").textContent=(k>=0?"+":"")+k.toFixed(3);
+      document.getElementById("t4_y0v").textContent=y0.toFixed(1);
+      document.getElementById("t4_regime").textContent=regime.toUpperCase();
+      document.getElementById("t4_mreg").textContent=regime;
+      document.getElementById("t4_my30").textContent=(y0*Math.exp(k*30)).toFixed(2);
+      var tlab=document.getElementById("t4_mtlab"),tval=document.getElementById("t4_mt");
+      if(k<-0.001){tlab.textContent="Half-life ln2/|k|";tval.textContent=(Math.LN2/(-k)).toFixed(1)+" s";}
+      else if(k>0.001){tlab.textContent="Doubling ln2/k";tval.textContent=(Math.LN2/k).toFixed(1)+" s";}
+      else{tlab.textContent="Change rate";tval.textContent="0 (flat)";}
+    }
+    t4redraw=draw;kIn.oninput=draw;y0In.oninput=draw;draw();
+  })();
+
+  // redraw all on resize (canvases reflow with the page)
+  var rt;
+  window.addEventListener("resize",function(){clearTimeout(rt);rt=setTimeout(function(){
+    if(t2redraw)t2redraw();if(t3redraw)t3redraw();if(t4redraw)t4redraw();
+  },150);});
+})();
+</script>
+</body>
+</html>
