@@ -1,11 +1,19 @@
-# OS / editor cruft
+# Jupyter Book build output
+_build/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# OS / editor
 .DS_Store
 Thumbs.db
-*.swp
-*~
-.idea/
 .vscode/
+.idea/
 
-# build / packaging artifacts
-*.zip
+# Node (only used transiently for demo tests)
 node_modules/

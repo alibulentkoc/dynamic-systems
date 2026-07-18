@@ -1,77 +1,73 @@
-# Foundations of Dynamic Systems — Interactive First-Order Lessons
+# Foundations of Dynamic Systems
 
-Self-contained, offline **interactive lessons on first-order dynamical systems**, built as drop-in supporting material for a course. Every lesson teaches the same idea — one stored quantity relaxing toward an equilibrium — through a different physical system, so students see that a leaking tank, an RC circuit, a cooling coffee cup, and a hydraulic cylinder are all the *same equation* in different clothing:
+An intuition-first, **interactive** mini-course that takes you from everyday physics to Laplace transforms,
+state space, and fluid-power control — building toward robotics, mechatronics, and physical AI.
 
+Every lesson and project is a **self-contained HTML page** (vanilla JavaScript + `<canvas>`, **no libraries,
+no CDNs, no network**) with live, tunable simulations, wrapped into a browsable [Jupyter Book](https://jupyterbook.org).
+The full symbolic derivations are provided as an executable SymPy notebook.
+
+## Quick start
+
+```bash
+pip install -r requirements.txt
+jupyter-book build .
+# then open _build/html/index.html
 ```
-τ dx/dt + x = x_target        →        x(t) = x∞ + Δ·e^(−t/τ)
-```
 
-Each lesson follows one arc: **choose the state → build the equation from a balance law → solve it → watch it respond**, ending with takeaways, quick-check questions, and worked exercises.
-
-## View it
-
-- **Live (GitHub Pages):** enable Pages for this repo (Settings → Pages → Build and deployment → *GitHub Actions*). The included workflow publishes the site on every push to `main`. The landing page is `index.html`.
-- **Locally:** just open `index.html` in any browser — or open any individual lesson file directly. No server, no build, no internet required.
+Or just open any file in `demos/` directly in a browser — each one runs standalone, offline, forever.
 
 ## What's inside
 
-### Foundations — one law across physical domains
-Work these in order; each introduces one new idea.
+**Lessons**
+1. Dynamic Systems Everywhere · Orders of a System (0th–3rd)
+2. Modeling with Newton's Laws
+3. Differential Equations, Read Physically
+4. Why the Laplace Transform Was Invented
+5. Transfer Functions
+6. Second-Order Systems: Frequency, Damping, Resonance
+7. State-Space Modeling
+8. One Language: Mechanical, Electrical, Hydraulic
 
-| # | Lesson | Domain | New idea |
-|---|--------|--------|----------|
-| 01 | Leaking Tank | Fluid | pure decay; where τ comes from |
-| 02 | RC Circuit | Electrical | driven response to a non-zero steady state |
-| 03 | Newton's Cooling | Thermal | decay to non-zero equilibrium; coordinate shift |
-| 04 | Drag & Terminal Velocity | Mechanical | equilibrium from a force balance |
-| 05 | Grain Drying | Agricultural | equilibrium as a floor; unreachable targets |
-| 06 | Study Hours & Grades | Learning | approach to a ceiling; independent variable ≠ time |
+**Projects**
+- Project 1 — Model & Simulate a Car Suspension (comfort-vs-handling trade-off)
+- Project 2 — Hydraulic Cylinder & Bulk Modulus (resonance & servo stability)
 
-Plus `leaking-tank-demo.html`, the original four-tab sandbox explorer.
+**Hydraulic Circuits** (fluid-power series)
+1. The Single Cylinder — `v = Q/A`, `F = P·A`, differential areas
+2. Cylinders in Series — shared flow, pressures add
+3. Cylinders in Parallel — shared pressure, flow divides (lightest load first)
+4. On/Off Control — bang-bang hunting and the deadband trade-off
+5. Proportional Control — smooth metered approach, gain vs the resonance limit
 
-### Fluid-Powered Physical AI — the robotics series
-Ordered from familiar toward the hydraulic and fluid-power systems central to physical AI. Same first-order structure throughout.
+**Derivations & Solutions**
+- An executable **SymPy** notebook + an interactive HTML page deriving `x(t)` three ways
+  (classical ODE, Laplace transform, state-space matrix exponential) and proving they agree.
 
-| # | Lesson | Domain |
-|---|--------|--------|
-| R1 | Mobile Robot Battery Charging | Electrical |
-| R2 | Drone Battery Temperature | Thermal |
-| R3 | Pneumatic Gripper Pressure | Pneumatic |
-| R4 | Hydraulic Hose Pressure Build-Up | Hydraulic |
-| R5 | Hydraulic Cylinder Chamber Filling | Electrohydraulic |
-| R6 | Soft Robotic Finger Inflation | Physical AI |
-| R7 | Hydraulic Accumulator Charging | Servo-Hydraulic |
+## Design principles
 
-## Structure
+- **Intuition first:** physical phenomenon → intuition → engineering example → math → interpretation.
+- **Zero dependencies in the demos:** system fonts only, hand-rendered math, no external URLs — built to run
+  in any browser for years.
+- **Everything is verified:** each simulation's physics is checked numerically (Node/SymPy) before shipping,
+  and every interactive is smoke-tested headless.
+
+## Repository layout
 
 ```
-.
-├── index.html                     landing page (links every lesson)
-├── lessons/
-│   ├── foundations/               the six domain lessons + tabbed demo
-│   └── robotics/                  the seven-lesson robotics series
-├── .github/workflows/deploy.yml   GitHub Pages deploy on push to main
-├── .nojekyll                      serve files as-is (no Jekyll processing)
-├── LICENSE                        MIT
-└── README.md
+demos/         self-contained interactive HTML lessons (the primary artifacts)
+lessons/       Jupyter Book pages (MyST) that embed each demo
+projects/      project pages (car suspension, hydraulic cylinder, circuits)
+derivations/   SymPy notebook + HTML companion (full worked solutions)
+assets/ code/ solutions/   supporting material
+_config.yml _toc.yml        Jupyter Book configuration
 ```
 
-## Design notes
+## Publishing
 
-- **Self-contained.** Each lesson is a single HTML file with all CSS and JavaScript inline. Zero external URLs, CDNs, fonts, or trackers — verified. Everything works offline and will keep working long-term.
-- **Vanilla stack.** Plain JavaScript and `<canvas>`; system fonts only. No frameworks, no build step.
-- **Consistent house style.** A lab-instrument / oscilloscope aesthetic shared across all lessons.
-- **Embeddable.** Because there are no dependencies, any lesson drops cleanly into an LMS, a course website, or a Jupyter Book via an `<iframe>`.
-
-## Reuse in another course
-
-These are designed to be portable. To include a lesson in your own course site, either link to the hosted page or copy the single HTML file and embed it:
-
-```html
-<iframe src="lessons/robotics/robotics-3-pneumatic-gripper.html"
-        style="width:100%;height:900px;border:0"></iframe>
-```
+Pushing to `main` triggers `.github/workflows/deploy.yml`, which builds the book and deploys it to
+**GitHub Pages**. Enable Pages once under *Settings → Pages → Source: GitHub Actions*.
 
 ## License
 
-Released under the [MIT License](LICENSE) — free to use, adapt, and redistribute, including in your own courses, with attribution.
+Released under the [MIT License](LICENSE).
