@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>The RLC Circuit — Second-Order System</title><style>
+  :root{--paper:#EEF2F5;--amber:#E8A33D;--teal:#22C3AE;--navy:#0E1B24;--ink:#1c2b33;--muted:#5d6f79;--line:#c9d4da;--grid:#16303c;--grid-soft:#12242e;--axis:#3a5b68;}
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);line-height:1.62;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:900px;margin:0 auto;padding:26px 20px 90px}
+  header.hero{border:1px solid var(--line);border-radius:14px;padding:24px 26px;margin-bottom:22px;background:linear-gradient(180deg,#ffffff,#f5f8fa);}
+  .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  h1{font-size:28px;margin:6px 0 8px;letter-spacing:-.01em}.hero .sub{color:var(--muted);font-size:15.5px;margin:0}
+  nav.toc{position:sticky;top:0;z-index:20;background:rgba(238,242,245,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);margin:0 -20px 22px;padding:9px 20px;display:flex;gap:6px;flex-wrap:wrap;font-size:12.5px}
+  nav.toc a{color:var(--muted);text-decoration:none;border:1px solid var(--line);background:#fff;padding:5px 11px;border-radius:20px;font-weight:600;white-space:nowrap;transition:.15s}
+  nav.toc a:hover{border-color:#a9bcc6;color:var(--ink)}
+  section{margin:34px 0}
+  section>h2{font-size:21px;margin:0 0 4px;display:flex;align-items:center;gap:10px}
+  section>h2 .num{display:inline-flex;width:26px;height:26px;border-radius:8px;background:var(--navy);color:var(--teal);font-size:14px;align-items:center;justify-content:center;flex:0 0 auto}
+  section>.lead{color:var(--muted);font-size:14px;margin:2px 0 14px}
+  p{margin:10px 0}.muted{color:var(--muted)}.small{font-size:13px}
+  figure.viz{margin:16px 0;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#fff,#f7fafb);padding:14px 16px 10px}
+  figure.viz svg{display:block;width:100%;height:auto}figure.viz figcaption{font-size:12.5px;color:var(--muted);margin-top:6px;text-align:center}
+  .demo{border:1px solid var(--line);border-radius:12px;background:#fff;margin:16px 0;overflow:hidden}
+  .demo .demohead{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;background:var(--navy);color:#dff3ee}
+  .demo .demohead .t{font-weight:700;font-size:13.5px}.demo .demohead .tag{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal)}
+  .demo .demobody{padding:16px}
+  .scope{background:var(--navy);border-radius:10px;padding:12px 12px 8px;border:1px solid #0a141b}
+  .scope .scopehead{display:flex;justify-content:space-between;align-items:center;color:#7fa0ac;font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;padding:0 2px}
+  .scope .dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+  canvas{display:block;width:100%;border-radius:8px;touch-action:none}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:12.5px;color:#9db6c0}
+  .legend span{display:inline-flex;align-items:center;gap:7px}.swatch{width:16px;height:3px;border-radius:2px;display:inline-block}
+  .controls{display:grid;gap:13px;margin-top:14px}
+  .ctl{display:grid;grid-template-columns:180px 1fr 110px;align-items:center;gap:12px}
+  .ctl label{font-size:13.5px;font-weight:600}
+  .ctl .val{font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;text-align:right;background:var(--paper);border:1px solid var(--line);border-radius:7px;padding:4px 8px}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:3px;background:linear-gradient(90deg,var(--teal),#7fc9bf);outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid var(--teal);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid var(--teal);cursor:pointer}
+  input[type=range].amber{background:linear-gradient(90deg,#f0c584,var(--amber))}
+  input[type=range].amber::-webkit-slider-thumb{border-color:var(--amber)}input[type=range].amber::-moz-range-thumb{border-color:var(--amber)}
+  .btn{appearance:none;border:1px solid var(--line);background:#fff;color:var(--ink);font-weight:600;font-size:13px;padding:8px 14px;border-radius:9px;cursor:pointer}
+  .btn:hover{border-color:#a9bcc6}.btn.primary{background:var(--navy);color:#eaf6f2;border-color:var(--navy)}.btn.ghost{background:transparent}
+  .eq{font-family:"Cambria Math","Times New Roman",Georgia,serif;font-size:18px;color:var(--ink);display:flex;align-items:center;flex-wrap:wrap;gap:2px;padding:10px 12px;background:var(--paper);border-radius:8px;border:1px solid var(--line);margin:10px 0;line-height:1}
+  .eq.center{justify-content:center}.eq.big{font-size:22px}
+  .eqi{display:inline-flex;font-size:15px;padding:2px 8px;vertical-align:middle}
+  .frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 4px;line-height:1}
+  .frac .num{padding:0 6px 2px;border-bottom:1.4px solid currentColor}.frac .den{padding:2px 6px 0}
+  var,.it{font-style:italic}.sub2{font-size:.7em;vertical-align:sub}.sup2{font-size:.7em;vertical-align:super}.op{margin:0 5px}
+  .steps{display:grid;gap:10px}
+  .step{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:#fff;opacity:.4;filter:grayscale(.35);transition:.3s}
+  .step.on{opacity:1;filter:none;border-color:#bcd0d8;box-shadow:0 1px 0 rgba(34,195,174,.15)}
+  .step .lab{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:4px}
+  .pill{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px;background:rgba(34,195,174,.14);color:#0f7d6e;border:1px solid rgba(34,195,174,.35)}
+  .callout{border-left:3px solid var(--teal);background:#f2fbf9;border-radius:0 8px 8px 0;padding:11px 15px;margin:12px 0;font-size:14px}
+  .callout.amber{border-left-color:var(--amber);background:#fdf7ee}
+  .readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;margin-top:12px}
+  .metric{background:var(--navy);color:#dff3ee;border-radius:10px;padding:10px 12px}
+  .metric .m-lab{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#7fa0ac}
+  .metric .m-val{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:19px;margin-top:2px}
+  .metric .m-val.amber{color:var(--amber)}.metric .m-val.teal{color:var(--teal)}
+  details{border:1px solid var(--line);border-radius:10px;padding:2px 15px;margin:12px 0;background:#fff}
+  summary{cursor:pointer;font-weight:600;padding:11px 0;font-size:14.5px;list-style:none}
+  summary::-webkit-details-marker{display:none}summary::before{content:"\\25b8";color:var(--teal);margin-right:8px;display:inline-block;transition:.2s}
+  details[open] summary::before{transform:rotate(90deg)}.qbtn{margin:4px 6px 10px 0}
+  .flexrow{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}.flexrow>.grow{flex:1 1 320px;min-width:270px}
+  .takeaways{border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#0E1B24,#12242e);color:#dff3ee;padding:18px 22px}
+  .takeaways h2{color:#fff;margin-top:0}.takeaways ul{margin:8px 0 0;padding-left:18px}.takeaways li{margin:8px 0}.takeaways b{color:var(--teal)}
+  .foot{color:var(--muted);font-size:12.5px;text-align:center;margin-top:30px}
+  code.tk{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--paper);padding:1px 6px;border-radius:5px;font-size:13px;border:1px solid var(--line)}
+</style></head><body><div class="wrap"><header class="hero"><div class="kicker">Foundations of Dynamic Systems &middot; Second-Order Series &middot; Lesson 2 &middot; Electrical</div><h1>The RLC Circuit</h1><p class="sub">Put an inductor in series with the RC circuit and the same thing happens as adding a spring to a mass: a second energy store appears, and the voltage can overshoot and ring.</p></header><nav class="toc"><a href="#scene">&#9312; The setup</a><a href="#state">&#9313; Two states</a><a href="#build">&#9314; Build the equation</a><a href="#regimes">&#9315; Three regimes</a><a href="#run">&#9316; The response</a><a href="#take">&#9317; Takeaways</a></nav><section id="scene"><h2><span class="num">1</span> The setup</h2><p class="lead">Where overshoot comes from.</p><p>The RC circuit could only charge toward the supply. Add an inductor and the current itself now carries energy &mdash; it resists changing, so it overshoots the mark, pumps the capacitor past the supply voltage, and the pair swap energy back and forth while the resistor bleeds it away.</p><figure class="viz"><svg viewBox="0 0 640 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Series RLC circuit">
+    <line x1="40" y1="140" x2="40" y2="60" stroke="#5b7480" stroke-width="2.5"/>
+    <line x1="40" y1="60" x2="90" y2="60" stroke="#5b7480" stroke-width="2.5"/>
+    <path d="M90,60 a8,8 0 0 1 16,0 a8,8 0 0 1 16,0 a8,8 0 0 1 16,0 a8,8 0 0 1 16,0" fill="none" stroke="#9BD0FF" stroke-width="2.6"/>
+    <text x="122" y="44" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="14" fill="#4f86b8">L</text>
+    <line x1="154" y1="60" x2="186" y2="60" stroke="#5b7480" stroke-width="2.5"/>
+    <path d="M186,60 l8,-10 l12,20 l12,-20 l12,20 l12,-20 l8,10" fill="none" stroke="#E8A33D" stroke-width="2.6"/>
+    <text x="222" y="40" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="14" fill="#a56a12">R</text>
+    <line x1="250" y1="60" x2="290" y2="60" stroke="#5b7480" stroke-width="2.5"/>
+    <line x1="290" y1="60" x2="290" y2="92" stroke="#5b7480" stroke-width="2.5"/>
+    <line x1="268" y1="92" x2="312" y2="92" stroke="#22C3AE" stroke-width="3.4"/>
+    <line x1="268" y1="106" x2="312" y2="106" stroke="#22C3AE" stroke-width="3.4"/>
+    <text x="330" y="103" font-family="Georgia,serif" font-style="italic" font-size="14" fill="#0f7d6e">C</text>
+    <line x1="290" y1="106" x2="290" y2="140" stroke="#5b7480" stroke-width="2.5"/>
+    <line x1="290" y1="140" x2="40" y2="140" stroke="#5b7480" stroke-width="2.5"/>
+    <line x1="28" y1="88" x2="52" y2="88" stroke="#5b7480" stroke-width="3"/>
+    <line x1="34" y1="102" x2="46" y2="102" stroke="#5b7480" stroke-width="3"/>
+    <text x="14" y="100" font-family="Georgia,serif" font-style="italic" font-size="13" fill="#5d6f79">V</text>
+    <rect x="376" y="52" width="248" height="112" rx="10" fill="#f2fbf9" stroke="#22C3AE"/>
+    <text x="500" y="84" text-anchor="middle" font-family="Georgia,serif" font-size="14" fill="#0f7d6e">LC v&#776; + RC v&#775; + v = V</text>
+    <text x="500" y="116" text-anchor="middle" font-family="Georgia,serif" font-size="14" fill="#5d6f79">&#969;&#8345; = 1/&#8730;(LC)</text>
+    <text x="500" y="142" text-anchor="middle" font-family="Georgia,serif" font-size="14" fill="#5d6f79">&#950; = (R/2)&#8730;(C/L)</text>
+  </svg><figcaption>The physical picture and the two numbers &mdash; &omega;<sub>n</sub> and &zeta; &mdash; that summarise its behaviour.</figcaption></figure></section><section id="state"><h2><span class="num">2</span> Two states, not one</h2><p class="lead">The reason a second-order system can ring.</p><p>Two stores means two states: the capacitor voltage <span class="eqi"><var>v</var><span class="sub2">C</span></span> and the inductor current <span class="eqi"><var>i</var><span class="sub2">L</span></span>. The state is the pair <span class="pill">(v<sub>C</sub>, i<sub>L</sub>)</span> &mdash; and the analogy is exact: inductance is mass, capacitance is spring compliance, resistance is the damper.</p><div class="callout amber"><strong>Why first-order systems never overshoot.</strong> With one state there is only one way to go: toward equilibrium, slowing as you approach. Overshoot needs somewhere to <em>store momentum</em> that carries you past the target. Two energy stores, two states &mdash; and suddenly the system can sail right by.</div></section><section id="build"><h2><span class="num">3</span> Building the equation</h2><p class="lead">Every second-order system collapses to the same standard form.</p><div class="demo"><div class="demohead"><span class="t">Interactive &middot; Assemble the law</span><span class="tag">Demo 1</span></div><div class="demobody"><div class="controls" style="margin-bottom:14px"><div class="ctl"><label>Inductance <var>L</var></label><input type="range" id="bd_s1" min="0.01" max="0.5" step="0.01" value="0.1"><span class="val" id="bd_s1v"></span></div><div class="ctl"><label>Capacitance <var>C</var></label><input type="range" id="bd_s2" min="10" max="500" step="10" value="100"><span class="val" id="bd_s2v"></span></div><div class="ctl"><label>Resistance <var>R</var></label><input type="range" id="bd_s3" class="amber" min="0" max="100" step="1" value="20"><span class="val" id="bd_s3v"></span></div></div><div class="steps" id="bd_steps"><div class="step on"><div class="lab">Kirchhoff's voltage law</div><div class="eq big center">L i&#775; + R i + v = V,&nbsp; i = C v&#775;</div></div><div class="step"><div class="lab">Collect terms &mdash; second order: two derivatives</div><div class="eq big center" style="background:#f2fbf9;border-color:rgba(34,195,174,.4)">x&#776;<span class="op">+</span>2&zeta;&omega;<span class="sub2">n</span>x&#775;<span class="op">+</span>&omega;<span class="sub2">n</span><span class="sup2">2</span>x<span class="op">=</span>&omega;<span class="sub2">n</span><span class="sup2">2</span>u</div></div><div class="step"><div class="lab">Read off the two numbers that decide everything</div><div class="eq big center">&omega;<span class="sub2">n</span><span class="op">=</span><span id="bd_e1">4</span><span class="op" style="margin-left:18px">&zeta;<span class="op">=</span></span><span id="bd_e2">0.250</span></div></div></div><div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="bd_next">Reveal next step &#9656;</button><button class="btn ghost" id="bd_reset">Reset</button></div><div class="readout"><div class="metric"><div class="m-lab">natural freq &omega;<sub>n</sub></div><div class="m-val teal" id="bd_wn"></div></div><div class="metric"><div class="m-lab">in Hz</div><div class="m-val" id="bd_fn"></div></div><div class="metric"><div class="m-lab">damping ratio &zeta;</div><div class="m-val amber" id="bd_z"></div></div><div class="metric"><div class="m-lab">regime</div><div class="m-val" id="bd_reg" style="font-size:14px"></div></div></div><div class="callout" style="margin-top:14px"><strong>Two numbers is all it takes.</strong> Whatever the hardware &mdash; mass and spring, inductor and capacitor, oil and load &mdash; once you have &omega;<sub>n</sub> and &zeta; you know the whole response. That is why controls engineers talk in &zeta; and &omega;<sub>n</sub> rather than in kilograms and henries.</div></div></div></section><section id="regimes"><h2><span class="num">4</span> The three regimes</h2><p class="lead">&zeta; alone decides the character of the response.</p><figure class="viz"><svg viewBox="0 0 640 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Three damping regimes"><rect x="20" y="30" width="190" height="150" rx="10" fill="#fdf7ee" stroke="#E8A33D"/><text x="115" y="54" text-anchor="middle" font-family="-apple-system,Arial" font-size="12" fill="#a56a12">&#950; &lt; 1 UNDERDAMPED</text><path d="M34,150 C54,60 74,60 94,110 C110,148 126,92 142,120 C156,144 170,110 196,122" fill="none" stroke="#E8A33D" stroke-width="2.6"/><line x1="34" y1="122" x2="196" y2="122" stroke="#a56a12" stroke-width="1" stroke-dasharray="3 3"/><text x="115" y="172" text-anchor="middle" font-family="-apple-system,Arial" font-size="11" fill="#a56a12">overshoots, rings</text><rect x="222" y="30" width="190" height="150" rx="10" fill="#f2fbf9" stroke="#22C3AE"/><text x="317" y="54" text-anchor="middle" font-family="-apple-system,Arial" font-size="12" fill="#0f7d6e">&#950; = 1 CRITICAL</text><path d="M236,150 C266,72 292,124 398,122" fill="none" stroke="#22C3AE" stroke-width="2.6"/><line x1="236" y1="122" x2="398" y2="122" stroke="#0f7d6e" stroke-width="1" stroke-dasharray="3 3"/><text x="317" y="172" text-anchor="middle" font-family="-apple-system,Arial" font-size="11" fill="#0f7d6e">fastest, no overshoot</text><rect x="424" y="30" width="192" height="150" rx="10" fill="#eef4fb" stroke="#9BD0FF"/><text x="520" y="54" text-anchor="middle" font-family="-apple-system,Arial" font-size="12" fill="#4f86b8">&#950; &gt; 1 OVERDAMPED</text><path d="M438,150 C486,140 496,128 602,123" fill="none" stroke="#9BD0FF" stroke-width="2.6"/><line x1="438" y1="122" x2="602" y2="122" stroke="#4f86b8" stroke-width="1" stroke-dasharray="3 3"/><text x="520" y="172" text-anchor="middle" font-family="-apple-system,Arial" font-size="11" fill="#4f86b8">sluggish, crawls in</text></svg><figcaption>One parameter, three personalities. Critical damping (&zeta; = 1) is the boundary: the fastest you can go without ever crossing the target.</figcaption></figure><p>Here &omega;<sub>n</sub> = 1/&radic;(LC) and &zeta; = (R/2)&radic;(C/L). Notice the resistor's role has flipped from the RC circuit: there, more R meant slower charging; here, more R means <em>more damping</em> &mdash; it is the brake that stops the ringing. A low-resistance LC circuit rings almost forever, which is the basis of an oscillator; add resistance and it settles.</p></section><section id="run"><h2><span class="num">5</span> The response</h2><p class="lead">Guess the shape, then drag &zeta; through the regimes. Tap to reveal the solution:</p><div class="eq big center" id="r_reveal" style="cursor:pointer;user-select:none">x(<var>t</var>)<span class="op">=</span><span id="r_hidden" style="letter-spacing:.15em;color:var(--muted)">tap&nbsp;to&nbsp;reveal</span></div><div class="demo"><div class="demohead"><span class="t">Interactive &middot; Step response &amp; poles</span><span class="tag">Demo 2</span></div><div class="demobody"><div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap"><button class="btn" data-z="0.1">&zeta; = 0.1</button><button class="btn" data-z="0.25">0.25</button><button class="btn" data-z="0.707">0.707</button><button class="btn" data-z="1">1.0</button><button class="btn" data-z="1.8">1.8</button><button class="btn" id="r_env">Show decay envelope</button></div><div class="scope"><div class="scopehead"><span><span class="dot" style="background:var(--teal)"></span>STEP RESPONSE</span><span id="r_cursor">t = 0.00 s</span></div><canvas id="r_plot" width="760" height="340"></canvas><div class="legend"><span><span class="swatch" style="background:var(--amber)"></span>underdamped</span><span><span class="swatch" style="background:var(--teal)"></span>critical</span><span><span class="swatch" style="background:#9BD0FF"></span>overdamped</span><span><span class="swatch" style="background:#FF8FA3"></span>envelope / peak</span></div></div><div class="flexrow" style="margin-top:14px"><div class="grow"><div class="scope" style="padding-bottom:14px"><div class="scopehead"><span><span class="dot" style="background:var(--teal)"></span>DEVICE</span></div><canvas id="r_dev" width="320" height="240"></canvas></div></div><div class="grow"><div class="scope" style="padding-bottom:14px"><div class="scopehead"><span><span class="dot" style="background:var(--amber)"></span>POLES (s-plane)</span></div><canvas id="r_pole" width="320" height="240"></canvas></div><p class="small muted" style="margin-top:8px">The poles are the same information as the curve. Off the real axis &rarr; ringing; the further left, the faster the decay.</p></div></div><div class="controls"><div class="ctl"><label>Damping ratio <var>&zeta;</var></label><input type="range" id="r_z" class="amber" min="0.05" max="2" step="0.005" value="0.25"><span class="val" id="r_zv"></span></div><div class="ctl"><label>Natural freq <var>&omega;</var><span class="sub2">n</span></label><input type="range" id="r_wn" min="50" max="1200" step="10" value="316"><span class="val" id="r_wnv"></span></div></div><div class="readout"><div class="metric"><div class="m-lab">x at cursor</div><div class="m-val teal" id="r_val"></div></div><div class="metric"><div class="m-lab">overshoot M<sub>p</sub></div><div class="m-val amber" id="r_os"></div></div><div class="metric"><div class="m-lab">settling (2%)</div><div class="m-val" id="r_ts"></div></div><div class="metric"><div class="m-lab">ringing freq &omega;<sub>d</sub></div><div class="m-val" id="r_wd" style="font-size:15px"></div></div><div class="metric"><div class="m-lab">regime</div><div class="m-val" id="r_reg" style="font-size:14px"></div></div></div><div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="r_run">&#9654; Run</button><button class="btn" id="r_pause">&#9208; Pause</button><button class="btn ghost" id="r_rst">&#8635; Reset t=0</button></div></div></div><details><summary>Full solution &mdash; all three regimes</summary><p>The character is decided by the roots of s&#178; + 2&zeta;&omega;<sub>n</sub>s + &omega;<sub>n</sub>&#178; = 0, namely s = &minus;&zeta;&omega;<sub>n</sub> &plusmn; &omega;<sub>n</sub>&radic;(&zeta;&#178;&minus;1).</p><p><strong>Underdamped (&zeta; &lt; 1)</strong> &mdash; complex pair, ringing at &omega;<sub>d</sub> = &omega;<sub>n</sub>&radic;(1&minus;&zeta;&#178;):</p><div class="eq center" style="background:#f2fbf9;border-color:rgba(34,195,174,.4)">x(t) = 1 &minus; e<sup>&minus;&zeta;&omega;<sub>n</sub>t</sup>[cos&omega;<sub>d</sub>t + (&zeta;/&radic;(1&minus;&zeta;&#178;))sin&omega;<sub>d</sub>t]</div><p><strong>Critically damped (&zeta; = 1)</strong> &mdash; repeated real root:</p><div class="eq center">x(t) = 1 &minus; e<sup>&minus;&omega;<sub>n</sub>t</sup>(1 + &omega;<sub>n</sub>t)</div><p><strong>Overdamped (&zeta; &gt; 1)</strong> &mdash; two real roots s<sub>1</sub>, s<sub>2</sub>; the slower one dominates and it behaves almost first order:</p><div class="eq center">x(t) = 1 &minus; (s<sub>2</sub>e<sup>s<sub>1</sub>t</sup> &minus; s<sub>1</sub>e<sup>s<sub>2</sub>t</sup>)/(s<sub>2</sub> &minus; s<sub>1</sub>)</div><p class="small muted">Useful shortcuts: overshoot M<sub>p</sub> = e<sup>&minus;&pi;&zeta;/&radic;(1&minus;&zeta;&#178;)</sup> (a function of &zeta; only), peak time t<sub>p</sub> = &pi;/&omega;<sub>d</sub>, and 2% settling t<sub>s</sub> &asymp; 4/(&zeta;&omega;<sub>n</sub>). Every closed form here was cross-checked against numerical integration of the original ODE.</p></details></section><section id="take"><div class="takeaways"><h2>Takeaways</h2><ul><li><b>The inductor is the mass.</b> It stores energy in current and resists change &mdash; exactly the role inertia plays mechanically.</li><li><b>Same equation, new labels.</b> LC v&#776; + RC v&#775; + v = V with &omega;<sub>n</sub> = 1/&radic;(LC), &zeta; = (R/2)&radic;(C/L).</li><li><b>R switched sides.</b> In the RC circuit resistance slowed charging; here it <em>damps</em> ringing. Same component, opposite role.</li><li><b>Ringing is energy sloshing.</b> L and C trade energy while R dissipates it; with R &rarr; 0 the ringing never stops &mdash; that is an oscillator.</li></ul></div><details><summary>Quick check</summary><p class="small muted">An RLC circuit rings badly after each switching event. Name two fixes and their side effects.</p><button class="btn qbtn" onclick="this.nextElementSibling.style.display='block'">Show answer</button><div style="display:none" class="callout">Raise &zeta; = (R/2)&radic;(C/L). (1) Add series resistance R &mdash; simple, but it burns power and slows the circuit. (2) Raise C or lower L &mdash; this also drops &omega;<sub>n</sub> = 1/&radic;(LC), so the circuit gets slower. This is the same trade as the mechanical lesson: you can damp the ringing or you can keep the speed, and the two pull against each other. It is exactly why snubber design is a compromise.</div></details></section><p class="foot">Second-Order Series &middot; Lesson 2 &middot; self-contained &amp; offline</p></div><script>var DEVICE=function(x,W,H,val,z,t){x.clearRect(0,0,W,H);
+  x.strokeStyle="#5b7480";x.lineWidth=2.5;
+  x.beginPath();x.moveTo(40,150);x.lineTo(40,60);x.lineTo(90,60);x.stroke();
+  // inductor coils
+  x.strokeStyle="#9BD0FF";x.lineWidth=2.6;x.beginPath();
+  for(var i=0;i<4;i++){x.arc(98+i*16,60,8,Math.PI,0,false);}x.stroke();
+  x.strokeStyle="#5b7480";x.beginPath();x.moveTo(162,60);x.lineTo(190,60);x.stroke();
+  // resistor
+  x.strokeStyle="#E8A33D";x.lineWidth=2.6;x.beginPath();x.moveTo(190,60);
+  for(var j=0;j<6;j++)x.lineTo(196+j*10,60+((j%2)?10:-10));
+  x.lineTo(256,60);x.stroke();
+  x.strokeStyle="#5b7480";x.beginPath();x.moveTo(256,60);x.lineTo(282,60);x.lineTo(282,150);x.stroke();
+  // capacitor plates
+  x.strokeStyle="#22C3AE";x.lineWidth=3.5;
+  x.beginPath();x.moveTo(258,150);x.lineTo(306,150);x.moveTo(258,166);x.lineTo(306,166);x.stroke();
+  x.strokeStyle="#5b7480";x.lineWidth=2.5;x.beginPath();x.moveTo(282,166);x.lineTo(282,190);x.lineTo(40,190);x.lineTo(40,150);x.stroke();
+  // charge fill on cap
+  var f=Math.max(0,Math.min(1.6,val))/1.6;
+  x.fillStyle="rgba(34,195,174,"+(0.15+0.6*f).toFixed(2)+")";x.fillRect(258,151,48,14);
+  x.fillStyle="#7fa0ac";x.font="10px ui-monospace,monospace";x.textAlign="center";
+  x.fillText("L",122,42);x.fillText("R",223,40);x.fillText("C",320-34,178);
+  x.fillStyle="#dff3ee";x.font="bold 16px ui-monospace,monospace";
+  x.fillText("v_C = "+val.toFixed(2),160,220);
+};var CFG={wn:function(L,Cuf,R){var C=Cuf*1e-6;return 1/Math.sqrt(L*C);},z:function(L,Cuf,R){var C=Cuf*1e-6;return (R/2)*Math.sqrt(C/L);},p1:{unit:"H",dec:2},p2:{unit:"&micro;F",dec:0},p3:{unit:"&Omega;",dec:0},revealHTML:"<span style=\"color:#0f7d6e;font-weight:700\">1<span class=\"op\">&minus;</span><var>e</var><span class=\"sup2\">&minus;&zeta;&omega;<span class=\"sub2\">n</span>t</span>[cos&omega;<span class=\"sub2\">d</span>t<span class=\"op\">+</span>(&zeta;/&radic;(1&minus;&zeta;&#178;))sin&omega;<span class=\"sub2\">d</span>t]<span class=\"op\" style=\"font-size:13px;color:#5d6f79\">&nbsp;(&zeta;&lt;1)</span></span>"};
+(function(){
+  "use strict";
+  var DPR=Math.max(1,Math.min(2,window.devicePixelRatio||1));
+  var Cx={grid:"#16303c",gridSoft:"#12242e",axis:"#3a5b68",txt:"#9db6c0",amber:"#E8A33D",teal:"#22C3AE",red:"#FF8FA3",blue:"#9BD0FF"};
+  function setup(cv,w,h){cv.width=w*DPR;cv.height=h*DPR;cv.style.aspectRatio=w+" / "+h;var x=cv.getContext("2d");x.setTransform(DPR,0,0,DPR,0,0);cv._w=w;cv._h=h;return x;}
+  function clear(x,w,h){x.clearRect(0,0,w,h);}
+  function setTxt(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+  function regime(z){return z<0.999?"underdamped":(z<1.001?"critically damped":"overdamped");}
+  function regimeColor(z){return z<0.999?Cx.amber:(z<1.001?Cx.teal:Cx.blue);}
+
+  // ---- unit step response of  xdd + 2 z wn xd + wn^2 x = wn^2 ----
+  function step(z,wn,t){
+    if(t<=0)return 0;
+    if(Math.abs(z-1)<1e-6)return 1-Math.exp(-wn*t)*(1+wn*t);
+    if(z<1){var wd=wn*Math.sqrt(1-z*z);
+      return 1-Math.exp(-z*wn*t)*(Math.cos(wd*t)+(z/Math.sqrt(1-z*z))*Math.sin(wd*t));}
+    var r=Math.sqrt(z*z-1),s1=-z*wn+wn*r,s2=-z*wn-wn*r;
+    return 1-(s2*Math.exp(s1*t)-s1*Math.exp(s2*t))/(s2-s1);
+  }
+
+  function frame(x,b,tMax,yMax,yl,tunit){var i;x.fillStyle="#0b1820";x.fillRect(b.x,b.y,b.w,b.h);x.lineWidth=1;
+    for(i=0;i<=10;i++){var gx=b.x+b.w*i/10;x.strokeStyle=(i%5===0)?Cx.grid:Cx.gridSoft;x.beginPath();x.moveTo(gx,b.y);x.lineTo(gx,b.y+b.h);x.stroke();}
+    for(i=0;i<=8;i++){var gy=b.y+b.h*i/8;x.strokeStyle=(i%4===0)?Cx.grid:Cx.gridSoft;x.beginPath();x.moveTo(b.x,gy);x.lineTo(b.x+b.w,gy);x.stroke();}
+    x.strokeStyle=Cx.axis;x.lineWidth=1.4;x.beginPath();x.moveTo(b.x,b.y);x.lineTo(b.x,b.y+b.h);x.lineTo(b.x+b.w,b.y+b.h);x.stroke();
+    x.fillStyle=Cx.txt;x.font="11px ui-monospace,Menlo,Consolas,monospace";x.textAlign="center";x.textBaseline="top";
+    for(i=0;i<=5;i++)x.fillText((tMax*i/5).toFixed(tMax<5?2:1),b.x+b.w*i/5,b.y+b.h+5);
+    x.fillText("t ("+tunit+")",b.x+b.w,b.y+b.h+18);
+    x.textAlign="right";x.textBaseline="middle";
+    for(i=0;i<=4;i++)x.fillText((yMax*i/4).toFixed(1),b.x-6,b.y+b.h-b.h*i/4);
+    x.save();x.translate(b.x-34,b.y+b.h/2);x.rotate(-Math.PI/2);x.textAlign="center";x.textBaseline="middle";x.fillStyle=Cx.txt;x.fillText(yl,0,0);x.restore();}
+  function mapX(b,tMax,t){return b.x+b.w*(t/tMax);}
+  function mapY(b,yMax,y){return b.y+b.h-b.h*(y/yMax);}
+
+  // ---------- DEMO 1 : build the equation ----------
+  (function(){
+    var s1=document.getElementById("bd_s1"),s2=document.getElementById("bd_s2"),s3=document.getElementById("bd_s3");
+    var stepi=0,steps=document.querySelectorAll("#bd_steps .step");
+    function nums(){
+      var a=parseFloat(s1.value),b=parseFloat(s2.value),c=parseFloat(s3.value);
+      var wn=CFG.wn(a,b,c), z=CFG.z(a,b,c);
+      setTxt("bd_s1v",a.toFixed(CFG.p1.dec)+" "+CFG.p1.unit);
+      setTxt("bd_s2v",b.toFixed(CFG.p2.dec)+" "+CFG.p2.unit);
+      setTxt("bd_s3v",c.toFixed(CFG.p3.dec)+" "+CFG.p3.unit);
+      setTxt("bd_wn",wn.toFixed(wn<10?2:0)+" rad/s");
+      setTxt("bd_fn",(wn/6.2832).toFixed(wn<60?2:1)+" Hz");
+      setTxt("bd_z",z.toFixed(3));
+      var r=document.getElementById("bd_reg");
+      r.textContent=regime(z); r.style.color=regimeColor(z);
+      setTxt("bd_e1",wn.toFixed(wn<10?2:0));
+      setTxt("bd_e2",z.toFixed(3));
+    }
+    function show(){steps.forEach(function(s,i){s.classList.toggle("on",i<=stepi);});}
+    document.getElementById("bd_next").onclick=function(){if(stepi<steps.length-1){stepi++;show();}};
+    document.getElementById("bd_reset").onclick=function(){stepi=0;show();};
+    s1.oninput=nums;s2.oninput=nums;s3.oninput=nums;nums();show();
+  })();
+
+  // ---------- DEMO 2 : response + poles ----------
+  var redraw;
+  (function(){
+    var devC=document.getElementById("r_dev"),plotC=document.getElementById("r_plot"),poleC=document.getElementById("r_pole");
+    var dx=setup(devC,320,240),px=setup(plotC,760,340),qx=setup(poleC,320,240);
+    var sz=document.getElementById("r_z"),sw=document.getElementById("r_wn");
+    var box={x:52,y:20,w:664,h:260},cursorT=0,playing=false,showEnv=false;
+    function P(){return{z:parseFloat(sz.value),wn:parseFloat(sw.value)};}
+    function tMaxOf(){var p=P();var Tosc=6.2832/p.wn, Tset=4/(p.z*p.wn);
+      return Math.max(3*Tosc,Math.min(Tset*1.5,12*Tosc));}
+    function drawPole(){
+      var p=P();clear(qx,320,240);
+      qx.fillStyle="#0b1820";qx.fillRect(0,0,320,240);
+      var cx=210,cy=120,S=150/p.wn;   // scale: |pole| ~ wn
+      qx.strokeStyle=Cx.grid;qx.lineWidth=1;
+      qx.beginPath();qx.moveTo(20,cy);qx.lineTo(300,cy);qx.stroke();
+      qx.beginPath();qx.moveTo(cx,14);qx.lineTo(cx,226);qx.stroke();
+      qx.fillStyle=Cx.txt;qx.font="10px ui-monospace,monospace";qx.textAlign="right";qx.fillText("Re",300,cy+13);
+      qx.textAlign="left";qx.fillText("Im",cx+5,18);
+      // unit circle of radius wn
+      qx.strokeStyle="rgba(127,160,172,.25)";qx.setLineDash([3,3]);
+      qx.beginPath();qx.arc(cx,cy,p.wn*S,0,6.29);qx.stroke();qx.setLineDash([]);
+      qx.fillStyle="#5d6f79";qx.textAlign="center";qx.fillText("|s| = \u03c9\u2099",cx-p.wn*S*0.72,cy-p.wn*S*0.72);
+      var re,im1,im2,two=true;
+      if(p.z<1){re=-p.z*p.wn;var wd=p.wn*Math.sqrt(1-p.z*p.z);im1=wd;im2=-wd;}
+      else {var r=Math.sqrt(p.z*p.z-1);re=null;var s1=-p.z*p.wn+p.wn*r,s2=-p.z*p.wn-p.wn*r;
+        // two real poles
+        [s1,s2].forEach(function(s){
+          qx.fillStyle=regimeColor(p.z);
+          qx.beginPath();qx.moveTo(cx+s*S-6,cy-6);qx.lineTo(cx+s*S+6,cy+6);qx.moveTo(cx+s*S+6,cy-6);qx.lineTo(cx+s*S-6,cy+6);
+          qx.strokeStyle=regimeColor(p.z);qx.lineWidth=3;qx.stroke();});
+        two=false;}
+      if(two){
+        [im1,im2].forEach(function(im){
+          var X=cx+re*S,Y=cy-im*S;
+          qx.strokeStyle=regimeColor(p.z);qx.lineWidth=3;
+          qx.beginPath();qx.moveTo(X-6,Y-6);qx.lineTo(X+6,Y+6);qx.moveTo(X+6,Y-6);qx.lineTo(X-6,Y+6);qx.stroke();});
+        qx.strokeStyle="rgba(232,163,61,.4)";qx.lineWidth=1.2;qx.setLineDash([4,3]);
+        qx.beginPath();qx.moveTo(cx,cy);qx.lineTo(cx+re*S,cy-im1*S);qx.stroke();qx.setLineDash([]);
+      }
+      qx.fillStyle=Cx.txt;qx.font="11px ui-monospace,monospace";qx.textAlign="center";
+      qx.fillText(p.z<1?"complex pair \u2192 ringing":"real poles \u2192 no ringing",160,232);
+    }
+    function draw(){
+      var p=P(),tMax=tMaxOf(),yMax=2;
+      clear(px,760,340);frame(px,box,tMax,yMax,"x / x_final","s");
+      // final value + 2% band
+      var fy=mapY(box,yMax,1);
+      px.fillStyle="rgba(34,195,174,0.10)";
+      px.fillRect(box.x,mapY(box,yMax,1.02),box.w,mapY(box,yMax,0.98)-mapY(box,yMax,1.02));
+      px.strokeStyle="rgba(127,160,172,.55)";px.setLineDash([5,4]);px.lineWidth=1.4;
+      px.beginPath();px.moveTo(box.x,fy);px.lineTo(box.x+box.w,fy);px.stroke();px.setLineDash([]);
+      px.fillStyle="#7fa0ac";px.font="11px ui-monospace,monospace";px.textAlign="left";
+      px.fillText("final value  \u00b12% band",box.x+6,fy-8);
+      // envelope
+      if(showEnv&&p.z<1){
+        [1,-1].forEach(function(sgn){
+          px.strokeStyle="rgba(255,143,163,.55)";px.lineWidth=1.6;px.setLineDash([4,3]);px.beginPath();
+          for(var i=0;i<=200;i++){var t=tMax*i/200;
+            var e=1+sgn*Math.exp(-p.z*p.wn*t)/Math.sqrt(1-p.z*p.z);
+            var Y=mapY(box,yMax,Math.max(0,Math.min(yMax,e)));
+            i?px.lineTo(mapX(box,tMax,t),Y):px.moveTo(mapX(box,tMax,t),Y);}
+          px.stroke();px.setLineDash([]);});
+      }
+      // response
+      px.strokeStyle=regimeColor(p.z);px.lineWidth=2.8;px.lineJoin="round";px.beginPath();
+      for(var i=0;i<=400;i++){var t=tMax*i/400,y=step(p.z,p.wn,t);
+        var Y=mapY(box,yMax,Math.max(0,Math.min(yMax,y)));
+        i?px.lineTo(mapX(box,tMax,t),Y):px.moveTo(mapX(box,tMax,t),Y);}
+      px.stroke();
+      // peak marker
+      if(p.z<1){
+        var wd=p.wn*Math.sqrt(1-p.z*p.z),tp=Math.PI/wd,yp=step(p.z,p.wn,tp);
+        if(tp<=tMax){px.fillStyle=Cx.red;px.beginPath();px.arc(mapX(box,tMax,tp),mapY(box,yMax,yp),4.5,0,6.29);px.fill();
+          px.fillStyle=Cx.red;px.textAlign="center";px.fillText("peak",mapX(box,tMax,tp),mapY(box,yMax,yp)-12);}
+      }
+      // cursor
+      var xc=step(p.z,p.wn,cursorT),ccx=mapX(box,tMax,cursorT),ccy=mapY(box,yMax,Math.max(0,Math.min(yMax,xc)));
+      px.strokeStyle="rgba(157,182,192,.4)";px.lineWidth=1;px.beginPath();px.moveTo(ccx,box.y);px.lineTo(ccx,box.y+box.h);px.stroke();
+      px.fillStyle=regimeColor(p.z);px.beginPath();px.arc(ccx,ccy,5,0,6.29);px.fill();px.strokeStyle="#0b1820";px.lineWidth=2;px.stroke();
+      // metrics
+      var Mp=p.z<1?Math.exp(-Math.PI*p.z/Math.sqrt(1-p.z*p.z))*100:0;
+      setTxt("r_cursor","t = "+cursorT.toFixed(2)+" s");
+      setTxt("r_val",xc.toFixed(3));
+      setTxt("r_os",p.z<1?Mp.toFixed(1)+" %":"0 % (no overshoot)");
+      setTxt("r_ts",(4/(p.z*p.wn)).toFixed(2)+" s");
+      setTxt("r_wd",p.z<1?(p.wn*Math.sqrt(1-p.z*p.z)).toFixed(2)+" rad/s":"\u2014 (no ringing)");
+      var rg=document.getElementById("r_reg");rg.textContent=regime(p.z);rg.style.color=regimeColor(p.z);
+      DEVICE(dx,320,240,xc,p.z,cursorT);
+      drawPole();
+    }
+    redraw=draw;
+    var dragging=false;
+    function tFromEvent(e){var r=plotC.getBoundingClientRect();var xp=((e.touches?e.touches[0].clientX:e.clientX)-r.left)*(plotC._w/r.width);var f=(xp-box.x)/box.w;f=Math.max(0,Math.min(1,f));return f*tMaxOf();}
+    function down(e){dragging=true;cursorT=tFromEvent(e);draw();e.preventDefault();}
+    function move(e){if(dragging){cursorT=tFromEvent(e);draw();e.preventDefault();}}
+    function up(){dragging=false;}
+    plotC.addEventListener("mousedown",down);window.addEventListener("mousemove",move);window.addEventListener("mouseup",up);
+    plotC.addEventListener("touchstart",down,{passive:false});plotC.addEventListener("touchmove",move,{passive:false});plotC.addEventListener("touchend",up);
+    function loop(){if(playing){cursorT+=tMaxOf()/240;if(cursorT>tMaxOf()){cursorT=tMaxOf();playing=false;}draw();}requestAnimationFrame(loop);}
+    document.getElementById("r_run").onclick=function(){if(cursorT>=tMaxOf())cursorT=0;playing=true;};
+    document.getElementById("r_pause").onclick=function(){playing=false;};
+    document.getElementById("r_rst").onclick=function(){playing=false;cursorT=0;draw();};
+    var be=document.getElementById("r_env");
+    be.onclick=function(){showEnv=!showEnv;be.classList.toggle("sel",showEnv);draw();};
+    document.querySelectorAll("[data-z]").forEach(function(b){
+      b.onclick=function(){sz.value=b.getAttribute("data-z");upd();};});
+    function upd(){setTxt("r_zv",parseFloat(sz.value).toFixed(3));
+      setTxt("r_wnv",parseFloat(sw.value).toFixed(parseFloat(sw.value)<10?2:0)+" rad/s");draw();}
+    sz.oninput=upd;sw.oninput=upd;
+    var revealed=false;
+    document.getElementById("r_reveal").onclick=function(){if(revealed)return;revealed=true;
+      document.getElementById("r_hidden").outerHTML=CFG.revealHTML;};
+    upd();loop();
+  })();
+  var rt;window.addEventListener("resize",function(){clearTimeout(rt);rt=setTimeout(function(){if(redraw)redraw();},150);});
+})();
+</script></body></html>

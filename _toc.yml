@@ -38,6 +38,11 @@ parts:
       - file: lessons/r9_camera_autofocus
       - file: lessons/r10_vision_confidence
       - file: lessons/r11_wheel_speed
+  - caption: Second-Order Systems (interactive)
+    chapters:
+      - file: lessons/so1_mass_spring_damper
+      - file: lessons/so2_rlc_circuit
+      - file: lessons/so3_hydraulic_cylinder_load
   - caption: Projects
     chapters:
       - file: projects/project1_car_suspension
