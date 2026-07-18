@@ -17,6 +17,23 @@ parts:
       - file: lessons/lesson06_second_order_systems
       - file: lessons/lesson07_state_space
       - file: lessons/lesson08_mechanical_electrical_hydraulic
+  - caption: First-Order Foundations (interactive)
+    chapters:
+      - file: lessons/fo01_leaking_tank
+      - file: lessons/fo02_rc_circuit
+      - file: lessons/fo03_newton_cooling
+      - file: lessons/fo04_drag_terminal
+      - file: lessons/fo05_grain_drying
+      - file: lessons/fo06_study_grades
+  - caption: Fluid-Powered Physical AI (interactive)
+    chapters:
+      - file: lessons/r1_battery_charging
+      - file: lessons/r2_drone_battery_temp
+      - file: lessons/r3_pneumatic_gripper
+      - file: lessons/r4_hydraulic_hose
+      - file: lessons/r5_cylinder_filling
+      - file: lessons/r6_soft_finger
+      - file: lessons/r7_accumulator
   - caption: Projects
     chapters:
       - file: projects/project1_car_suspension
