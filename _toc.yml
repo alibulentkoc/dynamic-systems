@@ -34,6 +34,10 @@ parts:
       - file: lessons/r5_cylinder_filling
       - file: lessons/r6_soft_finger
       - file: lessons/r7_accumulator
+      - file: lessons/r8_motor_winding
+      - file: lessons/r9_camera_autofocus
+      - file: lessons/r10_vision_confidence
+      - file: lessons/r11_wheel_speed
   - caption: Projects
     chapters:
       - file: projects/project1_car_suspension
